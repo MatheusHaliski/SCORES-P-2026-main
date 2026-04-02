@@ -1,4 +1,4 @@
-import { AppRoute } from '@/app/lib/stylist-shell';
+import { AppRoute } from '@/app/lib/scores-shell';
 import HomeView from '@/app/views/HomeView';
 import DiscoverView from '@/app/views/DiscoverView';
 import CreateSchemeView from '@/app/views/CreateSchemeView';

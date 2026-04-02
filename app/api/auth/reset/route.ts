@@ -29,11 +29,11 @@ const sendResetEmail = async (params: {
         body: JSON.stringify({
             from: fromEmail,
             to: [params.email],
-            subject: "Redefine your password",
+            subject: "Reset your SCORES password",
             html: `
 <p>Hello,</p>
-<p>We received a request to redefine your password. Click the link below to continue:</p>
-<p><a href="${params.resetLink}">Reset your password</a></p>
+<p>We received a request to reset your SCORES password. Click the link below to continue:</p>
+<p><a href="${params.resetLink}">Reset your SCORES password</a></p>
 <p>If you did not request this, you can ignore this email.</p>
 `,
         }),
@@ -66,7 +66,7 @@ export async function POST(request: NextRequest): Promise<Response> {
     try {
         const db = getAdminFirestore();
         const existingSnapshot = await db
-            .collection("VSusercontrol")
+            .collection("scores-p-2026-usercontrol")
             .where("email", "==", email)
             .limit(1)
             .get();
@@ -82,7 +82,7 @@ export async function POST(request: NextRequest): Promise<Response> {
         const createdAt = new Date();
         const expiresAt = new Date(Date.now() + 1000 * 60 * 60);
 
-        await db.collection("VSpasswordresets").add({
+        await db.collection("scores-p-2026-passwordresets").add({
             email,
             token,
             createdAt: createdAt.toISOString(),
