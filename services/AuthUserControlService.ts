@@ -7,8 +7,13 @@ export class AuthUserControlService {
   constructor(private readonly repository: UserControlRepository) {}
 
   async createOrSyncUserControl(authUser: AuthUserProfile): Promise<UserControlRecord> {
-    const email = authUser.email.trim().toLowerCase();
-    const displayName = authUser.displayName.trim() || email.split("@")[0] || "SCORES Manager";
+    const email = (authUser.email ?? "").trim().toLowerCase();
+    if (!email) {
+      throw new Error("No email was provided for this account.");
+    }
+
+    const displayName =
+      (authUser.displayName ?? "").trim() || email.split("@")[0] || "SCORES Manager";
     const now = nowIso();
 
     const existingByUid = await this.repository.getUserControlByUid(authUser.uid);
