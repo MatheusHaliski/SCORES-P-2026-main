@@ -4,8 +4,28 @@
 
 :root {
   color-scheme: dark;
+  --scores-cream: #e8e1c9;
+  --scores-cream-soft: #f0ecd9;
+  --scores-green: #155e4b;
 }
 
 body {
-  background-image: radial-gradient(circle at 0% 0%, #1e293b 0%, #020617 58%, #020617 100%);
+  background-color: var(--scores-cream);
+  background-image:
+    linear-gradient(rgba(245, 242, 229, 0.86), rgba(240, 236, 217, 0.88)),
+    url('/3ACBE31C-208C-45C8-ABE6-0BB0DA3A9683.png');
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
+  background-attachment: fixed;
+}
+
+.sa-auth-gradient-page {
+  background-color: var(--scores-cream);
+  background-image:
+    linear-gradient(rgba(245, 242, 229, 0.8), rgba(240, 236, 217, 0.84)),
+    url('/3ACBE31C-208C-45C8-ABE6-0BB0DA3A9683.png');
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
 }
