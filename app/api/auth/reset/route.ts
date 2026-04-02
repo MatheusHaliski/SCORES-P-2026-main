@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import crypto from "node:crypto";
 import { getAdminFirestore } from "@/app/lib/firebaseAdmin";
+import { USER_CONTROL_COLLECTION } from "@/types/UserControl";
 
 export const runtime = "nodejs";
 
@@ -66,7 +67,7 @@ export async function POST(request: NextRequest): Promise<Response> {
     try {
         const db = getAdminFirestore();
         const existingSnapshot = await db
-            .collection("scores-p-2026-usercontrol")
+            .collection(USER_CONTROL_COLLECTION)
             .where("email", "==", email)
             .limit(1)
             .get();
