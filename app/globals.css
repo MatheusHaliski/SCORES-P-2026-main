@@ -1,202 +1,31 @@
-:root {
-  --background: #f1f4ff;
-  --foreground: #eae8f1;
-  --page-gradient: linear-gradient(90deg, #2563eb 0%, #22c55e 55%, #38bdf8 100%);
-}
-
-@theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sharetech: var(--font-sharetech);
-}
-
-html,
-body {
-  margin: 0;
-  padding: 0;
-  min-height: 100%;
-}
-
-body {
-  background-color: var(--background);
-  background-image: var(--page-gradient);
-  background-attachment: fixed;
-  color: var(--foreground);
-  font-family: var(--font-sharetech), "Share Tech Mono", ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
-}
-
-
-.sa-auth-gradient-page {
-  background-color: var(--background);
-  background-image: url('/1DB71388-B9D0-42B9-B6C3-9A546875B819.jpeg');
-  background-position: center;
-  background-size: cover;
-  background-repeat: no-repeat;
-  background-attachment: fixed;
-  min-height: 100dvh;
-  width: 100vw;
-  margin-left: calc(50% - 50vw);
-  margin-right: calc(50% - 50vw);
-}
-
-.fe-fragmented-texture {
-  background-color: #f8f6ef;
-  background-image:
-   url("/F7B8D2E0-9994-4BFC-8D62-0206D32198DA.png");
-  background-position: 0 0;
-  background-size: 360px 360px;
-  background-repeat: repeat;
-}
-
-
-.fe-form-material {
-  background-color: #f4efe2;
-  background-image:
-    url("/F7B8D2E0-9994-4BFC-8D62-0206D32198DA.png");
-  background-position: 0 0;
-  background-size: 360px 360px;
-  background-repeat: repeat;
-}
-
-.fe-glass-panel {
-  background: linear-gradient(135deg, rgba(255, 255, 255, 0.32), rgba(255, 255, 255, 0.12));
-  backdrop-filter: blur(14px);
-  -webkit-backdrop-filter: blur(14px);
-  border: 1px solid rgba(255, 255, 255, 0.42);
-  box-shadow: 0 16px 40px rgba(15, 23, 42, 0.25);
-}
-
-.vs-auth-alert-popup {
-  background: #f0f0f0;
-  border: 2px solid #facc15;
-  border-radius: 28px;
-  padding: 24px;
-  width: min(90vw, 460px);
-  min-height: 520px;
-  box-sizing: border-box;
-}
-
-.vs-auth-alert-html {
-  margin: 0;
-  padding-bottom: 0;
-}
-
-.vs-auth-alert-inner {
-  background: #ffffff;
-  border-radius: 20px;
-  padding: 24px 28px;
-  text-align: center;
-  color: rgba(177, 153, 46, 0.79);
-  text-decoration: #1d4ed8;
-}
-.vs-auth-alert-icon {
-  display: flex;
-  justify-content: center;
-  margin-bottom: 12px;
-  color: #000000;
-}
-
-.vs-auth-alert-icon-svg {
-  width: 52px;
-  height: 52px;
-}
-
-.vs-auth-alert-title {
-  margin: 0 0 8px;
-  font-size: 1.5rem;
-  font-weight: 700;
-}
-
-.vs-auth-alert-message {
-  margin: 0;
-  font-size: 1rem;
-  font-weight: 600;
-}
-
-.vs-auth-alert-button {
-  margin-top: 0px;
-  border-radius: 999px;
-  padding: 5px 14px;
-  font-weight: 700;
-  text-transform: uppercase;
-  letter-spacing: 0.15em;
-  background: #ffffff;
-  color: #ea580c;
-  border: 2px solid #facc15;
-  box-shadow: 0 10px 20px rgba(234, 88, 12, 0.2);
-  max-width: 100%;
-}
-
-.vs-auth-alert-button:hover {
-  background: #fff7ed;
-}
-
-.swal2-popup.vs-auth-alert-popup .swal2-actions {
-  margin-bottom: 12px 0 0;
-  padding: 0;
-}
-.vs-auth-alert-text{
-  color:orange;
-}
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
-.sa-premium-gradient-surface {
-  background-image: linear-gradient(to right, rgb(21, 149, 21), rgb(21, 149, 21), rgb(255, 156, 35));
-  box-shadow: 0 14px 45px rgba(16, 185, 129, 0.25);
+:root {
+  color-scheme: dark;
+  --scores-cream: #e8e1c9;
+  --scores-cream-soft: #f0ecd9;
+  --scores-green: #155e4b;
 }
 
-.sa-premium-gradient-surface-soft {
-  background-image: linear-gradient(to right, rgba(6, 182, 212, 0.28), rgba(45, 212, 191, 0.28), rgba(16, 185, 129, 0.28));
-  box-shadow: 0 14px 45px rgba(16, 185, 129, 0.2);
-}
-
-
-.sa-home-shell {
-  background-color: #0b3d2e;
-  background-image: url('/1DB71388-B9D0-42B9-B6C3-9A546875B819.jpeg');
-  background-position: center;
+body {
+  background-color: var(--scores-cream);
+  background-image:
+    linear-gradient(rgba(245, 242, 229, 0.86), rgba(240, 236, 217, 0.88)),
+    url('/3ACBE31C-208C-45C8-ABE6-0BB0DA3A9683.png');
   background-size: cover;
+  background-position: center;
   background-repeat: no-repeat;
   background-attachment: fixed;
-  font-family: "Inter", "Segoe UI", "Trebuchet MS", Arial, sans-serif;
-  color: #f8fafc;
-}
-.sa-home-shell p,
-.sa-home-shell h1,
-.sa-home-shell h2,
-.sa-home-shell h3,
-.sa-home-shell h4,
-.sa-home-shell h5,
-.sa-home-shell span,
-.sa-home-shell li,
-.sa-home-shell a,
-.sa-home-shell button,
-.sa-home-shell input {
-  font-family: "Inter", "Segoe UI", "Trebuchet MS", Arial, sans-serif;
-  font-weight: 600;
-  letter-spacing: 0.01em;
 }
 
-.sa-home-shell h1,
-.sa-home-shell h2,
-.sa-home-shell h3 {
-  font-weight: 700;
-}
-
-.sa-surface-header {
-  @apply bg-gradient-to-r from-[#1400c7] via-[#0f7f73] to-[#1ecb72] shadow-xl shadow-cyan-500/20;
-}
-
-.sa-surface-sidebar {
-  @apply  bg-gradient-to-b from-[#0b0f2a] via-[#0a3f46] to-[#0d5c45] shadow-2xl shadow-cyan-950/40;
-}
-
-.sa-surface-topbar {
-  @apply bg-gradient-to-r from-[#101530]/95 via-[#0f5c68]/95 to-[#14855f]/95 shadow-lg shadow-cyan-900/20;
-}
-
-.sa-surface-context {
-  @apply bg-gradient-to-br from-[#1320a0] via-[#168b7c] to-[#2ec27e] shadow-xl shadow-emerald-500/15;
+.sa-auth-gradient-page {
+  background-color: var(--scores-cream);
+  background-image:
+    linear-gradient(rgba(245, 242, 229, 0.8), rgba(240, 236, 217, 0.84)),
+    url('/3ACBE31C-208C-45C8-ABE6-0BB0DA3A9683.png');
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
 }
