@@ -138,8 +138,8 @@ export async function POST(request: NextRequest): Promise<Response> {
 
     const synced = await service.createOrSyncUserControl({
       uid: record.uid,
-      displayName: record.displayName ?? email.split("@")[0] ?? "SCORES Manager",
-      email: record.email ?? email,
+      displayName: record.displayName,
+      email: record.email,
       provider: record.provider,
     });
 

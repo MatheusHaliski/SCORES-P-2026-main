@@ -60,7 +60,7 @@ export default function AuthShell({
         >
           <div className="flex h-full w-full items-center justify-center">
             <img
-              src="/1968F4FE-A4FF-44BB-944E-08BE533C975E.png"
+              src="/81002908-DEEB-4A44-AD5F-F5FA637A495C_1_105_c.jpeg"
               alt="SCORES"
               className="h-full w-full object-contain"
             />
@@ -101,7 +101,7 @@ export default function AuthShell({
               <div className="grid grid-cols-1 items-center gap-6 lg:grid-cols-2">
                 <div className="flex flex-col items-center justify-center gap-3">
                   <img
-                    src="/1968F4FE-A4FF-44BB-944E-08BE533C975E.png"
+                    src="/81002908-DEEB-4A44-AD5F-F5FA637A495C_1_105_c.jpeg"
                     alt="SCORES"
                     className="h-64 w-full max-w-[720px] object-contain sm:h-62 md:h-66 lg:h-68"
                   />
@@ -116,7 +116,7 @@ export default function AuthShell({
                 <div className="w-full">
                   <div className="overflow-hidden rounded-2xl border-8 border-orange-500 shadow-[0_18px_60px_rgba(0,0,0,0.25)]">
                     <img
-                      src="/31FA6088-A26D-4BEF-A3D8-F9BC6DAF3565.png"
+                      src="/849F10FC-0EF8-44E2-80AC-B9F6DEC72FF8.jpeg"
                       alt="SCORES featured visual"
                       className="h-full w-full object-cover"
                     />

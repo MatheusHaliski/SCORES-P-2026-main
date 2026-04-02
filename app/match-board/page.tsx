@@ -1,3 +1,4 @@
+import GameAccessGuard from "@/app/components/session/GameAccessGuard";
 import Link from "next/link";
 import { LiveScoreBoard } from "@/components/LiveScoreBoard";
 import { SectionCard } from "@/components/SectionCard";
@@ -15,7 +16,7 @@ export default async function MatchBoardView({ searchParams }: { searchParams: P
   const quarterSample = runQuarterSimulationExample();
 
   return (
-    <main className="mx-auto min-h-screen max-w-6xl p-6">
+    <><GameAccessGuard /><main className="mx-auto min-h-screen max-w-6xl p-6">
       <header className="rounded-2xl border border-white/15 bg-slate-900/70 p-4">
         <h1 className="text-2xl font-black text-white">MatchBoardView</h1>
         <p className="text-sm text-slate-300">Quarter {highlighted?.quarter ?? 1} • Clock {highlighted?.clock ?? "12:00"}</p>
@@ -49,6 +50,6 @@ export default async function MatchBoardView({ searchParams }: { searchParams: P
         <Link href={`/ht-manager?saveId=${saveId}`} className="rounded bg-violet-600 px-4 py-2 text-sm font-semibold text-white">Quarter break</Link>
         <Link href={`/post-match?saveId=${saveId}`} className="rounded bg-emerald-600 px-4 py-2 text-sm font-semibold text-white">Encerrar partida</Link>
       </div>
-    </main>
+    </main></>
   );
 }

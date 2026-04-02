@@ -79,7 +79,7 @@ export default function AuthViewClient() {
             setAuthSessionProfile({ email: normalizedEmail });
             setDevSessionToken(token);
             setSharedAccessToken(token);
-            router.replace("/home");
+            router.replace("/");
         } catch (error) {
             console.error("[AuthView] Failed to verify credentials:", error);
             void VSModalPaged({
