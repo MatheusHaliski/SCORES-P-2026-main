@@ -1,3 +1,4 @@
+import GameAccessGuard from "@/app/components/session/GameAccessGuard";
 import { LiveScoreBoard } from "@/components/LiveScoreBoard";
 import { SectionCard } from "@/components/SectionCard";
 import { StandingsTable } from "@/components/StandingsTable";
@@ -15,7 +16,7 @@ export default async function PostMatchBoardView({ searchParams }: { searchParam
   const finalFixtures = mockFixtures.filter((fixture) => fixture.leagueId === board.save.leagueId && fixture.status === "finished");
 
   return (
-    <main className="mx-auto min-h-screen max-w-7xl p-6">
+    <><GameAccessGuard /><main className="mx-auto min-h-screen max-w-7xl p-6">
       <h1 className="text-3xl font-black text-white">PostMatchBoardView</h1>
       <div className="mt-4 grid gap-4 lg:grid-cols-2">
         <SectionCard title="Resultados finais da rodada" subtitle="Time do usuário em destaque">
@@ -26,6 +27,6 @@ export default async function PostMatchBoardView({ searchParams }: { searchParam
           <p className="mt-3 text-xs text-slate-300">MVP da partida: {teamsById[board.save.teamId]?.shortName} - Armador com 24pts/11ast.</p>
         </SectionCard>
       </div>
-    </main>
+    </main></>
   );
 }

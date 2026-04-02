@@ -1,4 +1,4 @@
-import { AppRoute } from '@/app/lib/stylist-shell';
+import { AppRoute } from '@/app/lib/scores-shell';
 
 interface SidebarNavItemProps {
   route: AppRoute;

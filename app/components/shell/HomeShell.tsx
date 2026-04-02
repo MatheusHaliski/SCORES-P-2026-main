@@ -4,7 +4,7 @@ import { useEffect, useState } from 'react';
 import SidebarNav from './SidebarNav';
 import TopBar from './TopBar';
 import ContentRouter from './ContentRouter';
-import { AppRoute, ROUTE_TITLES } from '@/app/lib/stylist-shell';
+import { AppRoute, ROUTE_TITLES } from '@/app/lib/scores-shell';
 import { ensureSharedAccessToken } from '@/app/lib/accessTokenShare';
 import { useRouter } from 'next/navigation';
 import Image from 'next/image';
@@ -46,7 +46,7 @@ export default function HomeShell() {
       <main className="flex min-w-0 min-h-[600px] flex-1 flex-col p-2">
         <div className="sticky top-0 z-30 flex w-full items-stretch gap-2">
           <div className="flex h-full w-24 shrink-0 items-center justify-center rounded-2xl border-8 border-orange-500 bg-white p-2 shadow-[0_18px_60px_rgba(0,0,0,0.25)] sm:w-28 lg:w-32">
-            <Image src="/F4D37961-8CCF-4B15-8F4F-122C32FFF90F.jpeg" alt="SAI" width={160} height={72} className="h-full w-full object-contain" priority />
+            <Image src="/81002908-DEEB-4A44-AD5F-F5FA637A495C_1_105_c.jpeg" alt="SCORES" width={160} height={72} className="h-full w-full object-contain" priority />
           </div>
 
           <div className="min-w-0 flex-1">

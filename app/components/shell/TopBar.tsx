@@ -37,7 +37,7 @@ export default function TopBar({ pageTitle, onToggleNav, navOpen }: TopBarProps)
         </div>
 
         <div className="hidden w-full max-w-xl lg:block">
-          <SearchInput placeholder="Search outfits, brands, styles, or wardrobe items" />
+          <SearchInput placeholder="Search players, clubs, leagues, or tactics" />
         </div>
 
         <div className="flex items-center gap-2">
@@ -60,7 +60,7 @@ export default function TopBar({ pageTitle, onToggleNav, navOpen }: TopBarProps)
       </div>
 
       <div className="mt-3 lg:hidden">
-        <SearchInput placeholder="Search outfits, brands, styles, or wardrobe items" />
+        <SearchInput placeholder="Search players, clubs, leagues, or tactics" />
       </div>
     </header>
   );

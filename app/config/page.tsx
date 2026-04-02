@@ -1,3 +1,4 @@
+import GameAccessGuard from "@/app/components/session/GameAccessGuard";
 import { SectionCard } from "@/components/SectionCard";
 
 const configFields = [
@@ -12,7 +13,7 @@ const configFields = [
 
 export default function ConfigView() {
   return (
-    <main className="mx-auto min-h-screen max-w-4xl p-6">
+    <><GameAccessGuard /><main className="mx-auto min-h-screen max-w-4xl p-6">
       <SectionCard title="ConfigView" subtitle="Estrutura pronta para persistência futura">
         <div className="grid gap-2 md:grid-cols-2">
           {configFields.map((field) => (
@@ -23,6 +24,6 @@ export default function ConfigView() {
           ))}
         </div>
       </SectionCard>
-    </main>
+    </main></>
   );
 }

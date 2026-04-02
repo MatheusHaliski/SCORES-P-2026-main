@@ -3,22 +3,22 @@ import ContextSectionMenu from '@/app/components/navigation/ContextSectionMenu';
 import PageHeader from '@/app/components/shell/PageHeader';
 import SectionBlock from '@/app/components/shared/SectionBlock';
 
-const sections = ['Trending Clothes', 'New Arrivals', 'Brands', 'Categories', 'Best Sellers'];
+const sections = ['Top Prospects', 'Free Agents', 'Trade Targets', 'Contracts', 'Best Value'];
 
 const items = [
-  { itemName: 'Obsidian Tailored Blazer', brand: 'Maison Noire', price: '$320' },
-  { itemName: 'Silver Frame Sunglasses', brand: 'North Atelier', price: '$190' },
-  { itemName: 'Luxe Knit Polo', brand: 'Archetype', price: '$140' },
-  { itemName: 'Textured Wide-Leg Pants', brand: 'Ninety Seven', price: '$220' },
+  { itemName: 'A. Freeman (PG)', brand: 'Velocity Hawks', price: '$12.5M' },
+  { itemName: 'R. Costa (SF)', brand: 'Iron Giants', price: '$9.1M' },
+  { itemName: 'M. Hall (C)', brand: 'River Blaze', price: '$14.8M' },
+  { itemName: 'J. Adams (SG)', brand: 'North Wolves', price: '$8.2M' },
 ];
 
 export default function MarketView() {
   return (
     <div className="grid gap-6 lg:grid-cols-[280px_1fr]">
-      <ContextSectionMenu title="Market Index" sections={sections} />
+      <ContextSectionMenu title="Transfer Center" sections={sections} />
       <div className="space-y-6">
-        <PageHeader title="Fashion Market" subtitle="Scan curated products across trending labels and category clusters." />
-        <SectionBlock title="Trending Clothes" subtitle="Most viewed items this week.">
+        <PageHeader title="Transfer Market" subtitle="Evaluate players, salary impact, and roster fit." />
+        <SectionBlock title="Hot Targets" subtitle="Most viewed transfer opportunities this week.">
           <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
             {items.map((item) => (
               <ClothingItemCard key={item.itemName} {...item} />

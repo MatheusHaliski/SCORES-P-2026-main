@@ -42,8 +42,8 @@ export default function AuthShell2({
         >
           <div className="flex h-full w-full items-center justify-center">
             <img
-              src="/1E8AEB0C-78BC-42FD-9113-73F1A0728A3A_1_105_c.jpeg"
-              alt="DineExplorer"
+              src="/81002908-DEEB-4A44-AD5F-F5FA637A495C_1_105_c.jpeg"
+              alt="SCORES"
               className="h-full w-full object-contain"
             />
           </div>
@@ -102,14 +102,14 @@ export default function AuthShell2({
               <div className="grid grid-cols-1 items-center gap-6 lg:grid-cols-2">
                 <div className="flex flex-col items-center justify-center gap-3">
                   <img
-                    src="/1E8AEB0C-78BC-42FD-9113-73F1A0728A3A_1_105_c.jpeg"
-                    alt="DineExplorer"
+                    src="/81002908-DEEB-4A44-AD5F-F5FA637A495C_1_105_c.jpeg"
+                    alt="SCORES"
                     className="h-64 w-full max-w-[720px] object-contain sm:h-62 md:h-66 lg:h-68"
                   />
 
                   <div className="hidden font-sharetech leading-tight sm:block">
                     <div className="text-center font-sharetech text-2xl font-bold uppercase tracking-[0.22em] text-orange-500 sm:text-5xl md:text-6xl">
-                      DINE EXPLORER
+                      SCORES
                     </div>
                   </div>
                 </div>
@@ -118,7 +118,7 @@ export default function AuthShell2({
                   <div className="overflow-hidden rounded-2xl border-4 border-amber-300 shadow-[0_18px_60px_rgba(0,0,0,0.25)]">
                     <img
                       src="/4D13F57F-2101-40AC-888C-D2DF836E3286.png"
-                      alt="Dine Explorer featured visual"
+                      alt="SCORES featured visual"
                       className="h-full w-full object-cover"
                     />
                   </div>
