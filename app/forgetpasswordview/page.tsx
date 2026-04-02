@@ -6,8 +6,8 @@ import { VSModalPaged } from "@/app/lib/authAlerts";
 import { type FormEvent, useState } from "react";
 import {usePathname, useRouter} from "next/navigation";
 import { useEffect} from "react";
-import { getDevSessionToken, setDevSessionToken } from "@/app/lib/devSession";
-import { clearSharedAccessToken, ensureSharedAccessToken, setSharedAccessToken } from '@/app/lib/accessTokenShare';
+import { getDevSessionToken } from "@/app/lib/devSession";
+import { clearSharedAccessToken, ensureSharedAccessToken } from '@/app/lib/accessTokenShare';
 import {clearAuthSessionToken} from "@/app/lib/authSession";
 export default function SignupViewPage() {
     const router = useRouter();
@@ -128,7 +128,7 @@ export default function SignupViewPage() {
                             onClick={() => router.push("/signupview")}
                             className="inline-flex w-full max-w-xs items-center justify-center scale-110 text-xs font-semibold uppercase tracking-[0.2em] text-white transition rounded-full"
                         >
-                            Create an account
+                            Create a SCORES account
                         </Button>
                     </div>
 

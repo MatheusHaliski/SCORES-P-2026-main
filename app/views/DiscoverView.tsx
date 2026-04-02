@@ -7,37 +7,36 @@ import PageHeader from '@/app/components/shell/PageHeader';
 import SectionBlock from '@/app/components/shared/SectionBlock';
 import OutfitCard from '@/app/components/cards/OutfitCard';
 
-const sections = ['Style Categories', 'Streetwear', 'Luxury', 'Minimal', 'Sport', 'Vintage'];
+const sections = ['League Filters', 'Playstyles', 'Defense', 'Transition', 'Half-Court'];
 
 const categories = [
-  { name: 'Streetwear', description: 'Layered silhouettes, statement sneakers, and expressive fits.' },
-  { name: 'Luxury', description: 'Refined tailoring, premium textures, and elevated accessories.' },
-  { name: 'Minimal', description: 'Clean lines, neutral palettes, and timeless outfit systems.' },
-  { name: 'Sport', description: 'Performance-led details blended with city-ready comfort.' },
-  { name: 'Vintage', description: 'Retro references reimagined for modern wardrobes.' },
+  { name: 'Defense First', description: 'Clubs that prioritize paint control, switch timing, and low opponent efficiency.' },
+  { name: 'Fast Break', description: 'High-tempo systems focused on transition speed and early shot creation.' },
+  { name: 'Perimeter Heavy', description: 'Three-point volume, spacing discipline, and off-ball movement.' },
+  { name: 'Balanced', description: 'Strong two-way structure with stable possession and bench production.' },
+  { name: 'Youth Focus', description: 'High-upside development pipelines and long-term roster planning.' },
 ];
 
 const looksByCategory: Record<string, { title: string; category: string; rating: string; username: string }[]> = {
-  Streetwear: [
-    { title: 'Chrome Cargo Stack', category: 'Streetwear', rating: '9.1', username: 'zoe_fit' },
-    { title: 'Layered Asphalt Kit', category: 'Streetwear', rating: '9.0', username: 'leo_hype' },
+  'Defense First': [
+    { title: 'Zone Lock Sequence', category: 'Defense First', rating: '9.1', username: 'coach_blitz' },
+    { title: 'Paint Denial Drill', category: 'Defense First', rating: '9.0', username: 'gm_anchor' },
   ],
-  Luxury: [{ title: 'Graphite Evening Edit', category: 'Luxury', rating: '9.8', username: 'nina_mode' }],
-  Minimal: [{ title: 'Pearl Balance Uniform', category: 'Minimal', rating: '9.3', username: 'ion_clean' }],
-  Sport: [{ title: 'Sprint Monotone Capsule', category: 'Sport', rating: '8.9', username: 'ryan_motion' }],
-  Vintage: [{ title: 'Retro Archive Blend', category: 'Vintage', rating: '9.2', username: 'maya_archive' }],
+  'Fast Break': [{ title: 'Transition Wave', category: 'Fast Break', rating: '9.8', username: 'coach_dash' }],
+  'Perimeter Heavy': [{ title: 'Corner Rain System', category: 'Perimeter Heavy', rating: '9.3', username: 'analyst_arc' }],
+  Balanced: [{ title: 'Dual Threat Framework', category: 'Balanced', rating: '8.9', username: 'coach_sync' }],
+  'Youth Focus': [{ title: 'Prospect Minutes Plan', category: 'Youth Focus', rating: '9.2', username: 'gm_future' }],
 };
 
 export default function DiscoverView() {
-  const [selectedCategory, setSelectedCategory] = useState('Streetwear');
+  const [selectedCategory, setSelectedCategory] = useState('Defense First');
 
   return (
     <div className="grid gap-6 lg:grid-col">
-      <PageHeader title="Discover Styles" subtitle="Explore curated fashion archetypes and drill down into related looks." />
+      <PageHeader title="Discover Clubs" subtitle="Explore team identities and compare tactical archetypes." />
       <ContextSectionMenu title="Discover Sections" sections={sections} />
       <div className="space-y-6">
-
-        <SectionBlock title="Style Categories" subtitle="Select a category to filter looks in real time.">
+        <SectionBlock title="Playstyle Categories" subtitle="Select a playstyle to filter clubs and tactical snapshots.">
           <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
             {categories.map((category) => (
               <CategoryCard
@@ -50,7 +49,7 @@ export default function DiscoverView() {
           </div>
         </SectionBlock>
 
-        <SectionBlock title={`${selectedCategory} Looks`} subtitle="Category-driven recommendations.">
+        <SectionBlock title={`${selectedCategory} Insights`} subtitle="Category-driven recommendations.">
           <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
             {(looksByCategory[selectedCategory] ?? []).map((look) => (
               <OutfitCard key={look.title} {...look} />
