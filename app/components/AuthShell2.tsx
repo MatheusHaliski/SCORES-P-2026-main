@@ -9,11 +9,11 @@ type AuthShellProps = {
 };
 
 const GLOW_BAR =
-  "bg-gradient-to-r border-amber-300 border-8 from-cyan-500 via-teal-400 to-emerald-500 shadow-[0_14px_45px_rgba(16,185,129,0.25)]";
+  "bg-gradient-to-r border-[#3c2f1e] border-8 from-[#d2be74] via-[#5b4a2d] to-[#d2be74] shadow-[0_14px_45px_rgba(68,56,30,0.28)]";
 
 const GLOW_LINE =
   "relative after:content-[''] after:absolute after:left-6 after:right-6 after:-bottom-2 after:h-[10px] after:rounded-full " +
-  "after:bg-gradient-to-r after:from-cyan-400/40 after:via-teal-300/40 after:to-emerald-400/40 after:blur-xl";
+  "after:bg-gradient-to-r after:from-[#d2be74]/55 after:via-[#5b4a2d]/55 after:to-[#d2be74]/55 after:blur-xl";
 
 export default function AuthShell2({
   title,
@@ -35,7 +35,7 @@ export default function AuthShell2({
       <div className="absolute left-4 top-6 z-20 sm:left-10 lg:left-16">
         <div
           className={[
-            "flex h-24 w-44 items-center justify-center rounded-2xl border-4 border-yellow-100 bg-white px-3 py-2 text-amber-500 sm:h-28 sm:w-52",
+            "flex h-24 w-44 items-center justify-center rounded-2xl border-4 border-[#d2be74] bg-[#5b4a2d] px-3 py-2 text-amber-500 sm:h-28 sm:w-52",
             GLOW_LINE,
             "shadow-[0_18px_60px_rgba(0,0,0,0.25)]",
           ].join(" ")}
@@ -54,7 +54,7 @@ export default function AuthShell2({
       <div className="absolute right-4 top-6 z-20 sm:right-10 lg:right-16">
         <div
           className={[
-            "flex h-24 w-44 items-center justify-center rounded-2xl border-4 border-yellow-100 bg-white px-3 py-2 text-amber-500 sm:h-28 sm:w-52",
+            "flex h-24 w-44 items-center justify-center rounded-2xl border-4 border-[#d2be74] bg-[#5b4a2d] px-3 py-2 text-amber-500 sm:h-28 sm:w-52",
             GLOW_LINE,
             "shadow-[0_18px_60px_rgba(0,0,0,0.25)]",
           ].join(" ")}
@@ -78,7 +78,7 @@ export default function AuthShell2({
             GLOW_BAR,
             GLOW_LINE,
             "border-amber-300 border-4",
-            "bg-white bg-cover bg-center bg-no-repeat",
+            "bg-[#5b4a2d]/90 bg-cover bg-center bg-no-repeat",
           ].join(" ")}
         >
           {/* FORM CONTAINER */}
@@ -86,14 +86,14 @@ export default function AuthShell2({
             className={[
               "w-full space-y-6 rounded-3xl p-6 sm:p-8",
               "border-amber-300 border-4",
-              "bg-white bg-cover bg-center bg-no-repeat",
+              "bg-[#5b4a2d]/90 bg-cover bg-center bg-no-repeat",
               "shadow-[0_20px_50px_rgba(0,0,0,0.35)]",
             ].join(" ")}
           >
             {/* Header block */}
             <div
               className={[
-                "w-full rounded-2xl bg-white px-4 py-4 text-amber-500 sm:px-8 sm:py-5",
+                "w-full rounded-2xl bg-[#5b4a2d] px-4 py-4 text-[#d2be74] sm:px-8 sm:py-5",
                 GLOW_LINE,
                 "border-amber-300 border-4",
                 "shadow-[0_18px_60px_rgba(0,0,0,0.25)]",
