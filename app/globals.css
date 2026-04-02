@@ -4,28 +4,32 @@
 
 :root {
   color-scheme: dark;
-  --scores-cream: #e8e1c9;
-  --scores-cream-soft: #f0ecd9;
+  --scores-gold: #d2be74;
+  --scores-brown: #5b4a2d;
   --scores-green: #155e4b;
 }
 
 body {
-  background-color: var(--scores-cream);
+  background-color: var(--scores-brown);
   background-image:
-    linear-gradient(rgba(245, 242, 229, 0.86), rgba(240, 236, 217, 0.88)),
+    linear-gradient(rgba(44, 34, 18, 0.46), rgba(44, 34, 18, 0.46)),
+    repeating-linear-gradient(90deg, var(--scores-gold) 0 12.5%, var(--scores-brown) 12.5% 25%),
     url('/3ACBE31C-208C-45C8-ABE6-0BB0DA3A9683.png');
   background-size: cover;
   background-position: center;
   background-repeat: no-repeat;
   background-attachment: fixed;
+  background-blend-mode: multiply, normal, normal;
 }
 
 .sa-auth-gradient-page {
-  background-color: var(--scores-cream);
+  background-color: var(--scores-brown);
   background-image:
-    linear-gradient(rgba(245, 242, 229, 0.8), rgba(240, 236, 217, 0.84)),
+    linear-gradient(rgba(44, 34, 18, 0.34), rgba(44, 34, 18, 0.34)),
+    repeating-linear-gradient(90deg, var(--scores-gold) 0 12.5%, var(--scores-brown) 12.5% 25%),
     url('/3ACBE31C-208C-45C8-ABE6-0BB0DA3A9683.png');
   background-size: cover;
   background-position: center;
   background-repeat: no-repeat;
+  background-blend-mode: multiply, normal, normal;
 }

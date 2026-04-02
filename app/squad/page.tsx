@@ -1,4 +1,3 @@
-import GameAccessGuard from "@/app/components/session/GameAccessGuard";
 import Link from "next/link";
 import { MiniNextMatchCard } from "@/components/MiniNextMatchCard";
 import { PlayerRowCard } from "@/components/PlayerRowCard";
@@ -16,7 +15,7 @@ export default async function SquadHomeView({ searchParams }: { searchParams: Pr
   const teamsById = getTeamsById();
 
   return (
-    <><GameAccessGuard /><main className="min-h-screen p-6" style={{ backgroundImage: `${payload.visual.shapeCss}, ${payload.visual.gradientCss}` }}>
+    <main className="min-h-screen p-6" style={{ backgroundImage: `${payload.visual.shapeCss}, ${payload.visual.gradientCss}` }}>
       <div className="mx-auto max-w-7xl space-y-4">
         <header className="flex flex-wrap gap-2 rounded-2xl border border-white/20 bg-slate-950/70 p-3">
           {topActions.map((action) => (
@@ -44,6 +43,6 @@ export default async function SquadHomeView({ searchParams }: { searchParams: Pr
           </SectionCard>
         </div>
       </div>
-    </main></>
+    </main>
   );
 }

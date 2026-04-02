@@ -1,4 +1,3 @@
-import GameAccessGuard from "@/app/components/session/GameAccessGuard";
 import Link from "next/link";
 import { SectionCard } from "@/components/SectionCard";
 import { GameSetupService } from "@/services/GameSetupService";
@@ -10,7 +9,7 @@ export default async function SelectTeamView({ searchParams }: { searchParams: P
   const selectedTeam = data.teams.find((team) => team.id === params.teamId) ?? data.teams[0];
 
   return (
-    <><GameAccessGuard /><main className="mx-auto min-h-screen max-w-7xl p-6">
+    <main className="mx-auto min-h-screen max-w-7xl p-6">
       <h1 className="text-3xl font-black text-white">SelectTeamView</h1>
       <p className="text-slate-200">Escolha liga e time para iniciar o modo carreira.</p>
       <div className="mt-6 grid gap-4 lg:grid-cols-3">
@@ -40,6 +39,6 @@ export default async function SelectTeamView({ searchParams }: { searchParams: P
           ) : null}
         </SectionCard>
       </div>
-    </main></>
+    </main>
   );
 }
