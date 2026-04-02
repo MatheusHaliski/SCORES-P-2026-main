@@ -17,6 +17,14 @@ export default function AuthViewClient() {
     const [password, setPassword] = useState("");
     const [submitting, setSubmitting] = useState(false);
     const pathname = usePathname();
+    const navigateToPrototypeHome = () => {
+        router.replace("/");
+        setTimeout(() => {
+            if (window.location.pathname === "/authview") {
+                window.location.assign("/");
+            }
+        }, 150);
+    };
     useEffect(() => {
         const t = getDevSessionToken();
         if (!t) {
@@ -79,7 +87,7 @@ export default function AuthViewClient() {
             setAuthSessionProfile({ email: normalizedEmail });
             setDevSessionToken(token);
             setSharedAccessToken(token);
-            router.replace("/");
+            navigateToPrototypeHome();
         } catch (error) {
             console.error("[AuthView] Failed to verify credentials:", error);
             void VSModalPaged({
