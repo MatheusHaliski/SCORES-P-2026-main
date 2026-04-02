@@ -15,7 +15,7 @@ export default function CategoryCard({ name, description, onExplore }: CategoryC
         onClick={onExplore}
         className="rounded-lg h-15 border border-black px-3 py-2 text-xs font-semibold uppercase tracking-wider text-black transition hover:bg-black hover:text-black"
       >
-        Explore Looks
+        Explore Teams
       </button>
     </article>
   );

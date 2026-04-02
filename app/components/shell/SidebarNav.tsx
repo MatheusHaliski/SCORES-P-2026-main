@@ -1,6 +1,6 @@
 'use client';
 
-import { AppRoute, NAV_ITEMS } from '@/app/lib/stylist-shell';
+import { AppRoute, NAV_ITEMS } from '@/app/lib/scores-shell';
 import SidebarNavItem from './SidebarNavItem';
 
 interface SidebarNavProps {
