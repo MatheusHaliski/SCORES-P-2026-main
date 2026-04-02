@@ -95,3 +95,32 @@ NEXT_PUBLIC_DATA_SOURCE=mock
 ```
 
 Assim a aplicação continua funcional via `mocks/gameData.ts`.
+
+## Motor de Simulação (Scoring Engine)
+
+Novo módulo com responsabilidades separadas:
+
+- `engines/gameSimulationEngine.ts` → loop da partida (4 quarters, 48 ticks/quarter, 15s por tick)
+- `engines/possessionEngine.ts` → volume de oportunidades/posses por tick
+- `engines/scoringEngine.ts` → attack rating, defense resistance, chance de pontuar e conversão de pontos
+- `engines/contextEngine.ts` → fatores contextuais (casa, forma, sorte, fadiga, disciplina, moral, estado do jogo)
+- `engines/playstyleEngine.ts` → modificadores condicionais de playstyles
+- `types/simulation.ts` → tipos fortes de estado de partida
+- `services/simulation/SimulationDemoService.ts` → exemplos executáveis (quarter e jogo completo)
+
+### Fórmulas base implementadas
+
+- `attack_rating` e `defense_resistance` seguindo os pesos solicitados (ajustáveis em `defaultSimulationWeights`).
+- `chance_to_score = attack / (attack + defense)`.
+- `score_rate = base_rate * possession_factor * (attack/defense) * context_factor`.
+
+### Exemplo de quarter completo
+
+A função `runQuarterSimulationExample()` roda exatamente 1 quarter completo (48 ticks) e retorna:
+
+- placar parcial
+- posses estimadas
+- eficiência ofensiva
+- log de eventos de pontuação por tick
+
+A rota `/match-board` já exibe esse exemplo com eventos reais do engine.
