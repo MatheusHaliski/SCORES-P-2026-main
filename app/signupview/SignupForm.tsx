@@ -108,8 +108,8 @@ export default function SignupForm() {
                 }
 
                 await VSModalPaged({
-                    title: "Account created",
-                    messages: [`Welcome, ${parsed.data.name}. Your account has been successfully created.`],
+                    title: "SCORES account created",
+                    messages: [`Welcome, ${parsed.data.name}. Your SCORES account has been created successfully.`],
                     tone: "success",
                 });
                    form.reset();
@@ -250,8 +250,7 @@ export default function SignupForm() {
                                         }
                                     />
                                     <span>
-                                        I agree to the data use policy and advertising
-                                        updates.
+                                        I agree to the SCORES data policy and platform updates.
                                     </span>
                                 </label>
                             </FormControl>
@@ -260,7 +259,7 @@ export default function SignupForm() {
                     )}
                 />
                 <Button type="submit" disabled={isPending} className="w-full">
-                    {isPending ? "Creating your account..." : "Create your account"}
+                    {isPending ? "Creating your SCORES account..." : "Create your SCORES account"}
                 </Button>
             </form>
         </Form>

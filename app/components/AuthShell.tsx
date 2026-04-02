@@ -60,8 +60,8 @@ export default function AuthShell({
         >
           <div className="flex h-full w-full items-center justify-center">
             <img
-              src="/F4D37961-8CCF-4B15-8F4F-122C32FFF90F.jpeg"
-              alt="SAI"
+              src="/1968F4FE-A4FF-44BB-944E-08BE533C975E.png"
+              alt="SCORES"
               className="h-full w-full object-contain"
             />
           </div>
@@ -101,14 +101,14 @@ export default function AuthShell({
               <div className="grid grid-cols-1 items-center gap-6 lg:grid-cols-2">
                 <div className="flex flex-col items-center justify-center gap-3">
                   <img
-                    src="/F4D37961-8CCF-4B15-8F4F-122C32FFF90F.jpeg"
-                    alt="SAI"
+                    src="/1968F4FE-A4FF-44BB-944E-08BE533C975E.png"
+                    alt="SCORES"
                     className="h-64 w-full max-w-[720px] object-contain sm:h-62 md:h-66 lg:h-68"
                   />
 
                   <div className="hidden font-sharetech leading-tight sm:block">
                     <div className="text-center font-sharetech text-2xl font-bold uppercase tracking-[0.22em] text-orange-500 sm:text-5xl md:text-6xl">
-                      Stylist AI 
+                      SCORES 
                     </div>
                   </div>
                 </div>
@@ -116,8 +116,8 @@ export default function AuthShell({
                 <div className="w-full">
                   <div className="overflow-hidden rounded-2xl border-8 border-orange-500 shadow-[0_18px_60px_rgba(0,0,0,0.25)]">
                     <img
-                      src="/849F10FC-0EF8-44E2-80AC-B9F6DEC72FF8.jpeg"
-                      alt="SAI featured visual"
+                      src="/31FA6088-A26D-4BEF-A3D8-F9BC6DAF3565.png"
+                      alt="SCORES featured visual"
                       className="h-full w-full object-cover"
                     />
                   </div>

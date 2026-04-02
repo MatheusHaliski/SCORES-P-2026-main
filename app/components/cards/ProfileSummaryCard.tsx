@@ -16,7 +16,7 @@ export default function ProfileSummaryCard({ username, followers, following, sco
         </div>
         <div>
           <h3 className="text-lg font-semibold text-white">@{username}</h3>
-          <p className="text-sm text-white/60">StylistAI Creator</p>
+          <p className="text-sm text-white/60">SCORES Manager</p>
         </div>
       </div>
       <div className="grid grid-cols-3 gap-3">

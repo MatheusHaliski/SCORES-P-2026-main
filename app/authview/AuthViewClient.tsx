@@ -16,7 +16,6 @@ export default function AuthViewClient() {
     const [email, setEmail] = useState("");
     const [password, setPassword] = useState("");
     const [submitting, setSubmitting] = useState(false);
-    let [devsessiontoken] = useState("");
     const pathname = usePathname();
     useEffect(() => {
         const t = getDevSessionToken();
@@ -94,8 +93,8 @@ export default function AuthViewClient() {
 
     return (
         <AuthShell
-            title="Sign In"
-            subtitle="Welcome back"
+            title="Access your saved career"
+            subtitle="Sign in to continue your career"
         >
             <form
                 onSubmit={handleSubmit}
@@ -118,7 +117,7 @@ export default function AuthViewClient() {
                     "shadow-[0_20px_50px_rgba(0,0,0,0.35)]",
                 ].join(" ")}>
                     <label className="text-lg font-semibold text-orange-600">
-                        Email Address
+                        Email address
                         <input
                             type="email"
                             placeholder=""
@@ -145,7 +144,7 @@ export default function AuthViewClient() {
                             disabled={submitting}
                             className="inline-flex w-full items-center justify-center rounded-full text-xs font-semibold uppercase tracking-[0.2em] text-white transition sm:max-w-xs"
                         >
-                            {submitting ? "Authenticating..." : "Continue to your VS"}
+                            {submitting ? "Signing in..." : "Continue your SCORES career"}
                         </Button>
                     </div>
                 </div>
@@ -167,7 +166,7 @@ export default function AuthViewClient() {
                         onClick={() => router.push("/signupview")}
                         className="inline-flex w-full items-center justify-center rounded-full text-xs font-semibold uppercase tracking-[0.2em] text-white transition sm:flex-1"
                     >
-                        Create an account
+                        Create a SCORES account
                     </Button>
 
                     <Button
@@ -175,7 +174,7 @@ export default function AuthViewClient() {
                         onClick={() => router.push("/forgetpasswordview")}
                         className="inline-flex w-full items-center justify-center rounded-full text-xs font-semibold uppercase tracking-[0.2em] text-white transition sm:flex-1"
                     >
-                        Forgot Password
+                        Forgot password
                     </Button>
                 </div>
             </div>
