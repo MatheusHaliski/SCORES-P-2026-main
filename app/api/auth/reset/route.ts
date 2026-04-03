@@ -14,7 +14,6 @@ const sendResetEmail = async (params: {
     resetLink: string;
 }) => {
     const apiKey = process.env.RESEND_API_KEY;
-    console.log(apiKey);
     const fromEmail = process.env.RESEND_FROM_EMAIL;
 
     if (!apiKey || !fromEmail) {
@@ -73,10 +72,7 @@ export async function POST(request: NextRequest): Promise<Response> {
             .get();
 
         if (existingSnapshot.empty) {
-            return NextResponse.json(
-                { error: "No account was found with that email address." },
-                { status: 404 }
-            );
+            return NextResponse.json({ ok: true });
         }
 
         const token = crypto.randomUUID();
@@ -96,7 +92,11 @@ export async function POST(request: NextRequest): Promise<Response> {
             "http://localhost:3000";
         const resetLink = `${origin}/forgetpasswordview?token=${token}`;
 
-        await sendResetEmail({ email, resetLink });
+        try {
+            await sendResetEmail({ email, resetLink });
+        } catch (error) {
+            console.error("[Reset API] Failed to deliver reset email:", error);
+        }
 
         return NextResponse.json({ ok: true });
     } catch (error) {
