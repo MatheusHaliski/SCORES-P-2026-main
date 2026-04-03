@@ -70,7 +70,7 @@ export default function SignupViewPage() {
             void VSModalPaged({
                 title: "Check your email",
                 messages: [
-                    "We sent a redefinition link to your inbox. Follow it to reset your password.",
+                    "If an account exists for this email, a reset link will arrive in your inbox shortly.",
                 ],
                 tone: "success",
             });

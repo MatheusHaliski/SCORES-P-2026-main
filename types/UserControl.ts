@@ -1,4 +1,4 @@
-export const USER_CONTROL_COLLECTION = "scores-p-2026-usercontrol";
+export const USER_CONTROL_COLLECTION = "scores-p-2026-userscontrol";
 
 export type UserControlStatus = "active" | "blocked";
 export type UserControlRole = "manager" | "admin";
