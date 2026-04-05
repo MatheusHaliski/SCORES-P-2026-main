@@ -1,70 +1,78 @@
 import { UserControlRepository } from "@/repositories/UserControlRepository";
-import type { AuthUserProfile, UserControlRecord } from "@/types/UserControl";
+import { removeUndefinedFields } from "@/lib/removeUndefinedFields";
+import type {
+  AuthUserProfile,
+  CreateUserControlPayload,
+  UpdateUserControlPayload,
+  UserControlCredentialFields,
+  UserControlRecord,
+} from "@/types/UserControl";
 
 const nowIso = () => new Date().toISOString();
+
+const normalizeEmail = (email: string) => email.trim().toLowerCase();
+
+const normalizeDisplayName = (displayName: string | undefined, fallbackEmail: string) => {
+  const normalized = displayName?.trim();
+  return normalized || fallbackEmail.split("@")[0] || "SCORES Manager";
+};
+
+const buildCredentialPayload = (authUser: AuthUserProfile): Partial<UserControlCredentialFields> =>
+  removeUndefinedFields({
+    passwordHash: authUser.passwordHash,
+    passwordSalt: authUser.passwordSalt,
+    passwordIterations: authUser.passwordIterations,
+    passwordHashAlgorithm: authUser.passwordHashAlgorithm,
+  });
 
 export class AuthUserControlService {
   constructor(private readonly repository: UserControlRepository) {}
 
   async createOrSyncUserControl(authUser: AuthUserProfile): Promise<UserControlRecord> {
-    const email = authUser.email.trim().toLowerCase();
-    const displayName = authUser.displayName.trim() || email.split("@")[0] || "SCORES Manager";
+    const email = normalizeEmail(authUser.email);
+    const displayName = normalizeDisplayName(authUser.displayName, email);
     const now = nowIso();
+    const credentialPayload = buildCredentialPayload(authUser);
 
     const existingByUid = await this.repository.getUserControlByUid(authUser.uid);
     if (existingByUid) {
-      await this.repository.updateUserControl(existingByUid.id, {
+      const updatePayload: UpdateUserControlPayload = {
         email,
         displayName,
         provider: authUser.provider ?? existingByUid.provider ?? "password",
         lastLoginAt: now,
         updatedAt: now,
-        passwordHash: authUser.passwordHash,
-        passwordSalt: authUser.passwordSalt,
-        passwordIterations: authUser.passwordIterations,
-        passwordHashAlgorithm: authUser.passwordHashAlgorithm,
-      });
+        ...credentialPayload,
+      };
+
+      await this.repository.updateUserControl(existingByUid.id, updatePayload);
+
       return {
         ...existingByUid,
-        email,
-        displayName,
-        provider: authUser.provider ?? existingByUid.provider,
-        lastLoginAt: now,
-        updatedAt: now,
-        passwordHash: authUser.passwordHash,
-        passwordSalt: authUser.passwordSalt,
-        passwordIterations: authUser.passwordIterations,
-        passwordHashAlgorithm: authUser.passwordHashAlgorithm,
+        ...updatePayload,
       };
     }
 
     const existingByEmail = await this.repository.getUserControlByEmail(email);
     if (existingByEmail) {
-      await this.repository.updateUserControl(existingByEmail.id, {
+      const updatePayload: UpdateUserControlPayload = {
+        email,
         displayName,
         provider: authUser.provider ?? existingByEmail.provider ?? "password",
         lastLoginAt: now,
         updatedAt: now,
-        passwordHash: authUser.passwordHash,
-        passwordSalt: authUser.passwordSalt,
-        passwordIterations: authUser.passwordIterations,
-        passwordHashAlgorithm: authUser.passwordHashAlgorithm,
-      });
+        ...credentialPayload,
+      };
+
+      await this.repository.updateUserControl(existingByEmail.id, updatePayload);
 
       return {
         ...existingByEmail,
-        displayName,
-        provider: authUser.provider ?? existingByEmail.provider,
-        lastLoginAt: now,
-        updatedAt: now,
-        passwordHash: authUser.passwordHash,
-        passwordSalt: authUser.passwordSalt,
-        passwordIterations: authUser.passwordIterations,
-        passwordHashAlgorithm: authUser.passwordHashAlgorithm,
+        ...updatePayload,
       };
     }
 
-    return this.repository.createUserControl({
+    const createPayload: CreateUserControlPayload = {
       uid: authUser.uid,
       displayName,
       email,
@@ -74,11 +82,10 @@ export class AuthUserControlService {
       createdAt: now,
       updatedAt: now,
       lastLoginAt: now,
-      passwordHash: authUser.passwordHash,
-      passwordSalt: authUser.passwordSalt,
-      passwordIterations: authUser.passwordIterations,
-      passwordHashAlgorithm: authUser.passwordHashAlgorithm,
-    });
+      ...credentialPayload,
+    };
+
+    return this.repository.createUserControl(createPayload);
   }
 
   async validateUserControlAccess(uid: string): Promise<UserControlRecord> {

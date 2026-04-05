@@ -1,4 +1,5 @@
 import type { Firestore } from "firebase-admin/firestore";
+import { removeUndefinedFields } from "@/lib/removeUndefinedFields";
 import {
   type CreateUserControlPayload,
   type UpdateUserControlPayload,
@@ -34,11 +35,13 @@ export class UserControlRepository {
   }
 
   async createUserControl(payload: CreateUserControlPayload): Promise<UserControlRecord> {
-    const docRef = await this.db.collection(USER_CONTROL_COLLECTION).add(payload);
-    return { id: docRef.id, ...payload };
+    const sanitizedPayload = removeUndefinedFields(payload) as CreateUserControlPayload;
+    const docRef = await this.db.collection(USER_CONTROL_COLLECTION).add(sanitizedPayload);
+    return { id: docRef.id, ...sanitizedPayload };
   }
 
   async updateUserControl(id: string, payload: UpdateUserControlPayload): Promise<void> {
-    await this.db.collection(USER_CONTROL_COLLECTION).doc(id).set(payload, { merge: true });
+    const sanitizedPayload = removeUndefinedFields(payload) as UpdateUserControlPayload;
+    await this.db.collection(USER_CONTROL_COLLECTION).doc(id).set(sanitizedPayload, { merge: true });
   }
 }
