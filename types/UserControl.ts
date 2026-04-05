@@ -5,6 +5,13 @@ export type UserControlRole = "manager" | "admin";
 
 export type AuthProvider = "password" | "google" | "apple" | "unknown";
 
+export type UserControlCredentialFields = {
+  passwordHash?: string;
+  passwordSalt?: string;
+  passwordIterations?: number;
+  passwordHashAlgorithm?: string;
+};
+
 export type UserControlRecord = {
   id: string;
   uid: string;
@@ -16,11 +23,7 @@ export type UserControlRecord = {
   createdAt: string;
   updatedAt: string;
   lastLoginAt: string;
-  passwordHash?: string;
-  passwordSalt?: string;
-  passwordIterations?: number;
-  passwordHashAlgorithm?: string;
-};
+} & UserControlCredentialFields;
 
 export type CreateUserControlPayload = Omit<UserControlRecord, "id">;
 
@@ -33,8 +36,4 @@ export type AuthUserProfile = {
   displayName: string;
   email: string;
   provider?: AuthProvider;
-  passwordHash?: string;
-  passwordSalt?: string;
-  passwordIterations?: number;
-  passwordHashAlgorithm?: string;
-};
+} & UserControlCredentialFields;
