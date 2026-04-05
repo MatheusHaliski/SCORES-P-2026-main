@@ -4,6 +4,7 @@ import { PlayerRowCard } from "@/components/PlayerRowCard";
 import { SectionCard } from "@/components/SectionCard";
 import { TacticSwitcherPanel } from "@/components/TacticSwitcherPanel";
 import { SquadHomeService } from "@/services/SquadHomeService";
+import { HTLiveContextCard } from "@/components/HTLiveContextCard";
 
 export default async function HTManagerBoardView({ searchParams }: { searchParams: Promise<{ saveId?: string }> }) {
   const params = await searchParams;
@@ -16,6 +17,7 @@ export default async function HTManagerBoardView({ searchParams }: { searchParam
     <main className="mx-auto min-h-screen max-w-7xl p-6">
       <h1 className="text-3xl font-black text-white">HTManagerBoardView</h1>
       <p className="text-slate-300">Painel de decisão rápida durante intervalo de quarter.</p>
+      <HTLiveContextCard saveId={saveId} />
       <div className="mt-4 grid gap-4 lg:grid-cols-3">
         <SectionCard title="Titulares em quadra" className="lg:col-span-2">
           <div className="space-y-2">{starters.map((player) => <PlayerRowCard key={player.id} player={player} />)}</div>
