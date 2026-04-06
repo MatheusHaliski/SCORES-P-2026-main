@@ -6,6 +6,9 @@ import { StandingRow, Team } from "@/types/game";
 import { StandingsTable } from "@/components/StandingsTable";
 import { LiveFixtureState } from "@/types/matchSession";
 import { MatchSessionRepository } from "@/repositories/MatchSessionRepository";
+import { ManagerDismissalModal } from "@/components/ManagerDismissalModal";
+import { JobOfferCard } from "@/components/JobOfferCard";
+import { ManagerJobOffer } from "@/types/game";
 
 type CompletionResponse = {
   seasonFinished: boolean;
@@ -13,6 +16,15 @@ type CompletionResponse = {
   championTeamId: string | null;
   playoffTeamIds: string[];
   playoffSpots: number;
+  career: {
+    dismissed: boolean;
+    dismissalReason: string | null;
+    employmentStatus: "employed" | "unemployed" | "spectator";
+    currentClubId: string | null;
+    boardStars: number;
+    fansStars: number;
+  };
+  pendingJobOffer: ManagerJobOffer | null;
 };
 
 export function PostMatchModal({
@@ -36,6 +48,9 @@ export function PostMatchModal({
   const [showStandings, setShowStandings] = useState(false);
   const [isFinishing, setIsFinishing] = useState(false);
   const [completion, setCompletion] = useState<CompletionResponse | null>(null);
+  const [pendingOffer, setPendingOffer] = useState<ManagerJobOffer | null>(null);
+  const [isHandlingOffer, setIsHandlingOffer] = useState(false);
+  const [showDismissalModal, setShowDismissalModal] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   const finalizeAndContinue = async () => {
@@ -73,7 +88,9 @@ export function PostMatchModal({
 
       const payload = await response.json() as CompletionResponse;
       setCompletion(payload);
+      setPendingOffer(payload.pendingJobOffer);
       setShowStandings(true);
+      setShowDismissalModal(payload.career.dismissed);
       await new MatchSessionRepository().clear(saveId);
 
       if (!payload.seasonFinished) {
@@ -87,6 +104,35 @@ export function PostMatchModal({
   };
 
   const rows = completion?.standings ?? standings;
+  const dismissedClubName = completion?.career.currentClubId ? teamsById[completion.career.currentClubId]?.name ?? completion.career.currentClubId : teamsById[userTeamId]?.name ?? "Seu clube";
+
+  const respondToOffer = async (action: "accept" | "reject") => {
+    if (!pendingOffer || isHandlingOffer) return;
+    setIsHandlingOffer(true);
+    setError(null);
+    try {
+      const response = await fetch("/api/manager/job-offer/respond", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ saveId, offerId: pendingOffer.id, action }),
+      });
+
+      if (!response.ok) {
+        const payload = await response.json();
+        throw new Error(payload.error ?? "Falha ao responder proposta");
+      }
+
+      if (action === "accept") {
+        router.push(`/squad?saveId=${saveId}`);
+      } else {
+        setPendingOffer(null);
+      }
+    } catch (requestError) {
+      setError(requestError instanceof Error ? requestError.message : "Erro ao responder proposta");
+    } finally {
+      setIsHandlingOffer(false);
+    }
+  };
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/80 p-4">
@@ -107,6 +153,14 @@ export function PostMatchModal({
               </div>
             )}
             <StandingsTable rows={rows} teamsById={teamsById} playoffSpots={completion?.playoffSpots ?? 8} dangerSpots={3} highlightTeamId={userTeamId} />
+            {pendingOffer && (
+              <JobOfferCard
+                offer={pendingOffer}
+                busy={isHandlingOffer}
+                onAccept={() => respondToOffer("accept")}
+                onReject={() => respondToOffer("reject")}
+              />
+            )}
             <div className="flex gap-2">
               <button onClick={() => setShowStandings(false)} className="rounded bg-slate-700 px-3 py-2 text-xs font-bold text-white">Voltar</button>
               {completion?.seasonFinished && <button onClick={() => router.push(`/squad?saveId=${saveId}`)} className="rounded bg-emerald-600 px-3 py-2 text-xs font-bold text-white">Ir ao Squad</button>}
@@ -115,6 +169,13 @@ export function PostMatchModal({
         )}
         {error && <p className="mt-3 text-sm text-rose-300">{error}</p>}
       </div>
+      {showDismissalModal && completion?.career.dismissed && (
+        <ManagerDismissalModal
+          clubName={dismissedClubName}
+          reason={completion.career.dismissalReason ?? "Baixa reputação e sequência ruim."}
+          onContinue={() => setShowDismissalModal(false)}
+        />
+      )}
     </div>
   );
 }

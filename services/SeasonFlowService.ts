@@ -4,6 +4,8 @@ import { TeamsRepository } from "@/repositories/TeamsRepository";
 import { UserSavesRepository } from "@/repositories/UserSavesRepository";
 import { Fixture, StandingRow } from "@/types/game";
 import { SeasonCalendar, SeasonSummary } from "@/types/season";
+import { ManagerCareerService } from "@/services/ManagerCareerService";
+import { JobOfferService } from "@/services/JobOfferService";
 
 export class SeasonFlowService {
   constructor(
@@ -11,6 +13,8 @@ export class SeasonFlowService {
     private fixturesRepository = new FixturesRepository(),
     private teamsRepository = new TeamsRepository(),
     private calendarRepository = new SeasonCalendarRepository(),
+    private managerCareerService = new ManagerCareerService(),
+    private jobOfferService = new JobOfferService(),
   ) {}
 
   async getSeasonContext(saveId: string): Promise<{ calendar: SeasonCalendar; nextFixture: Fixture | null; standings: StandingRow[]; summary: SeasonSummary }> {
@@ -81,6 +85,14 @@ export class SeasonFlowService {
     this.savesRepository.upsertSaveProgress(saveId, savePatch);
 
     const standings = await this.buildStandings(save.leagueId, calendar.completedRounds);
+    const career = await this.managerCareerService.updateAfterRound(save, finishedFixtures, standings);
+    if (Object.keys(career.savePatch).length > 0) {
+      this.savesRepository.upsertSaveProgress(saveId, career.savePatch);
+    }
+    const refreshedSave = await this.savesRepository.getSaveById(saveId);
+    const pendingJobOffer = refreshedSave
+      ? await this.jobOfferService.generateJobOfferForRound(refreshedSave, round, standings)
+      : null;
     const isFinished = calendar.currentEntryIndex >= calendar.entries.length;
     const playoffSpots = Math.min(8, Math.max(2, Math.floor(standings.length / 2)));
 
@@ -91,7 +103,28 @@ export class SeasonFlowService {
       playoffTeamIds: isFinished ? standings.slice(0, playoffSpots).map((row) => row.teamId) : [],
       playoffSpots,
       nextRound: nextEntry?.round ?? null,
+      career: {
+        dismissed: career.dismissed,
+        dismissalReason: career.dismissalReason,
+        employmentStatus: refreshedSave?.employmentStatus ?? save.employmentStatus,
+        currentClubId: refreshedSave?.currentClubId ?? save.currentClubId,
+        boardStars: refreshedSave?.boardReputation ?? save.boardReputation,
+        fansStars: refreshedSave?.fansReputation ?? save.fansReputation,
+      },
+      pendingJobOffer,
     };
+  }
+
+  async getPendingJobOffer(saveId: string) {
+    return this.jobOfferService.getPendingJobOffer(saveId);
+  }
+
+  async acceptJobOffer(saveId: string, offerId: string) {
+    return this.jobOfferService.acceptJobOffer(saveId, offerId);
+  }
+
+  async rejectJobOffer(saveId: string, offerId: string) {
+    return this.jobOfferService.rejectJobOffer(saveId, offerId);
   }
 
   private async buildStandings(leagueId: string, completedRounds: Record<number, Fixture[]>): Promise<StandingRow[]> {

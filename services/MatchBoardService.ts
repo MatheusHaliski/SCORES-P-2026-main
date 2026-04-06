@@ -23,17 +23,20 @@ export class MatchBoardService {
     }
 
     const fixtures = await this.fixturesRepository.getFixturesByLeagueAndRound(save.leagueId, seasonContext.nextFixture.round);
-    const userFixture = fixtures.find((fixture) => fixture.homeTeamId === save.teamId || fixture.awayTeamId === save.teamId);
-    if (!userFixture) throw new Error("Confronto do usuário não encontrado na rodada");
+    const controlledTeamId = save.currentClubId ?? save.teamId;
+    const userFixture = fixtures.find((fixture) => fixture.homeTeamId === controlledTeamId || fixture.awayTeamId === controlledTeamId) ?? fixtures[0];
+    if (!userFixture) throw new Error("Rodada não possui jogos válidos");
 
-    const opponentTeamId = userFixture.homeTeamId === save.teamId ? userFixture.awayTeamId : userFixture.homeTeamId;
+    const isSpectator = save.employmentStatus !== "employed";
+    const activeTeamId = isSpectator ? userFixture.homeTeamId : controlledTeamId;
+    const opponentTeamId = userFixture.homeTeamId === activeTeamId ? userFixture.awayTeamId : userFixture.homeTeamId;
 
     const [userTeam, userPlayers, opponentPlayers] = await Promise.all([
-      this.teamsRepository.getTeamById(save.teamId),
-      this.playersRepository.getPlayersByTeam(save.teamId),
+      this.teamsRepository.getTeamById(activeTeamId),
+      this.playersRepository.getPlayersByTeam(activeTeamId),
       this.playersRepository.getPlayersByTeam(opponentTeamId),
     ]);
 
-    return { save, fixtures, userTeam, userPlayers, opponentPlayers, standings: seasonContext.standings, seasonSummary: seasonContext.summary };
+    return { save, fixtures, userTeam, userPlayers, opponentPlayers, standings: seasonContext.standings, seasonSummary: seasonContext.summary, activeTeamId, isSpectator };
   }
 }

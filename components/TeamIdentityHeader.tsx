@@ -1,4 +1,6 @@
 import { Team, Uniform } from "@/types/game";
+import { BoardReputationStars } from "@/components/BoardReputationStars";
+import { FansReputationStars } from "@/components/FansReputationStars";
 
 interface TeamIdentityHeaderProps {
   team: Team;
@@ -28,9 +30,9 @@ export function TeamIdentityHeader({ team, managerName, uniforms, boardReputatio
       </div>
       <div className="mt-4 grid grid-cols-2 gap-2 text-xs">
         <p className="rounded bg-slate-800 p-2 text-slate-100">Posição Liga: #{team.currentLeaguePosition}</p>
-        <p className="rounded bg-slate-800 p-2 text-slate-100">Board: {boardReputation}</p>
-        <p className="rounded bg-slate-800 p-2 text-slate-100">Torcida: {fansReputation}</p>
         <p className="rounded bg-slate-800 p-2 text-slate-100">Budget: ${team.budget.toLocaleString()}</p>
+        <BoardReputationStars stars={boardReputation} />
+        <FansReputationStars stars={fansReputation} />
       </div>
     </div>
   );

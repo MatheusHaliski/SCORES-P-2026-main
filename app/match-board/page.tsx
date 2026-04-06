@@ -21,10 +21,11 @@ export default async function MatchBoardView({ searchParams }: { searchParams: P
       round={board.save.currentRound}
       fixtures={board.fixtures}
       teamsById={teamsById}
-      userTeamId={board.save.teamId}
+      userTeamId={board.activeTeamId}
       userPlayers={board.userPlayers}
       opponentPlayers={board.opponentPlayers}
       standings={board.standings}
+      employmentStatus={board.save.employmentStatus}
     />
   );
 }

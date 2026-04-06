@@ -1,6 +1,7 @@
 export type PlayerPosition = "PG" | "SG" | "SF" | "PF" | "C";
 export type UniformType = "home" | "away" | "alternate";
 export type FixtureStatus = "scheduled" | "live" | "halftime" | "finished";
+export type EmploymentStatus = "employed" | "unemployed" | "spectator";
 
 export interface League {
   id: string;
@@ -75,8 +76,17 @@ export interface UserSave {
   updatedAt: string;
   nextFixtureId: string;
   budgetSnapshot: number;
-  boardReputation: number;
-  fansReputation: number;
+  boardReputation: number; // 0..10 stars
+  fansReputation: number; // 0..10 stars
+  roundsUnderCriticalBoard: number;
+  roundsUnderCriticalFans: number;
+  roundsUnderCriticalCombined: number;
+  isEmployed: boolean;
+  employmentStatus: EmploymentStatus;
+  currentClubId: string | null;
+  dismissalCount: number;
+  lastDismissedClubId?: string | null;
+  lastDismissedAt?: string | null;
 }
 
 export interface Uniform {
@@ -153,4 +163,18 @@ export interface SquadHomePayload {
   standings: StandingRow[];
   seasonCalendar?: import("@/types/season").SeasonCalendar;
   seasonSummary?: import("@/types/season").SeasonSummary;
+  pendingJobOffer?: ManagerJobOffer | null;
+}
+
+export interface ManagerJobOffer {
+  id: string;
+  saveId: string;
+  clubId: string;
+  clubName: string;
+  leagueId: string;
+  currentLeaguePosition: number;
+  offeredSalary: number;
+  status: "pending" | "accepted" | "rejected" | "expired";
+  createdAt: string;
+  updatedAt: string;
 }
