@@ -1,7 +1,6 @@
 import Link from "next/link";
 import { SectionCard } from "@/components/SectionCard";
 import { GameSetupService } from "@/services/GameSetupService";
-import { SaveGameService } from "@/services/SaveGameService";
 
 export default async function SelectTeamView({ searchParams }: { searchParams: Promise<{ leagueId?: string; teamId?: string }> }) {
   const params = await searchParams;
@@ -9,12 +8,8 @@ export default async function SelectTeamView({ searchParams }: { searchParams: P
   const data = await service.getSetupData(params.leagueId);
   const selectedTeam = data.teams.find((team) => team.id === params.teamId) ?? data.teams[0];
 
-  const userSaveSlots = await new SaveGameService().getSaveSlots("u-1");
-  const matchingSave = selectedTeam
-    ? userSaveSlots.find((slot) => slot.save.teamId === selectedTeam.id)?.save
-      ?? userSaveSlots.find((slot) => slot.save.leagueId === selectedTeam.leagueId)?.save
-    : undefined;
-  const targetSaveId = matchingSave?.id ?? "save-001";
+  const defaultManagerName = selectedTeam?.managerDefaultName ?? "SCORES Manager";
+  const defaultSaveName = selectedTeam ? `Carreira ${selectedTeam.shortName}` : "Meu Save";
 
   return (
     <main className="mx-auto min-h-screen max-w-7xl p-6">
@@ -43,12 +38,38 @@ export default async function SelectTeamView({ searchParams }: { searchParams: P
             ))}
           </div>
           {selectedTeam ? (
-            <Link
-              href={`/new-save?leagueId=${selectedTeam.leagueId}&teamId=${selectedTeam.id}`}
-              className="mt-4 inline-block rounded bg-cyan-600 px-4 py-2 text-sm font-bold text-white"
-            >
-              Confirmar {selectedTeam.shortName}
-            </Link>
+            <form action="/new-save" method="GET" className="mt-4 space-y-3 rounded-lg border border-white/15 bg-slate-950/40 p-4">
+              <input type="hidden" name="leagueId" value={selectedTeam.leagueId} />
+              <input type="hidden" name="teamId" value={selectedTeam.id} />
+              <div>
+                <label htmlFor="managerName" className="mb-1 block text-xs font-semibold uppercase tracking-wide text-slate-200">Nome do Manager</label>
+                <input
+                  id="managerName"
+                  name="managerName"
+                  defaultValue={defaultManagerName}
+                  maxLength={40}
+                  className="w-full rounded-md border border-white/20 bg-slate-900 px-3 py-2 text-sm text-white outline-none ring-cyan-400 placeholder:text-slate-500 focus:ring"
+                  placeholder="Ex.: Rafa Manager"
+                />
+              </div>
+              <div>
+                <label htmlFor="saveName" className="mb-1 block text-xs font-semibold uppercase tracking-wide text-slate-200">Nome do Save</label>
+                <input
+                  id="saveName"
+                  name="saveName"
+                  defaultValue={defaultSaveName}
+                  maxLength={60}
+                  className="w-full rounded-md border border-white/20 bg-slate-900 px-3 py-2 text-sm text-white outline-none ring-cyan-400 placeholder:text-slate-500 focus:ring"
+                  placeholder="Ex.: Projeto Campeão 2026"
+                />
+              </div>
+              <button
+                type="submit"
+                className="inline-block rounded bg-cyan-600 px-4 py-2 text-sm font-bold text-white"
+              >
+                Confirmar {selectedTeam.shortName}
+              </button>
+            </form>
           ) : null}
         </SectionCard>
       </div>
