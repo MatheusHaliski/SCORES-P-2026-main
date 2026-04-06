@@ -27,6 +27,12 @@ export function useLiveRoundSimulation(params: Params) {
   const service = useMemo(() => new MatchSessionService(), []);
   const [session, setSession] = useState<MatchSession | null>(null);
   const navigatingRef = useRef(false);
+  const sessionRef = useRef<MatchSession | null>(null);
+  const tickInFlightRef = useRef(false);
+
+  useEffect(() => {
+    sessionRef.current = session;
+  }, [session]);
 
   useEffect(() => {
     const userFixture = params.fixtures.find((fixture) => fixture.homeTeamId === params.userTeamId || fixture.awayTeamId === params.userTeamId);
@@ -46,24 +52,49 @@ export function useLiveRoundSimulation(params: Params) {
         quarterDuration: params.quarterDuration ?? 180,
       })
       .then(setSession);
-  }, [params, service]);
+  }, [
+    params.fixtures,
+    params.leagueId,
+    params.opponentPlayers,
+    params.players,
+    params.quarterDuration,
+    params.round,
+    params.saveId,
+    params.teamsById,
+    params.userTeamId,
+    service,
+  ]);
 
   useEffect(() => {
     if (!session || !QuarterFlowEngine.isLivePhase(session.phase)) return;
 
-    const interval = window.setInterval(async () => {
-      setSession((current) => {
-        if (!current || !QuarterFlowEngine.isLivePhase(current.phase)) return current;
-        service.tick(current, params.simulatedSecondsPerTick ?? 3, Math.random).then(setSession);
-        return current;
-      });
+    const interval = window.setInterval(() => {
+      const current = sessionRef.current;
+      if (!current || !QuarterFlowEngine.isLivePhase(current.phase) || tickInFlightRef.current) return;
+
+      tickInFlightRef.current = true;
+      service
+        .tick(current, params.simulatedSecondsPerTick ?? 3, Math.random)
+        .then((next) => {
+          sessionRef.current = next;
+          setSession(next);
+        })
+        .finally(() => {
+          tickInFlightRef.current = false;
+        });
     }, params.tickIntervalMs ?? 500);
 
     return () => window.clearInterval(interval);
   }, [params.simulatedSecondsPerTick, params.tickIntervalMs, service, session]);
 
   useEffect(() => {
-    if (!session || navigatingRef.current) return;
+    if (!session) return;
+
+    if (QuarterFlowEngine.isLivePhase(session.phase)) {
+      navigatingRef.current = false;
+    }
+
+    if (navigatingRef.current) return;
 
     if (QuarterFlowEngine.isBreakPhase(session.phase)) {
       navigatingRef.current = true;

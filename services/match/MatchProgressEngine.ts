@@ -48,6 +48,8 @@ export class MatchProgressEngine {
       const scoringTeamIsUser = random() < userChanceToScore;
       const scoringTactic = scoringTeamIsUser ? session.userTeamTactic : session.opponentTeamTactic;
       const variance = scoringTeamIsUser ? userTacticImpact.variance : oppTacticImpact.variance;
+      const scoringLineup = scoringTeamIsUser ? session.userLineup : session.opponentLineup;
+      const scorer = scoringLineup[Math.floor(random() * scoringLineup.length)];
 
       const shot3Chance = scoringTactic === "three_point_focus" ? 0.54 : 0.34;
       const paint2Chance = scoringTactic === "paint_attack" ? 0.78 : 0.6;
@@ -72,7 +74,7 @@ export class MatchProgressEngine {
         teamId: scoringTeamIsUser ? session.userTeamId : session.opponentTeamId,
         playerName: scorer?.playerName ?? (scoringTeamIsUser ? "Seu time" : "Adversário"),
         type: points === 3 ? "3PT_MADE" : "2PT_MADE",
-        text: `${scoringTeamIsUser ? "Seu time" : "Adversário"} converte ${points} pts (${formatClock(nextTimeRemaining)}).`,
+        text: `${scoringTeamIsUser ? "Seu time" : "Adversário"}: ${scorer?.playerName ?? "Jogador"} converte ${points} pts (${formatClock(nextTimeRemaining)}).`,
       });
     }
 
@@ -83,15 +85,33 @@ export class MatchProgressEngine {
     const updatedFixtures = session.fixtures.map((fixture) => {
       let nextFixture = fixture;
       if (fixture.id === userFixture.id) {
+        const latestScoreEvent = newEvents[newEvents.length - 1];
+        const scorerData = latestScoreEvent
+          ? { playerName: latestScoreEvent.playerName ?? "Unknown Player", minute: formatClock(nextTimeRemaining) }
+          : undefined;
+
         nextFixture = {
           ...fixture,
           homeScore: fixture.homeScore + homeDelta,
           awayScore: fixture.awayScore + awayDelta,
+          homeLastScorer: homeDelta > 0 ? scorerData : fixture.homeLastScorer,
+          awayLastScorer: awayDelta > 0 ? scorerData : fixture.awayLastScorer,
         };
       } else if (fixture.status !== "finished") {
         const randomSwing = random();
-        if (randomSwing < 0.2) nextFixture = { ...fixture, homeScore: fixture.homeScore + 2 };
-        else if (randomSwing < 0.4) nextFixture = { ...fixture, awayScore: fixture.awayScore + 2 };
+        if (randomSwing < 0.2) {
+          nextFixture = {
+            ...fixture,
+            homeScore: fixture.homeScore + 2,
+            homeLastScorer: { playerName: `${fixture.homeTeamName} #11`, minute: formatClock(nextTimeRemaining) },
+          };
+        } else if (randomSwing < 0.4) {
+          nextFixture = {
+            ...fixture,
+            awayScore: fixture.awayScore + 2,
+            awayLastScorer: { playerName: `${fixture.awayTeamName} #9`, minute: formatClock(nextTimeRemaining) },
+          };
+        }
       }
 
       const status: "live" | "break" | "finished" = quarterEnded
