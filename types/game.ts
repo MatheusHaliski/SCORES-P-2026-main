@@ -64,6 +64,7 @@ export interface User {
 
 export interface UserSave {
   id: string;
+  saveName?: string;
   userId: string;
   leagueId: string;
   teamId: string;

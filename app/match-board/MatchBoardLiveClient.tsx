@@ -1,11 +1,14 @@
 "use client";
 
+import { useState } from "react";
 import { SectionCard } from "@/components/SectionCard";
 import { useLiveRoundSimulation } from "@/hooks/useLiveRoundSimulation";
 import { Fixture, Player, StandingRow, Team } from "@/types/game";
 import { QuarterProgressHeader } from "@/components/QuarterProgressHeader";
 import { LiveRoundFixtureList } from "@/components/LiveRoundFixtureList";
 import { PostMatchModal } from "@/components/PostMatchModal";
+import { getLS } from "@/app/lib/SafeStorage";
+import { getSimulationSpeedOption, SIMULATION_SPEED_KEY } from "@/app/lib/simulationConfig";
 
 export function MatchBoardLiveClient({
   saveId,
@@ -28,6 +31,13 @@ export function MatchBoardLiveClient({
   opponentPlayers: Player[];
   standings: StandingRow[];
 }) {
+  const [simulationSpeedId] = useState(() => {
+    const storedSpeed = getLS(SIMULATION_SPEED_KEY);
+    return getSimulationSpeedOption(storedSpeed).id;
+  });
+
+  const simulationSpeed = getSimulationSpeedOption(simulationSpeedId);
+
   const { session } = useLiveRoundSimulation({
     saveId,
     leagueId,
@@ -37,9 +47,9 @@ export function MatchBoardLiveClient({
     userTeamId,
     players: userPlayers,
     opponentPlayers,
-    quarterDuration: 180,
-    tickIntervalMs: 500,
-    simulatedSecondsPerTick: 3,
+    quarterDuration: simulationSpeed.quarterDuration,
+    tickIntervalMs: simulationSpeed.tickIntervalMs,
+    simulatedSecondsPerTick: simulationSpeed.simulatedSecondsPerTick,
   });
 
   if (!session) {

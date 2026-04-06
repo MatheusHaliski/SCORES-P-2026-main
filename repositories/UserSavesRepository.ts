@@ -8,7 +8,7 @@ const saveProgressOverrides = new Map<string, Partial<UserSave>>();
 const buildDynamicSave = (saveId: string): UserSave | undefined => {
   const parsedSave = parseNewSaveId(saveId);
   if (!parsedSave) return undefined;
-  const { leagueId, teamId } = parsedSave;
+  const { leagueId, teamId, managerName, saveName } = parsedSave;
 
   const team = mockTeams.find((item) => item.id === teamId && item.leagueId === leagueId);
   const league = mockLeagues.find((item) => item.id === leagueId);
@@ -23,10 +23,11 @@ const buildDynamicSave = (saveId: string): UserSave | undefined => {
 
   return {
     id: saveId,
+    saveName: saveName?.trim() || `Carreira ${team.shortName}`,
     userId: "u-1",
     leagueId,
     teamId,
-    managerName: team.managerDefaultName,
+    managerName: managerName?.trim() || team.managerDefaultName,
     currentRound: nextFixture.round,
     currentSeason: league.season,
     createdAt: now,

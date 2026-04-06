@@ -71,9 +71,9 @@ export const mockPlayers: Player[] = mockTeams.flatMap((team) => createPlayers(t
 export const mockUsers: User[] = [{ id: "u-1", displayName: "Coach Demo", email: "coach@scores.gg", createdAt: "2026-01-10T10:00:00.000Z" }];
 
 export const mockUserSaves: UserSave[] = [
-  { id: "save-001", userId: "u-1", leagueId: "lg-nba", teamId: "t-wolves", managerName: "Coach Demo", currentRound: 8, currentSeason: "2026", createdAt: "2026-01-12T09:00:00.000Z", updatedAt: "2026-03-30T20:45:00.000Z", nextFixtureId: "fx-3", budgetSnapshot: 121000000, boardReputation: 76, fansReputation: 81 },
-  { id: "save-002", userId: "u-1", leagueId: "lg-latam", teamId: "t-falcons", managerName: "Rafa Manager", currentRound: 12, currentSeason: "2026", createdAt: "2026-02-10T12:00:00.000Z", updatedAt: "2026-04-01T13:20:00.000Z", nextFixtureId: "fx-2", budgetSnapshot: 58700000, boardReputation: 69, fansReputation: 86 },
-  { id: "save-003", userId: "u-1", leagueId: "lg-euro", teamId: "t-royals", managerName: "Dynasty Boss", currentRound: 5, currentSeason: "2026", createdAt: "2026-03-11T10:45:00.000Z", updatedAt: "2026-03-31T22:15:00.000Z", nextFixtureId: "fx-23", budgetSnapshot: 149000000, boardReputation: 90, fansReputation: 93 },
+  { id: "save-001", saveName: "Dinastia Wolves", userId: "u-1", leagueId: "lg-nba", teamId: "t-wolves", managerName: "Coach Demo", currentRound: 8, currentSeason: "2026", createdAt: "2026-01-12T09:00:00.000Z", updatedAt: "2026-03-30T20:45:00.000Z", nextFixtureId: "fx-3", budgetSnapshot: 121000000, boardReputation: 76, fansReputation: 81 },
+  { id: "save-002", saveName: "Rumo ao Título LATAM", userId: "u-1", leagueId: "lg-latam", teamId: "t-falcons", managerName: "Rafa Manager", currentRound: 12, currentSeason: "2026", createdAt: "2026-02-10T12:00:00.000Z", updatedAt: "2026-04-01T13:20:00.000Z", nextFixtureId: "fx-2", budgetSnapshot: 58700000, boardReputation: 69, fansReputation: 86 },
+  { id: "save-003", saveName: "Euro Royal Project", userId: "u-1", leagueId: "lg-euro", teamId: "t-royals", managerName: "Dynasty Boss", currentRound: 5, currentSeason: "2026", createdAt: "2026-03-11T10:45:00.000Z", updatedAt: "2026-03-31T22:15:00.000Z", nextFixtureId: "fx-23", budgetSnapshot: 149000000, boardReputation: 90, fansReputation: 93 },
 ];
 
 export const mockUniforms: Uniform[] = mockTeams.flatMap((team) => [
