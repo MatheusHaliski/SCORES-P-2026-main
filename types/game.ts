@@ -149,6 +149,8 @@ export interface SquadHomePayload {
   visual: ClubVisual;
   uniforms: Uniform[];
   players: Player[];
-  nextFixture: Fixture;
+  nextFixture: Fixture | null;
   standings: StandingRow[];
+  seasonCalendar?: import("@/types/season").SeasonCalendar;
+  seasonSummary?: import("@/types/season").SeasonSummary;
 }
