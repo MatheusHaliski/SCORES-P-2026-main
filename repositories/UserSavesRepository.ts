@@ -5,6 +5,29 @@ import { parseNewSaveId } from "@/lib/saveId";
 
 const saveProgressOverrides = new Map<string, Partial<UserSave>>();
 
+const clampStars = (value: number) => Math.max(0, Math.min(10, Math.round(value)));
+
+const normalizeSave = (save: UserSave): UserSave => {
+  const boardStars = save.boardReputation > 10 ? save.boardReputation / 10 : save.boardReputation;
+  const fansStars = save.fansReputation > 10 ? save.fansReputation / 10 : save.fansReputation;
+  const currentClubId = save.currentClubId ?? save.teamId;
+  const employmentStatus = save.employmentStatus ?? "employed";
+  return {
+    ...save,
+    boardReputation: clampStars(boardStars),
+    fansReputation: clampStars(fansStars),
+    roundsUnderCriticalBoard: save.roundsUnderCriticalBoard ?? 0,
+    roundsUnderCriticalFans: save.roundsUnderCriticalFans ?? 0,
+    roundsUnderCriticalCombined: save.roundsUnderCriticalCombined ?? 0,
+    isEmployed: save.isEmployed ?? employmentStatus === "employed",
+    employmentStatus,
+    currentClubId,
+    dismissalCount: save.dismissalCount ?? 0,
+    lastDismissedClubId: save.lastDismissedClubId ?? null,
+    lastDismissedAt: save.lastDismissedAt ?? null,
+  };
+};
+
 const buildDynamicSave = (saveId: string): UserSave | undefined => {
   const parsedSave = parseNewSaveId(saveId);
   if (!parsedSave) return undefined;
@@ -34,8 +57,17 @@ const buildDynamicSave = (saveId: string): UserSave | undefined => {
     updatedAt: now,
     nextFixtureId: nextFixture.id,
     budgetSnapshot: team.budget,
-    boardReputation: team.reputationBoard,
-    fansReputation: team.reputationFans,
+    boardReputation: clampStars(team.reputationBoard / 10),
+    fansReputation: clampStars(team.reputationFans / 10),
+    roundsUnderCriticalBoard: 0,
+    roundsUnderCriticalFans: 0,
+    roundsUnderCriticalCombined: 0,
+    isEmployed: true,
+    employmentStatus: "employed",
+    currentClubId: team.id,
+    dismissalCount: 0,
+    lastDismissedClubId: null,
+    lastDismissedAt: null,
   };
 };
 
@@ -49,7 +81,7 @@ export class UserSavesRepository {
     if (shouldUseFirebase && firestoreDb) {
       // TODO: query `user_saves` where userId == userId.
     }
-    return mockUserSaves.filter((save) => save.userId === userId);
+    return mockUserSaves.filter((save) => save.userId === userId).map(normalizeSave);
   }
 
   async getSaveById(saveId: string): Promise<UserSave | undefined> {
@@ -58,10 +90,10 @@ export class UserSavesRepository {
     }
 
     const staticSave = mockUserSaves.find((save) => save.id === saveId);
-    if (staticSave) return { ...staticSave, ...(saveProgressOverrides.get(saveId) ?? {}) };
+    if (staticSave) return normalizeSave({ ...staticSave, ...(saveProgressOverrides.get(saveId) ?? {}) } as UserSave);
 
     const dynamic = buildDynamicSave(saveId);
     if (!dynamic) return undefined;
-    return { ...dynamic, ...(saveProgressOverrides.get(saveId) ?? {}) };
+    return normalizeSave({ ...dynamic, ...(saveProgressOverrides.get(saveId) ?? {}) } as UserSave);
   }
 }

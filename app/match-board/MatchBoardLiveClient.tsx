@@ -9,6 +9,7 @@ import { LiveRoundFixtureList } from "@/components/LiveRoundFixtureList";
 import { PostMatchModal } from "@/components/PostMatchModal";
 import { getLS } from "@/app/lib/SafeStorage";
 import { getSimulationSpeedOption, SIMULATION_SPEED_KEY } from "@/app/lib/simulationConfig";
+import { SpectatorModeBanner } from "@/components/SpectatorModeBanner";
 
 export function MatchBoardLiveClient({
   saveId,
@@ -20,6 +21,7 @@ export function MatchBoardLiveClient({
   userPlayers,
   opponentPlayers,
   standings,
+  employmentStatus,
 }: {
   saveId: string;
   leagueId: string;
@@ -30,6 +32,7 @@ export function MatchBoardLiveClient({
   userPlayers: Player[];
   opponentPlayers: Player[];
   standings: StandingRow[];
+  employmentStatus: "employed" | "unemployed" | "spectator";
 }) {
   const [simulationSpeedId] = useState(() => {
     const storedSpeed = getLS(SIMULATION_SPEED_KEY);
@@ -58,6 +61,11 @@ export function MatchBoardLiveClient({
 
   return (
     <main className="mx-auto min-h-screen max-w-6xl p-6">
+      {employmentStatus !== "employed" && (
+        <div className="mb-3">
+          <SpectatorModeBanner />
+        </div>
+      )}
       <QuarterProgressHeader session={session} />
 
       <div className="mt-4">

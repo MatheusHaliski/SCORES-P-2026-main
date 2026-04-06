@@ -5,6 +5,7 @@ import { SectionCard } from "@/components/SectionCard";
 import { TeamIdentityHeader } from "@/components/TeamIdentityHeader";
 import { getTeamsById } from "@/lib/gameUtils";
 import { SquadHomeService } from "@/services/SquadHomeService";
+import { SpectatorModeBanner } from "@/components/SpectatorModeBanner";
 
 const topActions = [
   { label: "Calendário", tab: "calendar" },
@@ -59,8 +60,18 @@ export default async function SquadHomeView({ searchParams }: { searchParams: Pr
               </div>
             )}
 
+            {payload.save.employmentStatus !== "employed" && <SpectatorModeBanner />}
+
+            {payload.pendingJobOffer && (
+              <div className="rounded-xl border border-cyan-300/40 bg-cyan-400/10 p-3 text-xs text-cyan-100">
+                <p className="font-bold">Proposta pendente: {payload.pendingJobOffer.clubName}</p>
+                <p>Posição: #{payload.pendingJobOffer.currentLeaguePosition} • Salário: ${payload.pendingJobOffer.offeredSalary.toLocaleString()}/mês</p>
+                <p className="mt-1 text-cyan-200">Aceite/recuse no pós-jogo da rodada.</p>
+              </div>
+            )}
+
             {!seasonFinished && payload.nextFixture && (
-              <Link href={`/match-board?saveId=${payload.save.id}`} className="block rounded-xl bg-cyan-500 px-4 py-3 text-center font-bold text-slate-950">Iniciar Jogo</Link>
+              <Link href={`/match-board?saveId=${payload.save.id}`} className="block rounded-xl bg-cyan-500 px-4 py-3 text-center font-bold text-slate-950">{payload.save.employmentStatus === "employed" ? "Iniciar Jogo" : "Acompanhar Rodada"}</Link>
             )}
           </div>
 

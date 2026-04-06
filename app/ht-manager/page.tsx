@@ -1,8 +1,15 @@
 import { HTManagerClient } from "@/app/ht-manager/HTManagerClient";
+import { UserSavesRepository } from "@/repositories/UserSavesRepository";
+import { redirect } from "next/navigation";
 
 export default async function HTManagerBoardView({ searchParams }: { searchParams: Promise<{ saveId?: string }> }) {
   const params = await searchParams;
   const saveId = params.saveId ?? "save-001";
+  const save = await new UserSavesRepository().getSaveById(saveId);
+
+  if (!save || save.employmentStatus !== "employed") {
+    redirect(`/squad?saveId=${saveId}&tab=standings`);
+  }
 
   return (
     <main className="mx-auto min-h-screen max-w-7xl p-6">

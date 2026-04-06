@@ -26,6 +26,7 @@ export class SquadHomeService {
       this.teamsRepository.getVisualByTeamId(save.teamId),
       this.teamsRepository.getUniformsByTeamId(save.teamId),
     ]);
+    const pendingJobOffer = await this.seasonFlowService.getPendingJobOffer(saveId);
 
     if (!league || !team || !visual) {
       throw new Error("Dados incompletos para carregar o SquadHomeView");
@@ -42,6 +43,7 @@ export class SquadHomeService {
       seasonSummary: seasonContext.summary,
       visual,
       uniforms,
+      pendingJobOffer,
     };
   }
 }
