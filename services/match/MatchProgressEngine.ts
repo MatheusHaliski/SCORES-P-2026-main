@@ -58,6 +58,9 @@ export class MatchProgressEngine {
       if (points === 2 && random() > paint2Chance) points = 3;
       if (random() < 0.05 * variance) points = 2;
 
+      const scoringLineup = scoringTeamIsUser ? session.userLineup : session.opponentLineup;
+      const scorer = scoringLineup[Math.floor(random() * scoringLineup.length)];
+
       if (scoringTeamIsUser) {
         if (userIsHome) homeDelta += points;
         else awayDelta += points;
@@ -69,7 +72,7 @@ export class MatchProgressEngine {
         fixtureId: userFixture.id,
         second: elapsed,
         teamId: scoringTeamIsUser ? session.userTeamId : session.opponentTeamId,
-        playerName: scorer?.playerName ?? "Unknown Player",
+        playerName: scorer?.playerName ?? (scoringTeamIsUser ? "Seu time" : "Adversário"),
         type: points === 3 ? "3PT_MADE" : "2PT_MADE",
         text: `${scoringTeamIsUser ? "Seu time" : "Adversário"}: ${scorer?.playerName ?? "Jogador"} converte ${points} pts (${formatClock(nextTimeRemaining)}).`,
       });
