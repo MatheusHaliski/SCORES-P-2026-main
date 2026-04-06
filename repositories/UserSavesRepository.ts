@@ -1,6 +1,40 @@
-import { mockUserSaves } from "@/mocks/gameData";
+import { mockFixtures, mockLeagues, mockTeams, mockUserSaves } from "@/mocks/gameData";
 import { UserSave } from "@/types/game";
 import { firestoreDb, shouldUseFirebase } from "@/lib/firebase/config";
+import { parseNewSaveId } from "@/lib/saveId";
+
+const buildDynamicSave = (saveId: string): UserSave | undefined => {
+  const parsedSave = parseNewSaveId(saveId);
+  if (!parsedSave) return undefined;
+  const { leagueId, teamId } = parsedSave;
+
+  const team = mockTeams.find((item) => item.id === teamId && item.leagueId === leagueId);
+  const league = mockLeagues.find((item) => item.id === leagueId);
+  if (!team || !league) return undefined;
+
+  const nextFixture = mockFixtures.find((fixture) => fixture.leagueId === leagueId && fixture.status === "scheduled" && (fixture.homeTeamId === teamId || fixture.awayTeamId === teamId))
+    ?? mockFixtures.find((fixture) => fixture.leagueId === leagueId && (fixture.homeTeamId === teamId || fixture.awayTeamId === teamId));
+
+  if (!nextFixture) return undefined;
+
+  const now = new Date().toISOString();
+
+  return {
+    id: saveId,
+    userId: "u-1",
+    leagueId,
+    teamId,
+    managerName: team.managerDefaultName,
+    currentRound: nextFixture.round,
+    currentSeason: league.season,
+    createdAt: now,
+    updatedAt: now,
+    nextFixtureId: nextFixture.id,
+    budgetSnapshot: team.budget,
+    boardReputation: team.reputationBoard,
+    fansReputation: team.reputationFans,
+  };
+};
 
 export class UserSavesRepository {
   async getUserSaves(userId: string): Promise<UserSave[]> {
@@ -14,6 +48,10 @@ export class UserSavesRepository {
     if (shouldUseFirebase && firestoreDb) {
       // TODO: read `user_saves/{saveId}`.
     }
-    return mockUserSaves.find((save) => save.id === saveId);
+
+    const staticSave = mockUserSaves.find((save) => save.id === saveId);
+    if (staticSave) return staticSave;
+
+    return buildDynamicSave(saveId);
   }
 }
