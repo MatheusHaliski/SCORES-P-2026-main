@@ -8,5 +8,17 @@ export default async function MatchBoardView({ searchParams }: { searchParams: P
   const board = await new MatchBoardService().getLiveBoard(saveId);
   const teamsById = getTeamsById();
 
-  return <MatchBoardLiveClient saveId={saveId} fixtures={board.fixtures} teamsById={teamsById} userTeamId={board.save.teamId} />;
+  return (
+    <MatchBoardLiveClient
+      saveId={saveId}
+      leagueId={board.save.leagueId}
+      round={board.save.currentRound}
+      fixtures={board.fixtures}
+      teamsById={teamsById}
+      userTeamId={board.save.teamId}
+      userPlayers={board.userPlayers}
+      opponentPlayers={board.opponentPlayers}
+      standings={board.standings}
+    />
+  );
 }

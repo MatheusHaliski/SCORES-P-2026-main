@@ -13,14 +13,42 @@ import {
 } from "@/types/game";
 
 export const mockLeagues: League[] = [
-  { id: "lg-nba", name: "North Atlantic Basketball League", country: "USA", format: "Regular Season + Playoffs", teamCount: 8, season: "2026", logoUrl: "🏀" },
+  { id: "lg-nba", name: "North Atlantic Basketball League", country: "USA", format: "Regular Season + Playoffs", teamCount: 20, season: "2026", logoUrl: "🏀" },
   { id: "lg-latam", name: "Liga Continental LATAM", country: "Brazil", format: "Double Round Robin", teamCount: 6, season: "2026", logoUrl: "🌎" },
   { id: "lg-euro", name: "Euro Elite Cup", country: "Spain", format: "Group + Knockout", teamCount: 6, season: "2026", logoUrl: "⭐" },
 ];
 
+const nbaConfigs = [
+  ["t-wolves", "Seattle Wolves", "WOL", "🐺", "#1d4ed8", "#111827", 84],
+  ["t-sharks", "San Diego Sharks", "SHK", "🦈", "#0f766e", "#06202a", 81],
+  ["t-ravens", "Austin Ravens", "RAV", "🦅", "#7c3aed", "#312e81", 80],
+  ["t-titans", "Chicago Titans", "TTN", "🛡️", "#ef4444", "#450a0a", 82],
+  ["t-hawks", "Atlanta Hawksmen", "HWK", "🦉", "#ea580c", "#7c2d12", 79],
+  ["t-pythons", "Miami Pythons", "PYT", "🐍", "#16a34a", "#14532d", 78],
+  ["t-kings", "Sacramento Kingsmen", "KNG", "👑", "#6d28d9", "#2e1065", 83],
+  ["t-riders", "Denver Riders", "RDR", "🐎", "#0284c7", "#082f49", 80],
+  ["t-comets", "Houston Comets", "CMT", "☄️", "#dc2626", "#7f1d1d", 81],
+  ["t-giants", "New York Giants Hoops", "GNT", "🗽", "#2563eb", "#0f172a", 82],
+  ["t-bulls", "Dallas Bulls", "BUL", "🐂", "#b91c1c", "#450a0a", 79],
+  ["t-knights", "Detroit Knights", "KNI", "🛡️", "#4f46e5", "#1e1b4b", 78],
+  ["t-foxes", "Portland Foxes", "FOX", "🦊", "#f97316", "#7c2d12", 77],
+  ["t-storm", "Orlando Storm", "STM", "⛈️", "#0ea5e9", "#0c4a6e", 80],
+  ["t-vipers", "Phoenix Vipers", "VIP", "🐉", "#059669", "#064e3b", 81],
+  ["t-trail", "Utah Trailblaze", "TRL", "🏔️", "#0891b2", "#164e63", 76],
+  ["t-horizon", "LA Horizon", "HRZ", "🌅", "#c026d3", "#701a75", 82],
+  ["t-guard", "Boston Guardians", "GRD", "🛡️", "#1e40af", "#172554", 83],
+  ["t-rhythm", "Memphis Rhythm", "RHY", "🎵", "#9333ea", "#3b0764", 77],
+  ["t-flames", "Cleveland Flames", "FLM", "🔥", "#ea580c", "#431407", 78],
+] as const;
+
+const toTeam = (row: (typeof nbaConfigs)[number]): Team => ({
+  id: row[0], leagueId: "lg-nba", name: row[1], shortName: row[2], logoUrl: row[3], overall: row[6], attackOverall: row[6], defenseOverall: row[6] - 1,
+  physicality: row[6] - 2, budget: 95000000, stadiumId: `st-${row[0]}`, managerDefaultName: "AI Coach", reputationBoard: 70, reputationFans: 70, currentLeaguePosition: 10,
+  primaryColor: row[4], secondaryColor: row[5], visualId: `v-${row[0]}`, uniformIds: [`u-${row[0]}-home`, `u-${row[0]}-away`], summary: "Equipe competitiva com rotação sólida.",
+});
+
 export const mockTeams: Team[] = [
-  { id: "t-wolves", leagueId: "lg-nba", name: "Seattle Wolves", shortName: "WOL", logoUrl: "🐺", overall: 84, attackOverall: 83, defenseOverall: 86, physicality: 82, budget: 128000000, stadiumId: "st-wolves", managerDefaultName: "Alex Carter", reputationBoard: 74, reputationFans: 79, currentLeaguePosition: 3, primaryColor: "#1d4ed8", secondaryColor: "#111827", visualId: "v-wolves", uniformIds: ["u-wolves-home", "u-wolves-away"], summary: "Elenco físico, forte no garrafão e defesa agressiva." },
-  { id: "t-sharks", leagueId: "lg-nba", name: "San Diego Sharks", shortName: "SHK", logoUrl: "🦈", overall: 81, attackOverall: 84, defenseOverall: 78, physicality: 79, budget: 97000000, stadiumId: "st-sharks", managerDefaultName: "Mia Burton", reputationBoard: 69, reputationFans: 72, currentLeaguePosition: 5, primaryColor: "#0f766e", secondaryColor: "#06202a", visualId: "v-sharks", uniformIds: ["u-sharks-home", "u-sharks-away"], summary: "Time veloz e perigoso no perímetro." },
+  ...nbaConfigs.map(toTeam),
   { id: "t-falcons", leagueId: "lg-latam", name: "Rio Falcons", shortName: "RFC", logoUrl: "🦅", overall: 79, attackOverall: 80, defenseOverall: 77, physicality: 81, budget: 61000000, stadiumId: "st-falcons", managerDefaultName: "Rafa Souza", reputationBoard: 71, reputationFans: 83, currentLeaguePosition: 2, primaryColor: "#f97316", secondaryColor: "#7c2d12", visualId: "v-falcons", uniformIds: ["u-falcons-home", "u-falcons-away"], summary: "Clube com torcida quente e transição mortal." },
   { id: "t-jaguars", leagueId: "lg-latam", name: "São Paulo Jaguars", shortName: "SPJ", logoUrl: "🐆", overall: 77, attackOverall: 76, defenseOverall: 78, physicality: 80, budget: 55000000, stadiumId: "st-jaguars", managerDefaultName: "Livia Rocha", reputationBoard: 64, reputationFans: 68, currentLeaguePosition: 4, primaryColor: "#22c55e", secondaryColor: "#14532d", visualId: "v-jaguars", uniformIds: ["u-jaguars-home", "u-jaguars-away"], summary: "Equipe equilibrada com foco em rotação profunda." },
   { id: "t-royals", leagueId: "lg-euro", name: "Madrid Royals", shortName: "MDR", logoUrl: "👑", overall: 86, attackOverall: 87, defenseOverall: 84, physicality: 82, budget: 152000000, stadiumId: "st-royals", managerDefaultName: "Daniel Vega", reputationBoard: 88, reputationFans: 91, currentLeaguePosition: 1, primaryColor: "#7c3aed", secondaryColor: "#2e1065", visualId: "v-royals", uniformIds: ["u-royals-home", "u-royals-away"], summary: "Favorito ao título com elenco técnico e profundo." },
@@ -28,7 +56,7 @@ export const mockTeams: Team[] = [
 ];
 
 const createPlayers = (teamId: string, prefix: string): Player[] => [
-  { id: `${teamId}-p1`, teamId, name: `${prefix} Grant`, age: 24, position: "PG", overall: 80, marketValue: 11000000, physicalCondition: 92, pace: 85, shooting: 79, passing: 88, dribbling: 86, defending: 74, physical: 72, playstyles: ["Floor General", "Clutch Passer"], isStarter: true, isBench: false },
+  { id: `${teamId}-p1`, teamId, name: `${prefix} Grant`, age: 24, position: "PG", overall: 80, marketValue: 11000000, physicalCondition: 92, pace: 85, shooting: 79, passing: 88, dribbling: 86, defending: 74, physical: 72, playstyles: ["Floor General"], isStarter: true, isBench: false },
   { id: `${teamId}-p2`, teamId, name: `${prefix} Reed`, age: 26, position: "SG", overall: 82, marketValue: 14000000, physicalCondition: 89, pace: 84, shooting: 86, passing: 77, dribbling: 83, defending: 75, physical: 74, playstyles: ["Catch & Shoot"], isStarter: true, isBench: false },
   { id: `${teamId}-p3`, teamId, name: `${prefix} Miles`, age: 27, position: "SF", overall: 84, marketValue: 17000000, physicalCondition: 88, pace: 82, shooting: 81, passing: 78, dribbling: 80, defending: 84, physical: 83, playstyles: ["Two-way Wing"], isStarter: true, isBench: false },
   { id: `${teamId}-p4`, teamId, name: `${prefix} Coleman`, age: 29, position: "PF", overall: 83, marketValue: 16000000, physicalCondition: 86, pace: 75, shooting: 78, passing: 76, dribbling: 72, defending: 85, physical: 86, playstyles: ["Post Defender"], isStarter: true, isBench: false },
@@ -38,21 +66,14 @@ const createPlayers = (teamId: string, prefix: string): Player[] => [
   { id: `${teamId}-p8`, teamId, name: `${prefix} Silva`, age: 23, position: "SF", overall: 73, marketValue: 4800000, physicalCondition: 93, pace: 79, shooting: 72, passing: 68, dribbling: 71, defending: 74, physical: 76, playstyles: ["Hustle"], isStarter: false, isBench: true },
 ];
 
-export const mockPlayers: Player[] = [
-  ...createPlayers("t-wolves", "Noah"),
-  ...createPlayers("t-sharks", "Kai"),
-  ...createPlayers("t-falcons", "Bruno"),
-  ...createPlayers("t-jaguars", "Igor"),
-  ...createPlayers("t-royals", "Luca"),
-  ...createPlayers("t-blaze", "Erik"),
-];
+export const mockPlayers: Player[] = mockTeams.flatMap((team) => createPlayers(team.id, team.shortName));
 
 export const mockUsers: User[] = [{ id: "u-1", displayName: "Coach Demo", email: "coach@scores.gg", createdAt: "2026-01-10T10:00:00.000Z" }];
 
 export const mockUserSaves: UserSave[] = [
-  { id: "save-001", userId: "u-1", leagueId: "lg-nba", teamId: "t-wolves", managerName: "Coach Demo", currentRound: 7, currentSeason: "2026", createdAt: "2026-01-12T09:00:00.000Z", updatedAt: "2026-03-30T20:45:00.000Z", nextFixtureId: "fx-3", budgetSnapshot: 121000000, boardReputation: 76, fansReputation: 81 },
-  { id: "save-002", userId: "u-1", leagueId: "lg-latam", teamId: "t-falcons", managerName: "Rafa Manager", currentRound: 11, currentSeason: "2026", createdAt: "2026-02-10T12:00:00.000Z", updatedAt: "2026-04-01T13:20:00.000Z", nextFixtureId: "fx-6", budgetSnapshot: 58700000, boardReputation: 69, fansReputation: 86 },
-  { id: "save-003", userId: "u-1", leagueId: "lg-euro", teamId: "t-royals", managerName: "Dynasty Boss", currentRound: 4, currentSeason: "2026", createdAt: "2026-03-11T10:45:00.000Z", updatedAt: "2026-03-31T22:15:00.000Z", nextFixtureId: "fx-9", budgetSnapshot: 149000000, boardReputation: 90, fansReputation: 93 },
+  { id: "save-001", userId: "u-1", leagueId: "lg-nba", teamId: "t-wolves", managerName: "Coach Demo", currentRound: 8, currentSeason: "2026", createdAt: "2026-01-12T09:00:00.000Z", updatedAt: "2026-03-30T20:45:00.000Z", nextFixtureId: "fx-3", budgetSnapshot: 121000000, boardReputation: 76, fansReputation: 81 },
+  { id: "save-002", userId: "u-1", leagueId: "lg-latam", teamId: "t-falcons", managerName: "Rafa Manager", currentRound: 12, currentSeason: "2026", createdAt: "2026-02-10T12:00:00.000Z", updatedAt: "2026-04-01T13:20:00.000Z", nextFixtureId: "fx-2", budgetSnapshot: 58700000, boardReputation: 69, fansReputation: 86 },
+  { id: "save-003", userId: "u-1", leagueId: "lg-euro", teamId: "t-royals", managerName: "Dynasty Boss", currentRound: 5, currentSeason: "2026", createdAt: "2026-03-11T10:45:00.000Z", updatedAt: "2026-03-31T22:15:00.000Z", nextFixtureId: "fx-23", budgetSnapshot: 149000000, boardReputation: 90, fansReputation: 93 },
 ];
 
 export const mockUniforms: Uniform[] = mockTeams.flatMap((team) => [
@@ -60,14 +81,7 @@ export const mockUniforms: Uniform[] = mockTeams.flatMap((team) => [
   { id: `u-${team.id}-away`, teamId: team.id, type: "away", primaryColor: "#f8fafc", secondaryColor: team.primaryColor, imageUrl: "🛫 Away" },
 ]);
 
-export const mockStadiums: Stadium[] = [
-  { id: "st-wolves", teamId: "t-wolves", name: "Moon Arena", capacity: 22000, level: 4, value: 89000000 },
-  { id: "st-sharks", teamId: "t-sharks", name: "Pacific Dome", capacity: 19800, level: 3, value: 62000000 },
-  { id: "st-falcons", teamId: "t-falcons", name: "Carioca Center", capacity: 17500, level: 3, value: 45000000 },
-  { id: "st-jaguars", teamId: "t-jaguars", name: "Paulista Pavilion", capacity: 18300, level: 3, value: 47000000 },
-  { id: "st-royals", teamId: "t-royals", name: "Crown Palace Arena", capacity: 24000, level: 5, value: 110000000 },
-  { id: "st-blaze", teamId: "t-blaze", name: "Tempelhof Court", capacity: 20600, level: 4, value: 69000000 },
-];
+export const mockStadiums: Stadium[] = mockTeams.map((team) => ({ id: `st-${team.id}`, teamId: team.id, name: `${team.shortName} Arena`, capacity: 19000, level: 3, value: 60000000 }));
 
 export const mockClubVisuals: ClubVisual[] = mockTeams.map((team) => ({
   id: `visual-${team.id}`,
@@ -81,30 +95,40 @@ export const mockClubVisuals: ClubVisual[] = mockTeams.map((team) => ({
   textureUrl: "",
 }));
 
+const nbaRound8Pairs = [
+  ["t-wolves", "t-sharks"], ["t-ravens", "t-titans"], ["t-hawks", "t-pythons"], ["t-kings", "t-riders"], ["t-comets", "t-giants"],
+  ["t-bulls", "t-knights"], ["t-foxes", "t-storm"], ["t-vipers", "t-trail"], ["t-horizon", "t-guard"], ["t-rhythm", "t-flames"],
+] as const;
+
 export const mockFixtures: Fixture[] = [
-  { id: "fx-1", leagueId: "lg-nba", round: 7, date: "2026-04-03", homeTeamId: "t-wolves", awayTeamId: "t-sharks", homeScore: 61, awayScore: 59, status: "live", quarter: 3, clock: "06:32" },
-  { id: "fx-2", leagueId: "lg-nba", round: 7, date: "2026-04-03", homeTeamId: "t-sharks", awayTeamId: "t-wolves", homeScore: 0, awayScore: 0, status: "scheduled", quarter: 0, clock: "12:00" },
-  { id: "fx-3", leagueId: "lg-nba", round: 8, date: "2026-04-06", homeTeamId: "t-wolves", awayTeamId: "t-sharks", homeScore: 0, awayScore: 0, status: "scheduled", quarter: 0, clock: "12:00" },
-  { id: "fx-4", leagueId: "lg-latam", round: 11, date: "2026-04-03", homeTeamId: "t-falcons", awayTeamId: "t-jaguars", homeScore: 88, awayScore: 84, status: "finished", quarter: 4, clock: "00:00" },
-  { id: "fx-5", leagueId: "lg-latam", round: 11, date: "2026-04-03", homeTeamId: "t-jaguars", awayTeamId: "t-falcons", homeScore: 77, awayScore: 79, status: "finished", quarter: 4, clock: "00:00" },
-  { id: "fx-6", leagueId: "lg-latam", round: 12, date: "2026-04-07", homeTeamId: "t-falcons", awayTeamId: "t-jaguars", homeScore: 0, awayScore: 0, status: "scheduled", quarter: 0, clock: "12:00" },
-  { id: "fx-7", leagueId: "lg-euro", round: 4, date: "2026-04-02", homeTeamId: "t-royals", awayTeamId: "t-blaze", homeScore: 72, awayScore: 67, status: "halftime", quarter: 3, clock: "12:00" },
-  { id: "fx-8", leagueId: "lg-euro", round: 4, date: "2026-04-02", homeTeamId: "t-blaze", awayTeamId: "t-royals", homeScore: 65, awayScore: 69, status: "live", quarter: 4, clock: "08:12" },
-  { id: "fx-9", leagueId: "lg-euro", round: 5, date: "2026-04-08", homeTeamId: "t-royals", awayTeamId: "t-blaze", homeScore: 0, awayScore: 0, status: "scheduled", quarter: 0, clock: "12:00" },
+  ...nbaRound8Pairs.map((pair, i) => ({ id: `fx-${i + 3}`, leagueId: "lg-nba", round: 8, date: "2026-04-06", homeTeamId: pair[0], awayTeamId: pair[1], homeScore: 0, awayScore: 0, status: "scheduled" as const, quarter: 0, clock: "12:00" })),
+  { id: "fx-1", leagueId: "lg-latam", round: 11, date: "2026-04-03", homeTeamId: "t-falcons", awayTeamId: "t-jaguars", homeScore: 88, awayScore: 84, status: "finished", quarter: 4, clock: "00:00" },
+  { id: "fx-2", leagueId: "lg-latam", round: 12, date: "2026-04-07", homeTeamId: "t-falcons", awayTeamId: "t-jaguars", homeScore: 0, awayScore: 0, status: "scheduled", quarter: 0, clock: "12:00" },
+  { id: "fx-23", leagueId: "lg-euro", round: 5, date: "2026-04-08", homeTeamId: "t-royals", awayTeamId: "t-blaze", homeScore: 0, awayScore: 0, status: "scheduled", quarter: 0, clock: "12:00" },
 ];
 
+const nbaStandings: StandingRow[] = nbaConfigs.map((row, index) => ({
+  teamId: row[0],
+  leagueId: "lg-nba",
+  played: 7,
+  wins: Math.max(1, 14 - index),
+  losses: Math.max(0, index - 1),
+  pointsFor: 720 + (20 - index) * 9,
+  pointsAgainst: 700 + index * 7,
+  leaguePoints: 8 + Math.max(1, 14 - index),
+  position: index + 1,
+}));
+
 export const mockStandings: StandingRow[] = [
-  { teamId: "t-wolves", leagueId: "lg-nba", played: 7, wins: 5, losses: 2, pointsFor: 760, pointsAgainst: 710, leaguePoints: 12, position: 2 },
-  { teamId: "t-sharks", leagueId: "lg-nba", played: 7, wins: 3, losses: 4, pointsFor: 711, pointsAgainst: 726, leaguePoints: 10, position: 5 },
+  ...nbaStandings,
   { teamId: "t-falcons", leagueId: "lg-latam", played: 11, wins: 8, losses: 3, pointsFor: 901, pointsAgainst: 810, leaguePoints: 19, position: 1 },
-  { teamId: "t-jaguars", leagueId: "lg-latam", played: 11, wins: 6, losses: 5, pointsFor: 842, pointsAgainst: 831, leaguePoints: 17, position: 3 },
+  { teamId: "t-jaguars", leagueId: "lg-latam", played: 11, wins: 6, losses: 5, pointsFor: 842, pointsAgainst: 831, leaguePoints: 17, position: 2 },
   { teamId: "t-royals", leagueId: "lg-euro", played: 4, wins: 4, losses: 0, pointsFor: 388, pointsAgainst: 340, leaguePoints: 12, position: 1 },
-  { teamId: "t-blaze", leagueId: "lg-euro", played: 4, wins: 2, losses: 2, pointsFor: 360, pointsAgainst: 357, leaguePoints: 8, position: 3 },
+  { teamId: "t-blaze", leagueId: "lg-euro", played: 4, wins: 2, losses: 2, pointsFor: 360, pointsAgainst: 357, leaguePoints: 8, position: 2 },
 ];
 
 export const mockChampionsHistory: LeagueChampionHistory[] = [
   { id: "ch-1", leagueId: "lg-nba", season: "2025", championTeamId: "t-wolves" },
-  { id: "ch-2", leagueId: "lg-nba", season: "2024", championTeamId: "t-sharks" },
   { id: "ch-3", leagueId: "lg-latam", season: "2025", championTeamId: "t-falcons" },
   { id: "ch-4", leagueId: "lg-euro", season: "2025", championTeamId: "t-royals" },
 ];
