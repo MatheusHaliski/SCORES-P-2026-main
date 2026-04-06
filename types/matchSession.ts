@@ -46,6 +46,14 @@ export type LiveFixtureState = {
   awayColor: string;
   homeScore: number;
   awayScore: number;
+  homeLastScorer?: {
+    playerName: string;
+    minute: string;
+  };
+  awayLastScorer?: {
+    playerName: string;
+    minute: string;
+  };
   isUserMatch: boolean;
   status: "scheduled" | "live" | "break" | "finished";
 };

@@ -69,6 +69,8 @@ export class MatchSessionService {
         awayColor: payload.teamsById[fixture.awayTeamId]?.primaryColor ?? "#1e293b",
         homeScore: fixture.homeScore,
         awayScore: fixture.awayScore,
+        homeLastScorer: undefined,
+        awayLastScorer: undefined,
         isUserMatch: fixture.id === payload.userFixture.id,
         status: fixture.id === payload.userFixture.id ? "live" : "scheduled",
       })),
