@@ -90,7 +90,11 @@ export class MatchProgressEngine {
         else if (randomSwing < 0.4) nextFixture = { ...fixture, awayScore: fixture.awayScore + 2 };
       }
 
-      const status = quarterEnded ? (nextPhase === "POST_MATCH" ? "finished" : "break") : "live";
+      const status: "live" | "break" | "finished" = quarterEnded
+        ? nextPhase === "POST_MATCH"
+          ? "finished"
+          : "break"
+        : "live";
       return { ...nextFixture, status };
     });
 
