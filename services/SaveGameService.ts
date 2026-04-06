@@ -1,6 +1,13 @@
 import { LeaguesRepository } from "@/repositories/LeaguesRepository";
 import { TeamsRepository } from "@/repositories/TeamsRepository";
 import { UserSavesRepository } from "@/repositories/UserSavesRepository";
+import { League, Team, UserSave } from "@/types/game";
+
+export type SaveSlot = {
+  save: UserSave;
+  team?: Team;
+  league?: League;
+};
 
 export class SaveGameService {
   constructor(
@@ -12,7 +19,7 @@ export class SaveGameService {
   async getSaveSlots(userId: string) {
     const saves = await this.savesRepository.getUserSaves(userId);
 
-    const decorated = await Promise.all(
+    const decorated: SaveSlot[] = await Promise.all(
       saves.map(async (save) => {
         const [team, league] = await Promise.all([
           this.teamsRepository.getTeamById(save.teamId),
