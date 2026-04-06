@@ -35,7 +35,12 @@ export default async function SelectTeamView({ searchParams }: { searchParams: P
             ))}
           </div>
           {selectedTeam ? (
-            <Link href={`/squad?saveId=save-001`} className="mt-4 inline-block rounded bg-cyan-600 px-4 py-2 text-sm font-bold text-white">Confirmar {selectedTeam.shortName}</Link>
+            <Link
+              href={`/new-save?leagueId=${selectedTeam.leagueId}&teamId=${selectedTeam.id}`}
+              className="mt-4 inline-block rounded bg-cyan-600 px-4 py-2 text-sm font-bold text-white"
+            >
+              Confirmar {selectedTeam.shortName}
+            </Link>
           ) : null}
         </SectionCard>
       </div>
