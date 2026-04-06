@@ -29,6 +29,7 @@ export type MatchEventType =
   | "STEAL"
   | "TIMEOUT"
   | "SUBSTITUTION"
+  | "INJURY"
   | "DEFENSIVE_STOP"
   | "INFO";
 

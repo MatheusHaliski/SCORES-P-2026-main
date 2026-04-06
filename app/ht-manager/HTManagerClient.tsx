@@ -22,6 +22,10 @@ export function HTManagerClient({ saveId }: { saveId: string }) {
   return (
     <div className="space-y-4">
       <SectionCard title={`HTManagerBoardView • ${session.phase}`}>
+        <div className="mb-3 rounded border border-white/20 bg-slate-800/60 p-2 text-xs text-slate-200">
+          <p>Público: <strong>{(session.attendance ?? 0).toLocaleString()}</strong></p>
+          <p>Receita de bilheteria estimada (IA): <strong>${(session.ticketRevenueEstimate ?? 0).toLocaleString()}</strong></p>
+        </div>
         <HTLineupManager
           lineup={session.userLineup}
           bench={session.userBench}

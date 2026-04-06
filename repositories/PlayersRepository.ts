@@ -1,4 +1,4 @@
-import { mockPlayers } from "@/mocks/gameData";
+import { enrichedMockPlayers } from "@/mocks/gameData";
 import { Player } from "@/types/game";
 import { firestoreDb, shouldUseFirebase } from "@/lib/firebase/config";
 
@@ -7,6 +7,6 @@ export class PlayersRepository {
     if (shouldUseFirebase && firestoreDb) {
       // TODO: query `players` where teamId == teamId.
     }
-    return mockPlayers.filter((player) => player.teamId === teamId);
+    return enrichedMockPlayers.filter((player) => player.teamId === teamId);
   }
 }

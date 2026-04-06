@@ -31,6 +31,9 @@ export type LineupPlayer = {
   dribbling: number;
   defending: number;
   physical: number;
+  morale: "Muito Feliz" | "Feliz" | "Contente" | "Insatisfeito" | "Muito Insatisfeito";
+  injuryStatus: "Disponível" | "Lesionado";
+  playstyles: string[];
   isStarter: boolean;
 };
 
@@ -77,6 +80,16 @@ export type MatchSession = {
   opponentLineup: LineupPlayer[];
   opponentBench: LineupPlayer[];
   substitutions: Array<{ outPlayerId: string; inPlayerId: string; quarter: number; at: string }>;
+  injuredPlayerIds: string[];
+  pendingInjury: null | {
+    outPlayerId: string;
+    outPlayerName: string;
+    suggestedPosition: string;
+    reason: string;
+  };
+  venueName?: string;
+  attendance?: number;
+  ticketRevenueEstimate?: number;
   fixtures: LiveFixtureState[];
   eventFeed: MatchEvent[];
   score: {

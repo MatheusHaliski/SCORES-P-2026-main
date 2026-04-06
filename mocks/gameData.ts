@@ -67,6 +67,35 @@ const createPlayers = (teamId: string, prefix: string): Player[] => [
 ];
 
 export const mockPlayers: Player[] = mockTeams.flatMap((team) => createPlayers(team.id, team.shortName));
+export const enrichedMockPlayers: Player[] = mockPlayers.map((player) => ({
+  ...player,
+  salary: Math.round(player.marketValue * 0.0065),
+  morale: "Contente",
+  injuryStatus: "Disponível",
+  injuryRecoveryRounds: 0,
+  transferStatus: "not_listed",
+  isTransferListed: false,
+  attributes: {
+    acceleration: player.pace,
+    sprintSpeed: Math.max(50, player.pace - 2),
+    positioning: player.overall,
+    finishing: player.shooting,
+    shotPower: Math.max(50, player.shooting - 1),
+    longShots: Math.max(45, player.shooting - 3),
+    vision: player.passing,
+    shortPass: Math.max(40, player.passing - 1),
+    longPass: Math.max(40, player.passing - 3),
+    curve: Math.max(35, player.passing - 5),
+    ballControl: player.dribbling,
+    agility: Math.max(40, player.dribbling - 1),
+    composure: Math.max(40, player.overall - 2),
+    interceptions: Math.max(35, player.defending - 2),
+    defensiveAwareness: player.defending,
+    strength: player.physical,
+    stamina: player.physicalCondition,
+    aggression: Math.max(40, player.physical - 4),
+  },
+}));
 
 export const mockUsers: User[] = [{ id: "u-1", displayName: "Coach Demo", email: "coach@scores.gg", createdAt: "2026-01-10T10:00:00.000Z" }];
 
