@@ -1,12 +1,20 @@
 import Link from "next/link";
 import { SectionCard } from "@/components/SectionCard";
 import { GameSetupService } from "@/services/GameSetupService";
+import { SaveGameService } from "@/services/SaveGameService";
 
 export default async function SelectTeamView({ searchParams }: { searchParams: Promise<{ leagueId?: string; teamId?: string }> }) {
   const params = await searchParams;
   const service = new GameSetupService();
   const data = await service.getSetupData(params.leagueId);
   const selectedTeam = data.teams.find((team) => team.id === params.teamId) ?? data.teams[0];
+
+  const userSaveSlots = await new SaveGameService().getSaveSlots("u-1");
+  const matchingSave = selectedTeam
+    ? userSaveSlots.find((slot) => slot.save.teamId === selectedTeam.id)?.save
+      ?? userSaveSlots.find((slot) => slot.save.leagueId === selectedTeam.leagueId)?.save
+    : undefined;
+  const targetSaveId = matchingSave?.id ?? "save-001";
 
   return (
     <main className="mx-auto min-h-screen max-w-7xl p-6">
@@ -35,7 +43,7 @@ export default async function SelectTeamView({ searchParams }: { searchParams: P
             ))}
           </div>
           {selectedTeam ? (
-            <Link href={`/squad?saveId=save-001`} className="mt-4 inline-block rounded bg-cyan-600 px-4 py-2 text-sm font-bold text-white">Confirmar {selectedTeam.shortName}</Link>
+            <Link href={`/squad?saveId=${targetSaveId}`} className="mt-4 inline-block rounded bg-cyan-600 px-4 py-2 text-sm font-bold text-white">Confirmar {selectedTeam.shortName}</Link>
           ) : null}
         </SectionCard>
       </div>
