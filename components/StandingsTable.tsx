@@ -1,6 +1,8 @@
 import { StandingRow, Team } from "@/types/game";
 
-export function StandingsTable({ rows, teamsById }: { rows: StandingRow[]; teamsById: Record<string, Team> }) {
+export function StandingsTable({ rows, teamsById, playoffSpots = 8, dangerSpots = 3 }: { rows: StandingRow[]; teamsById: Record<string, Team>; playoffSpots?: number; dangerSpots?: number }) {
+  const total = rows.length;
+
   return (
     <table className="w-full text-xs text-slate-100">
       <thead>
@@ -9,11 +11,15 @@ export function StandingsTable({ rows, teamsById }: { rows: StandingRow[]; teams
         </tr>
       </thead>
       <tbody>
-        {rows.map((row) => (
-          <tr key={row.teamId} className="border-t border-white/10">
-            <td>{row.position}</td><td>{teamsById[row.teamId]?.shortName}</td><td>{row.played}</td><td>{row.wins}</td><td>{row.losses}</td><td>{row.pointsFor}</td><td>{row.pointsAgainst}</td><td>{row.leaguePoints}</td>
-          </tr>
-        ))}
+        {rows.map((row) => {
+          const isPlayoff = row.position <= playoffSpots;
+          const isDanger = row.position > total - dangerSpots;
+          return (
+            <tr key={row.teamId} className={`border-t border-white/10 ${isPlayoff ? "bg-emerald-500/15" : ""} ${isDanger ? "bg-red-500/15" : ""}`}>
+              <td>{row.position}</td><td>{teamsById[row.teamId]?.shortName}</td><td>{row.played}</td><td>{row.wins}</td><td>{row.losses}</td><td>{row.pointsFor}</td><td>{row.pointsAgainst}</td><td>{row.leaguePoints}</td>
+            </tr>
+          );
+        })}
       </tbody>
     </table>
   );
