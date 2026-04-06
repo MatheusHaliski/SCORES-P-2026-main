@@ -25,6 +25,11 @@ export default async function SquadHomeView({ searchParams }: { searchParams: Pr
     new TeamsRepository().getStadiumByTeamId(payload.team.id),
   ]);
 
+
+  const stadiumsByTeamId = Object.fromEntries(
+    (await Promise.all(allTeams.map(async (team) => [team.id, await new TeamsRepository().getStadiumByTeamId(team.id)] as const))).map(([teamId, teamStadium]) => [teamId, teamStadium ?? null]),
+  );
+
   return (
     <SquadHomeClient
       payload={payload}
@@ -35,6 +40,7 @@ export default async function SquadHomeView({ searchParams }: { searchParams: Pr
       allTeams={allTeams}
       allPlayers={allPlayers}
       stadium={stadium ?? null}
+      stadiumsByTeamId={stadiumsByTeamId}
     />
   );
 }

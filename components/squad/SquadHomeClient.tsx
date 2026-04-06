@@ -15,6 +15,7 @@ import { TransferMarketService } from "@/services/TransferMarketService";
 import { GlobalSearchService } from "@/services/GlobalSearchService";
 import { FinanceService } from "@/services/FinanceService";
 import { StadiumRevenueService } from "@/services/StadiumRevenueService";
+import { ClubVisualService } from "@/services/ClubVisualService";
 
 type InboxMessage = {
   id: string;
@@ -45,11 +46,15 @@ type CareerState = {
   inbox: InboxMessage[];
   financeLog: Array<{ id: string; type: string; amount: number; note: string; round: number }>;
   pendingActions: PendingAction[];
+  teamColors: {
+    primaryColor: string;
+    secondaryColor: string;
+  };
 };
 
 const STORAGE_PREFIX = "scores:career-state:";
 
-const topActions = ["Calendário", "Classificações", "Campeões", "Comprar Jogador", "Salvar Jogo", "Sair", "Buscar", "Empréstimo", "Orçamento", "Estádio", "Email", "Consumíveis"] as const;
+const topActions = ["Calendário", "Classificações", "Campeões", "Comprar Jogador", "Salvar Jogo", "Sair", "Buscar", "Empréstimo", "Orçamento", "Estádio", "Email", "Consumíveis", "Identidade do Clube"] as const;
 const moraleService = new PlayerMoraleService();
 const injuryService = new PlayerInjuryService();
 const playstyleInventoryService = new PlaystyleInventoryService();
@@ -57,6 +62,7 @@ const transferService = new TransferMarketService();
 const globalSearchService = new GlobalSearchService();
 const financeService = new FinanceService();
 const stadiumRevenueService = new StadiumRevenueService();
+const clubVisualService = new ClubVisualService();
 
 const nowIso = () => new Date().toISOString();
 
@@ -134,6 +140,12 @@ const AttributeVerticalBars = ({ values }: { values: Array<{ name: string; value
   </div>
 );
 
+const LogoMark = ({ logo, label, size = 24 }: { logo: string; label: string; size?: number }) => {
+  const isImage = logo.startsWith("/") || logo.startsWith("http") || logo.startsWith("data:");
+  if (isImage) return <Image src={logo} alt={label} width={size} height={size} className="rounded" />;
+  return <span className="inline-flex items-center justify-center rounded bg-slate-800 px-2 py-1 text-lg">{logo}</span>;
+};
+
 export function SquadHomeClient({
   payload,
   teamsById,
@@ -143,6 +155,7 @@ export function SquadHomeClient({
   allTeams,
   allPlayers,
   stadium,
+  stadiumsByTeamId,
 }: {
   payload: SquadHomePayload;
   teamsById: Record<string, Team>;
@@ -152,6 +165,7 @@ export function SquadHomeClient({
   allTeams: Team[];
   allPlayers: Player[];
   stadium: Stadium | null;
+  stadiumsByTeamId: Record<string, Stadium | null>;
 }) {
   const [openModal, setOpenModal] = useState<(typeof topActions)[number] | null>(null);
   const [selectedPlayerId, setSelectedPlayerId] = useState<string | null>(null);
@@ -161,6 +175,7 @@ export function SquadHomeClient({
   const [selectedLeagueId, setSelectedLeagueId] = useState<string | null>(null);
   const [selectedClubId, setSelectedClubId] = useState<string | null>(null);
   const [selectedGlobalPlayerId, setSelectedGlobalPlayerId] = useState<string | null>(null);
+  const [colorDraft, setColorDraft] = useState({ primaryColor: payload.team.primaryColor, secondaryColor: payload.team.secondaryColor });
   const [playerFilters, setPlayerFilters] = useState<{ position: string; minOverall: number; listedOnly: boolean }>({
     position: "",
     minOverall: 70,
@@ -179,6 +194,10 @@ export function SquadHomeClient({
       signedPlayers: [],
       inbox: [],
       pendingActions: [],
+      teamColors: {
+        primaryColor: payload.team.primaryColor,
+        secondaryColor: payload.team.secondaryColor,
+      },
       financeLog: [{ id: "init", type: "setup", amount: payload.save.budgetSnapshot, note: "Saldo inicial", round: payload.save.currentRound }],
     };
 
@@ -398,6 +417,29 @@ export function SquadHomeClient({
     addFinance("consumable", -cost, `Compra de ${item}`);
   };
 
+  const saveTeamColors = async () => {
+    const nextColors = {
+      primaryColor: colorDraft.primaryColor,
+      secondaryColor: colorDraft.secondaryColor,
+    };
+
+    updateState((prev) => ({ ...prev, teamColors: nextColors }));
+    try {
+      await fetch("/api/team/colors", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          teamId: payload.team.id,
+          primaryColor: nextColors.primaryColor,
+          secondaryColor: nextColors.secondaryColor,
+        }),
+      });
+    } catch {
+      // fallback já persistido no save local.
+    }
+    setOpenModal(null);
+  };
+
   const attributeSections = (player: Player) => {
     const attrs = player.attributes ?? {
       acceleration: player.pace,
@@ -439,6 +481,20 @@ export function SquadHomeClient({
   const selectedClub = allTeams.find((club) => club.id === selectedClubId) ?? null;
   const selectedGlobalPlayer = marketPool.find((player) => player.id === selectedGlobalPlayerId) ?? null;
   const availablePlaystyles = playstyleInventoryService.availableItems(state.inventory);
+  const primaryColor = state.teamColors?.primaryColor ?? payload.team.primaryColor;
+  const secondaryColor = clubVisualService.ensureReadableAccent(state.teamColors?.secondaryColor ?? payload.team.secondaryColor);
+  const boardMoraleLabel = clubVisualService.reputationToLabel(payload.save.boardReputation);
+  const fansMoraleLabel = clubVisualService.reputationToLabel(payload.save.fansReputation);
+  const boardExpectation = clubVisualService.boardExpectation({
+    teamPosition: payload.team.currentLeaguePosition,
+    boardReputation: payload.save.boardReputation,
+  });
+  const isHomeNextMatch = payload.nextFixture ? payload.nextFixture.homeTeamId === payload.team.id : false;
+  const nextVenue = payload.nextFixture
+    ? isHomeNextMatch
+      ? stadium?.name ?? `${payload.team.shortName} Arena`
+      : stadiumsByTeamId[payload.nextFixture.awayTeamId === payload.team.id ? payload.nextFixture.homeTeamId : payload.nextFixture.awayTeamId]?.name ?? `${teamsById[payload.nextFixture.awayTeamId === payload.team.id ? payload.nextFixture.homeTeamId : payload.nextFixture.awayTeamId]?.shortName ?? "Arena"} Arena`
+    : "";
 
   const stadiumProjection = stadiumRevenueService.estimate({
     capacity: state.stadiumCapacity,
@@ -451,7 +507,12 @@ export function SquadHomeClient({
   });
 
   return (
-    <main className="min-h-screen p-6" style={{ backgroundImage: `${payload.visual.shapeCss}, ${payload.visual.gradientCss}` }}>
+    <main
+      className="min-h-screen p-6"
+      style={{
+        backgroundImage: `radial-gradient(circle at 15% 15%, ${secondaryColor}40 0%, transparent 30%), radial-gradient(circle at 85% 75%, ${primaryColor}55 0%, transparent 35%), linear-gradient(135deg, ${primaryColor}f2, #020617)`,
+      }}
+    >
       <div className="mx-auto max-w-7xl space-y-4">
         <header className="flex flex-wrap gap-2 rounded-2xl border border-white/20 bg-slate-950/70 p-3">
           {topActions.map((action) => (
@@ -463,8 +524,32 @@ export function SquadHomeClient({
 
         <div className="grid gap-4 lg:grid-cols-4">
           <div className="space-y-4 lg:col-span-1">
-            <TeamIdentityHeader team={payload.team} managerName={payload.save.managerName} uniforms={payload.uniforms} boardReputation={payload.save.boardReputation} fansReputation={payload.save.fansReputation} />
-            {payload.nextFixture ? <MiniNextMatchCard fixture={payload.nextFixture} homeTeam={teamsById[payload.nextFixture.homeTeamId]} awayTeam={teamsById[payload.nextFixture.awayTeamId]} /> : null}
+            <TeamIdentityHeader
+              team={payload.team}
+              managerName={payload.save.managerName}
+              boardReputation={payload.save.boardReputation}
+              fansReputation={payload.save.fansReputation}
+              boardMoraleLabel={boardMoraleLabel}
+              fansMoraleLabel={fansMoraleLabel}
+              stadiumName={stadium?.name ?? `${payload.team.shortName} Arena`}
+              boardExpectation={boardExpectation}
+              secondaryColor={secondaryColor}
+              onOpenColorEditor={() => {
+                setColorDraft({ primaryColor, secondaryColor: state.teamColors?.secondaryColor ?? payload.team.secondaryColor });
+                setOpenModal("Identidade do Clube");
+              }}
+            />
+            {payload.nextFixture ? (
+              <MiniNextMatchCard
+                fixture={payload.nextFixture}
+                userTeam={payload.team}
+                homeTeam={teamsById[payload.nextFixture.homeTeamId]}
+                awayTeam={teamsById[payload.nextFixture.awayTeamId]}
+                venue={nextVenue}
+                primaryColor={primaryColor}
+                secondaryColor={secondaryColor}
+              />
+            ) : null}
             {payload.save.employmentStatus !== "employed" && <SpectatorModeBanner />}
             <div className="rounded-xl border border-emerald-400/50 bg-emerald-500/10 p-3 text-xs text-emerald-100">
               <p>Caixa: ${state.budget.toLocaleString()}</p>
@@ -478,7 +563,7 @@ export function SquadHomeClient({
             <div className="space-y-2">
               {mergedPlayers.map((player) => (
                 <button key={player.id} onClick={() => setSelectedPlayerId(player.id)} className="grid w-full grid-cols-8 gap-2 rounded-xl border border-white/10 bg-slate-800/70 p-2 text-left text-xs text-slate-100 hover:border-cyan-300/60">
-                  <p className="col-span-2 font-semibold">{player.name}</p>
+                  <p className="col-span-2 font-semibold" style={{ color: secondaryColor }}>{player.name}</p>
                   <p>{player.position}</p>
                   <p>OVR {player.overall}</p>
                   <p>{player.age} anos</p>
@@ -675,8 +760,8 @@ export function SquadHomeClient({
             </div>
             <input className="w-full rounded border border-white/20 bg-slate-800 px-2 py-1 text-sm" placeholder="Buscar por nome" value={searchQuery} onChange={(event) => setSearchQuery(event.target.value)} />
 
-            {searchTab === "Ligas" && <div className="max-h-[60vh] space-y-1 overflow-auto">{filteredLeagues.map((league) => <button key={league.id} onClick={() => setSelectedLeagueId(league.id)} className="flex w-full items-center gap-2 rounded border border-white/10 p-2 text-left"><Image src={league.logoUrl} alt={league.name} width={24} height={24} className="h-6 w-6 rounded" /><span>{league.name}</span></button>)}</div>}
-            {searchTab === "Clubes" && <div className="max-h-[60vh] space-y-1 overflow-auto">{filteredClubs.map((club) => <button key={club.id} onClick={() => setSelectedClubId(club.id)} className="flex w-full items-center gap-2 rounded border border-white/10 p-2 text-left"><Image src={club.logoUrl} alt={club.name} width={24} height={24} className="h-6 w-6 rounded" /><span>{club.name}</span></button>)}</div>}
+            {searchTab === "Ligas" && <div className="max-h-[60vh] space-y-1 overflow-auto">{filteredLeagues.map((league) => <button key={league.id} onClick={() => setSelectedLeagueId(league.id)} className="flex w-full items-center gap-2 rounded border border-white/10 p-2 text-left"><LogoMark logo={league.logoUrl} label={league.name} size={24} /><span>{league.name}</span></button>)}</div>}
+            {searchTab === "Clubes" && <div className="max-h-[60vh] space-y-1 overflow-auto">{filteredClubs.map((club) => <button key={club.id} onClick={() => setSelectedClubId(club.id)} className="flex w-full items-center gap-2 rounded border border-white/10 p-2 text-left"><LogoMark logo={club.logoUrl} label={club.name} size={24} /><span>{club.name}</span></button>)}</div>}
             {searchTab === "Jogadores" && (
               <div className="space-y-2">
                 <div className="grid grid-cols-2 gap-2">
@@ -692,7 +777,7 @@ export function SquadHomeClient({
           <div className="rounded-xl border border-white/20 p-3">
             {searchTab === "Ligas" && selectedLeague && (
               <div className="space-y-2">
-                <div className="flex items-center gap-3"><Image src={selectedLeague.logoUrl} alt={selectedLeague.name} width={48} height={48} className="h-12 w-12 rounded" /><div><p className="text-lg font-black">{selectedLeague.name}</p><p>{selectedLeague.country} • {selectedLeague.format}</p></div></div>
+                <div className="flex items-center gap-3"><LogoMark logo={selectedLeague.logoUrl} label={selectedLeague.name} size={48} /><div><p className="text-lg font-black">{selectedLeague.name}</p><p>{selectedLeague.country} • {selectedLeague.format}</p></div></div>
                 <p>Times: {selectedLeague.teamCount}</p>
                 <p>Classificação (top 8):</p>
                 {standings.slice(0, 8).map((row) => <p key={row.teamId}>#{row.position} {teamsById[row.teamId]?.name} ({row.wins}-{row.losses})</p>)}
@@ -703,7 +788,7 @@ export function SquadHomeClient({
 
             {searchTab === "Clubes" && selectedClub && (
               <div className="space-y-2">
-                <div className="flex items-center gap-3"><Image src={selectedClub.logoUrl} alt={selectedClub.name} width={48} height={48} className="h-12 w-12 rounded" /><div><p className="text-lg font-black">{selectedClub.name}</p><p>{leagues.find((league) => league.id === selectedClub.leagueId)?.name}</p></div></div>
+                <div className="flex items-center gap-3"><LogoMark logo={selectedClub.logoUrl} label={selectedClub.name} size={48} /><div><p className="text-lg font-black">{selectedClub.name}</p><p>{leagues.find((league) => league.id === selectedClub.leagueId)?.name}</p></div></div>
                 <p>Orçamento: ${selectedClub.budget.toLocaleString()} • Overall: {selectedClub.overall}</p>
                 <p>Posição liga: {selectedClub.currentLeaguePosition} • Reputação: {selectedClub.reputationFans}/10</p>
                 <p className="font-semibold text-cyan-300">Elenco do clube</p>
@@ -744,6 +829,39 @@ export function SquadHomeClient({
             {!selectedLeague && searchTab === "Ligas" && <p>Selecione uma liga para ver detalhes.</p>}
             {!selectedClub && searchTab === "Clubes" && <p>Selecione um clube para ver detalhes e elenco.</p>}
             {!selectedGlobalPlayer && searchTab === "Jogadores" && <p>Selecione um jogador para abrir detalhes globais.</p>}
+          </div>
+        </div>
+      ))}
+
+      {openModal === "Identidade do Clube" && modalShell("ClubColorEditorModal", () => setOpenModal(null), (
+        <div className="space-y-4 text-sm text-slate-100">
+          <p>Editor visual de identidade do clube com preview em tempo real.</p>
+          <div className="grid gap-3 sm:grid-cols-2">
+            <label className="rounded border border-white/20 p-3">
+              <p className="mb-2 text-xs uppercase text-slate-300">Primary Color</p>
+              <input type="color" value={colorDraft.primaryColor} onChange={(event) => setColorDraft((prev) => ({ ...prev, primaryColor: event.target.value }))} className="h-10 w-full cursor-pointer rounded" />
+            </label>
+            <label className="rounded border border-white/20 p-3">
+              <p className="mb-2 text-xs uppercase text-slate-300">Secondary Color</p>
+              <input type="color" value={colorDraft.secondaryColor} onChange={(event) => setColorDraft((prev) => ({ ...prev, secondaryColor: event.target.value }))} className="h-10 w-full cursor-pointer rounded" />
+            </label>
+          </div>
+
+          <div
+            className="rounded-2xl border border-white/20 p-4"
+            style={{
+              backgroundImage: `linear-gradient(135deg, ${colorDraft.primaryColor}cc, #0f172acc), radial-gradient(circle at 20% 30%, ${colorDraft.secondaryColor}66 0%, transparent 35%)`,
+            }}
+          >
+            <p className="text-xs uppercase tracking-widest text-slate-100">ClubThemePreviewCard</p>
+            <p className="text-lg font-black" style={{ color: clubVisualService.ensureReadableAccent(colorDraft.secondaryColor) }}>{payload.team.name}</p>
+            <p className="text-xs text-slate-200">Manager: {payload.save.managerName}</p>
+          </div>
+
+          <div className="flex flex-wrap gap-2">
+            <button onClick={() => setColorDraft({ primaryColor: payload.team.primaryColor, secondaryColor: payload.team.secondaryColor })} className="rounded bg-slate-700 px-3 py-1 text-xs font-semibold">Restaurar padrão</button>
+            <button onClick={() => setOpenModal(null)} className="rounded bg-slate-700 px-3 py-1 text-xs font-semibold">Cancelar</button>
+            <button onClick={saveTeamColors} className="rounded bg-emerald-500 px-3 py-1 text-xs font-bold text-slate-950">Salvar cores</button>
           </div>
         </div>
       ))}

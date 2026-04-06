@@ -28,4 +28,24 @@ export class TeamsRepository {
   async getStadiumByTeamId(teamId: string): Promise<Stadium | undefined> {
     return mockStadiums.find((stadium) => stadium.teamId === teamId);
   }
+
+  async updateTeamColors(teamId: string, primaryColor: string, secondaryColor: string): Promise<void> {
+    if (shouldUseFirebase && firestoreDb) {
+      // TODO: update document in `teams` and `clubVisuals`.
+    }
+
+    const team = mockTeams.find((entry) => entry.id === teamId);
+    if (team) {
+      team.primaryColor = primaryColor;
+      team.secondaryColor = secondaryColor;
+    }
+
+    const visual = mockClubVisuals.find((entry) => entry.teamId === teamId);
+    if (visual) {
+      visual.primaryColor = primaryColor;
+      visual.secondaryColor = secondaryColor;
+      visual.shapeCss = `radial-gradient(circle at 20% 20%, ${secondaryColor}88 0%, transparent 55%), radial-gradient(circle at 85% 70%, ${primaryColor}99 0%, transparent 50%)`;
+      visual.gradientCss = `linear-gradient(135deg, ${secondaryColor}, ${primaryColor})`;
+    }
+  }
 }
