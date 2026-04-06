@@ -1,4 +1,4 @@
-import { LiveFixtureState } from "@/types/liveMatch";
+import { LiveFixtureState } from "@/types/matchSession";
 
 export function UserMatchHighlightCard({ fixture }: { fixture: LiveFixtureState }) {
   return (
