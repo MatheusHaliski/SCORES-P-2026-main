@@ -56,7 +56,7 @@ export function MatchBoardLiveClient({
         </SectionCard>
       </div>
 
-      {session.phase === "POST_MATCH" && <PostMatchModal saveId={saveId} standings={standings} teamsById={teamsById} />}
+      {session.phase === "POST_MATCH" && <PostMatchModal saveId={saveId} standings={standings} teamsById={teamsById} userTeamId={userTeamId} />}
     </main>
   );
 }

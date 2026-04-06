@@ -27,7 +27,7 @@ export class MatchBoardService {
       this.teamsRepository.getTeamById(save.teamId),
       this.playersRepository.getPlayersByTeam(save.teamId),
       this.playersRepository.getPlayersByTeam(opponentTeamId),
-      this.standingsRepository.getStandingsByLeague(save.leagueId),
+      this.standingsRepository.getStandingsByLeague(save.leagueId, saveId),
     ]);
 
     return { save, fixtures, userTeam, userPlayers, opponentPlayers, standings };
