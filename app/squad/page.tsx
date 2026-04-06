@@ -36,7 +36,7 @@ export default async function SquadHomeView({ searchParams }: { searchParams: Pr
             <Link href={`/match-board?saveId=${payload.save.id}`} className="block rounded-xl bg-cyan-500 px-4 py-3 text-center font-bold text-slate-950">Iniciar Jogo</Link>
           </div>
 
-          <SectionCard title="Elenco Principal" subtitle="Hub de gestão do save" className="lg:col-span-3">
+          <SectionCard title="Elenco Principal" subtitle={payload.save.saveName ?? "Hub de gestão do save"} className="lg:col-span-3">
             <div className="space-y-2">
               {payload.players.map((player) => <PlayerRowCard key={player.id} player={player} />)}
             </div>
