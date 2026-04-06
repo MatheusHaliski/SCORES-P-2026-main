@@ -3,7 +3,7 @@ import { StandingRow, Team } from "@/types/game";
 import { StandingsTable } from "@/components/StandingsTable";
 import { useState } from "react";
 
-export function PostMatchModal({ saveId, standings, teamsById }: { saveId: string; standings: StandingRow[]; teamsById: Record<string, Team> }) {
+export function PostMatchModal({ saveId, standings, teamsById, userTeamId }: { saveId: string; standings: StandingRow[]; teamsById: Record<string, Team>; userTeamId: string }) {
   const [showStandings, setShowStandings] = useState(false);
 
   return (
@@ -17,7 +17,7 @@ export function PostMatchModal({ saveId, standings, teamsById }: { saveId: strin
           </div>
         ) : (
           <div className="mt-3 space-y-3">
-            <StandingsTable rows={standings} teamsById={teamsById} playoffSpots={8} dangerSpots={3} />
+            <StandingsTable rows={standings} teamsById={teamsById} playoffSpots={8} dangerSpots={3} highlightTeamId={userTeamId} />
             <button onClick={() => setShowStandings(false)} className="rounded bg-slate-700 px-3 py-2 text-xs font-bold text-white">Voltar</button>
           </div>
         )}

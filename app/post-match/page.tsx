@@ -10,7 +10,7 @@ export default async function PostMatchBoardView({ searchParams }: { searchParam
   const params = await searchParams;
   const saveId = params.saveId ?? "save-001";
   const board = await new MatchBoardService().getLiveBoard(saveId);
-  const standings = await new StandingsRepository().getStandingsByLeague(board.save.leagueId);
+  const standings = await new StandingsRepository().getStandingsByLeague(board.save.leagueId, saveId);
   const teamsById = getTeamsById();
   const finalFixtures = mockFixtures.filter((fixture) => fixture.leagueId === board.save.leagueId && fixture.status === "finished");
 
@@ -22,7 +22,7 @@ export default async function PostMatchBoardView({ searchParams }: { searchParam
           <LiveScoreBoard fixtures={finalFixtures.length ? finalFixtures : board.fixtures} teamsById={teamsById} highlightTeamId={board.save.teamId} />
         </SectionCard>
         <SectionCard title="Classificação atualizada" subtitle="Impacto imediato da rodada">
-          <StandingsTable rows={standings} teamsById={teamsById} />
+          <StandingsTable rows={standings} teamsById={teamsById} highlightTeamId={board.save.teamId} />
           <p className="mt-3 text-xs text-slate-300">MVP da partida: {teamsById[board.save.teamId]?.shortName} - Armador com 24pts/11ast.</p>
         </SectionCard>
       </div>
