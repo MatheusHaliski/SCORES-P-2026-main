@@ -1,3 +1,4 @@
+import { redirect } from "next/navigation";
 import { getTeamsById } from "@/lib/gameUtils";
 import { MatchBoardService } from "@/services/MatchBoardService";
 import { MatchBoardLiveClient } from "@/app/match-board/MatchBoardLiveClient";
@@ -5,7 +6,12 @@ import { MatchBoardLiveClient } from "@/app/match-board/MatchBoardLiveClient";
 export default async function MatchBoardView({ searchParams }: { searchParams: Promise<{ saveId?: string }> }) {
   const params = await searchParams;
   const saveId = params.saveId ?? "save-001";
-  const board = await new MatchBoardService().getLiveBoard(saveId);
+  const board = await new MatchBoardService().getLiveBoard(saveId).catch(() => null);
+
+  if (!board) {
+    redirect(`/squad?saveId=${saveId}&tab=standings`);
+  }
+
   const teamsById = getTeamsById();
 
   return (

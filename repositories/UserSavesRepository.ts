@@ -3,6 +3,8 @@ import { UserSave } from "@/types/game";
 import { firestoreDb, shouldUseFirebase } from "@/lib/firebase/config";
 import { parseNewSaveId } from "@/lib/saveId";
 
+const saveProgressOverrides = new Map<string, Partial<UserSave>>();
+
 const buildDynamicSave = (saveId: string): UserSave | undefined => {
   const parsedSave = parseNewSaveId(saveId);
   if (!parsedSave) return undefined;
@@ -37,6 +39,11 @@ const buildDynamicSave = (saveId: string): UserSave | undefined => {
 };
 
 export class UserSavesRepository {
+  upsertSaveProgress(saveId: string, patch: Partial<UserSave>) {
+    const current = saveProgressOverrides.get(saveId) ?? {};
+    saveProgressOverrides.set(saveId, { ...current, ...patch });
+  }
+
   async getUserSaves(userId: string): Promise<UserSave[]> {
     if (shouldUseFirebase && firestoreDb) {
       // TODO: query `user_saves` where userId == userId.
@@ -50,8 +57,10 @@ export class UserSavesRepository {
     }
 
     const staticSave = mockUserSaves.find((save) => save.id === saveId);
-    if (staticSave) return staticSave;
+    if (staticSave) return { ...staticSave, ...(saveProgressOverrides.get(saveId) ?? {}) };
 
-    return buildDynamicSave(saveId);
+    const dynamic = buildDynamicSave(saveId);
+    if (!dynamic) return undefined;
+    return { ...dynamic, ...(saveProgressOverrides.get(saveId) ?? {}) };
   }
 }

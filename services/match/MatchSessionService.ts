@@ -27,7 +27,8 @@ export class MatchSessionService {
 
   async loadOrCreate(payload: CreateMatchSessionPayload): Promise<MatchSession> {
     const existing = await this.repository.getBySaveId(payload.saveId);
-    if (existing) return existing;
+    if (existing && existing.round === payload.round) return existing;
+    if (existing && existing.round !== payload.round) await this.repository.clear(payload.saveId);
 
     const now = new Date().toISOString();
     const userIsHome = payload.userFixture.homeTeamId === payload.userTeamId;
