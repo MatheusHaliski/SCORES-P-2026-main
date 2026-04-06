@@ -19,6 +19,7 @@ const formatClock = (seconds: number) => {
 export class MatchProgressEngine {
   tick(session: MatchSession, simulatedSecondsPerTick: number, random: () => number): MatchSession {
     if (!QuarterFlowEngine.isLivePhase(session.phase)) return session;
+    if (session.pendingInjury) return session;
 
     const userFixture = session.fixtures.find((fixture) => fixture.isUserMatch);
     if (!userFixture) return session;
@@ -26,8 +27,18 @@ export class MatchProgressEngine {
     const nextTimeRemaining = clamp(session.timeRemaining - simulatedSecondsPerTick, 0, session.quarterDuration);
     const elapsed = session.quarterDuration - nextTimeRemaining;
 
-    const userLineupImpact = LineupImpactEngine.fromLineup(session.userLineup);
-    const oppLineupImpact = LineupImpactEngine.fromLineup(session.opponentLineup);
+    const moraleFactor = (morale: MatchSession["userLineup"][number]["morale"]) => (
+      morale === "Muito Feliz" ? 1.05 : morale === "Feliz" ? 1.02 : morale === "Contente" ? 1 : morale === "Insatisfeito" ? 0.96 : 0.9
+    );
+    const styleBonus = (playstyles: string[]) => 1 + Math.min(0.08, playstyles.length * 0.015);
+    const lineupAdjusted = <T extends MatchSession["userLineup"]>(lineup: T) =>
+      lineup.map((player) => ({
+        ...player,
+        overall: Math.round(player.overall * moraleFactor(player.morale) * Math.max(0.8, player.stamina / 100) * styleBonus(player.playstyles)),
+      })) as T;
+
+    const userLineupImpact = LineupImpactEngine.fromLineup(lineupAdjusted(session.userLineup));
+    const oppLineupImpact = LineupImpactEngine.fromLineup(lineupAdjusted(session.opponentLineup));
     const userTacticImpact = TacticImpactEngine.for(session.userTeamTactic);
     const oppTacticImpact = TacticImpactEngine.for(session.opponentTeamTactic);
 
@@ -73,6 +84,23 @@ export class MatchProgressEngine {
         type: points === 3 ? "3PT_MADE" : "2PT_MADE",
         text: `${scoringTeamIsUser ? "Seu time" : "Adversário"}: ${scorer?.playerName ?? "Jogador"} converte ${points} pts (${formatClock(nextTimeRemaining)}).`,
       });
+    }
+
+    if (random() < 0.045) {
+      const candidates = session.userLineup.filter((player) => player.injuryStatus !== "Lesionado");
+      const risky = [...candidates].sort((a, b) => a.stamina - b.stamina);
+      const victim = risky[0];
+      if (victim) {
+        newEvents.push({
+          id: `ev-injury-${Date.now()}-${Math.floor(random() * 99999)}`,
+          fixtureId: userFixture.id,
+          second: elapsed,
+          teamId: session.userTeamId,
+          playerName: victim.playerName,
+          type: "INJURY",
+          text: `${victim.playerName} sentiu lesão e precisa ser substituído.`,
+        });
+      }
     }
 
     const quarterEnded = nextTimeRemaining === 0;
@@ -131,6 +159,17 @@ export class MatchProgressEngine {
       stamina: clamp(player.stamina - simulatedSecondsPerTick * 0.05 * oppTacticImpact.staminaDrain, 45, 100),
     }));
 
+    const injuryEvent = newEvents.find((event) => event.type === "INJURY");
+    const pendingInjury = injuryEvent?.playerName
+      ? {
+          outPlayerId: drainedUserLineup.find((player) => player.playerName === injuryEvent.playerName)?.playerId ?? "",
+          outPlayerName: injuryEvent.playerName,
+          suggestedPosition: drainedUserLineup.find((player) => player.playerName === injuryEvent.playerName)?.position ?? "SG",
+          reason: "Evento de lesão durante a partida",
+        }
+      : null;
+    const injuryPlayerId = pendingInjury?.outPlayerId;
+
     return {
       ...session,
       quarter: nextQuarter,
@@ -138,8 +177,10 @@ export class MatchProgressEngine {
       timeRemaining: quarterEnded && nextPhase !== "POST_MATCH" ? session.quarterDuration : nextTimeRemaining,
       isFinished: nextPhase === "POST_MATCH",
       fixtures: updatedFixtures,
-      userLineup: drainedUserLineup,
+      userLineup: drainedUserLineup.map((player) => injuryPlayerId && player.playerId === injuryPlayerId ? { ...player, injuryStatus: "Lesionado" } : player),
       opponentLineup: drainedOpponentLineup,
+      injuredPlayerIds: injuryPlayerId ? [...new Set([...session.injuredPlayerIds, injuryPlayerId])] : session.injuredPlayerIds,
+      pendingInjury: pendingInjury ?? session.pendingInjury,
       score: {
         user: userIsHome ? userFixtureAfter?.homeScore ?? session.score.user : userFixtureAfter?.awayScore ?? session.score.user,
         opponent: userIsHome ? userFixtureAfter?.awayScore ?? session.score.opponent : userFixtureAfter?.homeScore ?? session.score.opponent,

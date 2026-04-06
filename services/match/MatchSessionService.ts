@@ -3,8 +3,9 @@ import { MatchProgressEngine } from "@/services/match/MatchProgressEngine";
 import { QuarterFlowEngine } from "@/services/match/QuarterFlowEngine";
 import { MatchEvent } from "@/types/liveMatch";
 import { CreateMatchSessionPayload, LineupPlayer, MatchSession, TeamTactic } from "@/types/matchSession";
+import { StadiumRevenueService } from "@/services/StadiumRevenueService";
 
-const toLineupPlayer = (player: { id: string; name: string; position: string; overall: number; physicalCondition: number; pace: number; shooting: number; passing: number; dribbling: number; defending: number; physical: number; isStarter: boolean }): LineupPlayer => ({
+const toLineupPlayer = (player: { id: string; name: string; position: string; overall: number; physicalCondition: number; pace: number; shooting: number; passing: number; dribbling: number; defending: number; physical: number; isStarter: boolean; morale?: LineupPlayer["morale"]; injuryStatus?: LineupPlayer["injuryStatus"]; playstyles?: string[] }): LineupPlayer => ({
   playerId: player.id,
   playerName: player.name,
   position: player.position,
@@ -16,6 +17,9 @@ const toLineupPlayer = (player: { id: string; name: string; position: string; ov
   dribbling: player.dribbling,
   defending: player.defending,
   physical: player.physical,
+  morale: player.morale ?? "Contente",
+  injuryStatus: player.injuryStatus ?? "Disponível",
+  playstyles: player.playstyles ?? [],
   isStarter: player.isStarter,
 });
 
@@ -23,6 +27,7 @@ export class MatchSessionService {
   constructor(
     private repository = new MatchSessionRepository(),
     private progressEngine = new MatchProgressEngine(),
+    private stadiumRevenueService = new StadiumRevenueService(),
   ) {}
 
   async loadOrCreate(payload: CreateMatchSessionPayload): Promise<MatchSession> {
@@ -38,6 +43,17 @@ export class MatchSessionService {
     const userBench = payload.players.filter((player) => player.isBench).slice(0, 7).map(toLineupPlayer);
     const opponentLineup = payload.opponentPlayers.filter((player) => player.isStarter).slice(0, 5).map(toLineupPlayer);
     const opponentBench = payload.opponentPlayers.filter((player) => player.isBench).slice(0, 7).map(toLineupPlayer);
+
+    const stadiumCapacity = 19000;
+    const ticketPrice = 45;
+    const revenueEstimate = this.stadiumRevenueService.estimate({
+      capacity: stadiumCapacity,
+      ticketPrice,
+      demand: 0.92,
+      teamForm: 0.1,
+      reputation: 74,
+      roundImportance: payload.round > 10 ? 0.16 : 0.08,
+    });
 
     const session: MatchSession = {
       id: `ms-${payload.saveId}`,
@@ -58,6 +74,11 @@ export class MatchSessionService {
       opponentLineup,
       opponentBench,
       substitutions: [],
+      injuredPlayerIds: [],
+      pendingInjury: null,
+      venueName: `${payload.teamsById[payload.userTeamId]?.shortName ?? "HOME"} Arena`,
+      attendance: revenueEstimate.attendance,
+      ticketRevenueEstimate: revenueEstimate.revenue,
       fixtures: payload.fixtures.map((fixture) => ({
         id: fixture.id,
         homeTeamId: fixture.homeTeamId,
@@ -144,6 +165,7 @@ export class MatchSessionService {
       userBench: nextBench,
       substitutions: [...session.substitutions, { outPlayerId, inPlayerId, quarter: session.quarter, at: new Date().toISOString() }],
       eventFeed: [...session.eventFeed, subEvent].slice(-60),
+      pendingInjury: session.pendingInjury?.outPlayerId === outPlayerId ? null : session.pendingInjury,
       updatedAt: new Date().toISOString(),
     };
 
