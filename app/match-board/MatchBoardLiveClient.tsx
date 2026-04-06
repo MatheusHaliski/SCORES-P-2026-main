@@ -1,6 +1,5 @@
 "use client";
 
-import { MatchEventFeed } from "@/components/MatchEventFeed";
 import { SectionCard } from "@/components/SectionCard";
 import { useLiveRoundSimulation } from "@/hooks/useLiveRoundSimulation";
 import { Fixture, Player, StandingRow, Team } from "@/types/game";
@@ -51,12 +50,9 @@ export function MatchBoardLiveClient({
     <main className="mx-auto min-h-screen max-w-6xl p-6">
       <QuarterProgressHeader session={session} />
 
-      <div className="mt-4 grid gap-4 lg:grid-cols-[2fr_1fr]">
+      <div className="mt-4">
         <SectionCard title="Rodada completa - placares ao vivo">
-          <LiveRoundFixtureList fixtures={session.fixtures} />
-        </SectionCard>
-        <SectionCard title="Feed textual de eventos">
-          <MatchEventFeed events={session.eventFeed} />
+          <LiveRoundFixtureList fixtures={session.fixtures} events={session.eventFeed} userTeamId={userTeamId} />
         </SectionCard>
       </div>
 
