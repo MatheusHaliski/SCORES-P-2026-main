@@ -58,9 +58,6 @@ export class MatchProgressEngine {
       if (points === 2 && random() > paint2Chance) points = 3;
       if (random() < 0.05 * variance) points = 2;
 
-      const scoringLineup = scoringTeamIsUser ? session.userLineup : session.opponentLineup;
-      const scorer = scoringLineup[Math.floor(random() * scoringLineup.length)];
-
       if (scoringTeamIsUser) {
         if (userIsHome) homeDelta += points;
         else awayDelta += points;
