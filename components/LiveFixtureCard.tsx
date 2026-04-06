@@ -1,4 +1,4 @@
-import { LiveFixtureState } from "@/types/liveMatch";
+import { LiveFixtureState } from "@/types/matchSession";
 
 export function LiveFixtureCard({ fixture }: { fixture: LiveFixtureState }) {
   return (

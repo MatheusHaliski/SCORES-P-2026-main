@@ -1,51 +1,66 @@
 "use client";
 
-import { MatchTopProgressBar } from "@/components/MatchTopProgressBar";
 import { MatchEventFeed } from "@/components/MatchEventFeed";
-import { LiveRoundScoreBoard } from "@/components/LiveRoundScoreBoard";
-import { UserMatchHighlightCard } from "@/components/UserMatchHighlightCard";
 import { SectionCard } from "@/components/SectionCard";
 import { useLiveRoundSimulation } from "@/hooks/useLiveRoundSimulation";
-import { Fixture, Team } from "@/types/game";
+import { Fixture, Player, StandingRow, Team } from "@/types/game";
+import { QuarterProgressHeader } from "@/components/QuarterProgressHeader";
+import { LiveRoundFixtureList } from "@/components/LiveRoundFixtureList";
+import { PostMatchModal } from "@/components/PostMatchModal";
 
 export function MatchBoardLiveClient({
   saveId,
+  leagueId,
+  round,
   fixtures,
   teamsById,
   userTeamId,
+  userPlayers,
+  opponentPlayers,
+  standings,
 }: {
   saveId: string;
+  leagueId: string;
+  round: number;
   fixtures: Fixture[];
   teamsById: Record<string, Team>;
   userTeamId: string;
+  userPlayers: Player[];
+  opponentPlayers: Player[];
+  standings: StandingRow[];
 }) {
-  const { state, userFixture } = useLiveRoundSimulation({
+  const { session } = useLiveRoundSimulation({
     saveId,
+    leagueId,
+    round,
     fixtures,
     teamsById,
     userTeamId,
-    quarter: 1,
-    totalQuarterSeconds: 180,
+    players: userPlayers,
+    opponentPlayers,
+    quarterDuration: 180,
     tickIntervalMs: 500,
     simulatedSecondsPerTick: 3,
   });
 
+  if (!session) {
+    return <main className="mx-auto min-h-screen max-w-6xl p-6 text-white">Carregando partida...</main>;
+  }
+
   return (
     <main className="mx-auto min-h-screen max-w-6xl p-6">
-      <MatchTopProgressBar progress={state.progress} />
+      <QuarterProgressHeader session={session} />
 
       <div className="mt-4 grid gap-4 lg:grid-cols-[2fr_1fr]">
-        <SectionCard title="Jogo do usuário em destaque">
-          {userFixture ? <UserMatchHighlightCard fixture={userFixture} /> : <p className="text-sm text-slate-300">Não foi possível localizar o confronto do usuário.</p>}
+        <SectionCard title="Rodada completa - placares ao vivo">
+          <LiveRoundFixtureList fixtures={session.fixtures} />
         </SectionCard>
         <SectionCard title="Feed textual de eventos">
-          <MatchEventFeed events={state.events} />
+          <MatchEventFeed events={session.eventFeed} />
         </SectionCard>
       </div>
 
-      <SectionCard title="Placar ao vivo da rodada" className="mt-4">
-        <LiveRoundScoreBoard fixtures={state.fixtures} />
-      </SectionCard>
+      {session.phase === "POST_MATCH" && <PostMatchModal saveId={saveId} standings={standings} teamsById={teamsById} />}
     </main>
   );
 }

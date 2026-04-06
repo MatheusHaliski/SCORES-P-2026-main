@@ -1,4 +1,4 @@
-import { LiveFixtureState } from "@/types/liveMatch";
+import { LiveFixtureState } from "@/types/matchSession";
 import { LiveFixtureCard } from "@/components/LiveFixtureCard";
 
 export function LiveRoundScoreBoard({ fixtures }: { fixtures: LiveFixtureState[] }) {

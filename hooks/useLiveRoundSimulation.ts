@@ -2,83 +2,127 @@
 
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
-import { Fixture, Team } from "@/types/game";
-import { HalftimeSnapshot, LiveRoundState } from "@/types/liveMatch";
-import { LiveRoundSimulationService } from "@/services/simulation/LiveRoundSimulationService";
+import { MatchSessionService } from "@/services/match/MatchSessionService";
+import { MatchSession } from "@/types/matchSession";
+import { QuarterFlowEngine } from "@/services/match/QuarterFlowEngine";
+import { Fixture, Player, Team } from "@/types/game";
+import { HalftimeSnapshot } from "@/types/liveMatch";
 
-type UseLiveRoundSimulationParams = {
+type Params = {
   saveId: string;
+  leagueId: string;
+  round: number;
   fixtures: Fixture[];
+  players: Player[];
+  opponentPlayers: Player[];
   teamsById: Record<string, Team>;
   userTeamId: string;
-  quarter?: number;
-  totalQuarterSeconds?: number;
   tickIntervalMs?: number;
   simulatedSecondsPerTick?: number;
+  quarterDuration?: number;
 };
 
-const halftimeStorageKey = (saveId: string) => `scores:halftime:${saveId}`;
-
-export function useLiveRoundSimulation(params: UseLiveRoundSimulationParams) {
+export function useLiveRoundSimulation(params: Params) {
   const router = useRouter();
-  const simulationService = useMemo(() => new LiveRoundSimulationService(), []);
-  const [state, setState] = useState<LiveRoundState>(() =>
-    simulationService.createInitialState({
-      fixtures: params.fixtures,
-      teamsById: params.teamsById,
-      userTeamId: params.userTeamId,
-      quarter: params.quarter ?? 1,
-      totalQuarterSeconds: params.totalQuarterSeconds ?? 180,
-    }),
-  );
-
-  const didNavigateRef = useRef(false);
+  const service = useMemo(() => new MatchSessionService(), []);
+  const [session, setSession] = useState<MatchSession | null>(null);
+  const navigatingRef = useRef(false);
 
   useEffect(() => {
-    const interval = window.setInterval(() => {
-      setState((currentState) =>
-        simulationService.tickRound({
-          state: currentState,
-          simulatedSecondsPerTick: params.simulatedSecondsPerTick ?? 3,
-          random: Math.random,
-        }),
-      );
+    const userFixture = params.fixtures.find((fixture) => fixture.homeTeamId === params.userTeamId || fixture.awayTeamId === params.userTeamId);
+    if (!userFixture) return;
+
+    service
+      .loadOrCreate({
+        saveId: params.saveId,
+        leagueId: params.leagueId,
+        round: params.round,
+        userTeamId: params.userTeamId,
+        userFixture,
+        fixtures: params.fixtures,
+        players: params.players,
+        opponentPlayers: params.opponentPlayers,
+        teamsById: params.teamsById,
+        quarterDuration: params.quarterDuration ?? 180,
+      })
+      .then(setSession);
+  }, [params, service]);
+
+  useEffect(() => {
+    if (!session || !QuarterFlowEngine.isLivePhase(session.phase)) return;
+
+    const interval = window.setInterval(async () => {
+      setSession((current) => {
+        if (!current || !QuarterFlowEngine.isLivePhase(current.phase)) return current;
+        service.tick(current, params.simulatedSecondsPerTick ?? 3, Math.random).then(setSession);
+        return current;
+      });
     }, params.tickIntervalMs ?? 500);
 
     return () => window.clearInterval(interval);
-  }, [params.simulatedSecondsPerTick, params.tickIntervalMs, simulationService]);
+  }, [params.simulatedSecondsPerTick, params.tickIntervalMs, service, session]);
 
   useEffect(() => {
-    if (!state.isFinished || didNavigateRef.current) return;
-    didNavigateRef.current = true;
+    if (!session || navigatingRef.current) return;
 
-    const snapshot: HalftimeSnapshot = {
-      saveId: params.saveId,
-      quarterFinished: state.progress.quarter,
-      savedAt: new Date().toISOString(),
-      fixtures: state.fixtures,
-      recentEvents: state.events.slice(-15),
-      progress: state.progress,
-    };
+    if (QuarterFlowEngine.isBreakPhase(session.phase)) {
+      navigatingRef.current = true;
+      router.push(`/ht-manager?saveId=${params.saveId}`);
+      return;
+    }
 
-    window.localStorage.setItem(halftimeStorageKey(params.saveId), JSON.stringify(snapshot));
-    router.push(`/ht-manager?saveId=${params.saveId}`);
-  }, [params.saveId, router, state]);
+  }, [params.saveId, router, session]);
 
-  return {
-    state,
-    userFixture: state.fixtures.find((fixture) => fixture.isUserMatch),
-    halftimeStorageKey: halftimeStorageKey(params.saveId),
-  };
+  return { session, setSession };
 }
+
 
 export function readHalftimeSnapshot(saveId: string): HalftimeSnapshot | null {
   if (typeof window === "undefined") return null;
-  const payload = window.localStorage.getItem(halftimeStorageKey(saveId));
-  if (!payload) return null;
+
+  const rawSession = window.localStorage.getItem(`scores:match_session:${saveId}`);
+  if (!rawSession) return null;
 
   try {
-    return JSON.parse(payload) as HalftimeSnapshot;
+    const session = JSON.parse(rawSession) as MatchSession;
+    if (!session) return null;
+
+    const quarterFinished =
+      session.phase === "BREAK_Q1"
+        ? 1
+        : session.phase === "BREAK_Q2"
+          ? 2
+          : session.phase === "BREAK_Q3"
+            ? 3
+            : session.phase === "POST_MATCH"
+              ? 4
+              : null;
+
+    if (!quarterFinished) return null;
+
+    return {
+      saveId,
+      quarterFinished,
+      savedAt: session.updatedAt,
+      fixtures: session.fixtures.map((fixture) => ({
+        id: fixture.id,
+        homeTeamId: fixture.homeTeamId,
+        awayTeamId: fixture.awayTeamId,
+        homeTeamName: fixture.homeTeamName,
+        awayTeamName: fixture.awayTeamName,
+        homeScore: fixture.homeScore,
+        awayScore: fixture.awayScore,
+        isUserMatch: fixture.isUserMatch,
+        status: fixture.status === "break" ? "halftime" : fixture.status === "finished" ? "finished" : "live",
+      })),
+      recentEvents: session.eventFeed.slice(-15),
+      progress: {
+        quarter: session.quarter,
+        elapsedSeconds: session.quarterDuration - session.timeRemaining,
+        totalSeconds: session.quarterDuration,
+        progressPercent: ((session.quarterDuration - session.timeRemaining) / session.quarterDuration) * 100,
+      },
+    };
   } catch {
     return null;
   }
