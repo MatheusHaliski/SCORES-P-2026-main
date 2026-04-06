@@ -96,41 +96,171 @@ const PlayerFace = ({ player }: { player: Player }) => (
   </div>
 );
 
-const OverallBadge = ({ value, impact }: { value: number; impact: number }) => (
-  <div className="rounded-2xl border border-cyan-300/60 bg-slate-800 p-4 text-center shadow-[0_0_40px_rgba(34,211,238,0.25)]">
-    <p className="text-[11px] uppercase tracking-widest text-cyan-300">Overall</p>
-    <p className="text-5xl font-black text-white">{value}</p>
-    <p className="text-xs text-slate-300">Impact Score: <span className="font-bold text-cyan-200">{impact}</span></p>
+const scoreTone = (value: number) => {
+  if (value >= 85) return "text-emerald-300 border-emerald-400/50";
+  if (value >= 75) return "text-cyan-300 border-cyan-400/40";
+  if (value >= 65) return "text-amber-300 border-amber-400/40";
+  return "text-rose-300 border-rose-400/40";
+};
+
+const moraleVisualMap: Record<PlayerMorale, { icon: string; tone: string }> = {
+  "Muito Feliz": { icon: "😄", tone: "text-emerald-300" },
+  Feliz: { icon: "🙂", tone: "text-cyan-300" },
+  Contente: { icon: "😐", tone: "text-slate-200" },
+  Insatisfeito: { icon: "🙁", tone: "text-amber-300" },
+  "Muito Insatisfeito": { icon: "😠", tone: "text-rose-300" },
+};
+
+const statIconMap: Record<string, string> = {
+  acceleration: "⚡",
+  sprintSpeed: "🏃",
+  positioning: "🎯",
+  finishing: "🥅",
+  shotPower: "💥",
+  longShots: "🚀",
+  vision: "🧠",
+  shortPass: "🧩",
+  longPass: "🛰️",
+  curve: "🌀",
+  ballControl: "🪄",
+  agility: "🤸",
+  dribbling: "👟",
+  composure: "🧘",
+  interceptions: "🛡️",
+  defensiveAwareness: "👁️",
+  strength: "🏋️",
+  stamina: "🔋",
+  aggression: "🔥",
+};
+
+const statLabelMap: Record<string, string> = {
+  sprintSpeed: "Sprint",
+  shotPower: "Power",
+  longShots: "Long",
+  shortPass: "S.Pass",
+  longPass: "L.Pass",
+  ballControl: "Control",
+  defensiveAwareness: "Awareness",
+};
+
+const OverallScoreBadge = ({ value, impact }: { value: number; impact: number }) => (
+  <div className="rounded-3xl border border-cyan-300/60 bg-gradient-to-b from-slate-700 to-slate-900 p-4 text-center shadow-[0_0_45px_rgba(34,211,238,0.32)]">
+    <p className="text-[11px] uppercase tracking-[0.25em] text-cyan-200">Overall</p>
+    <div className="mx-auto mt-2 flex h-24 w-24 items-center justify-center rounded-full border-4 border-cyan-300/60 bg-slate-950/80 text-5xl font-black text-white">
+      {value}
+    </div>
+    <p className="mt-3 text-xs text-slate-300">Impact Score</p>
+    <p className="text-2xl font-black text-cyan-200">{impact}</p>
   </div>
 );
 
-const AttributeSectionGauge = ({ label, value }: { label: string; value: number }) => {
-  const degrees = Math.min(180, Math.max(10, Math.round((value / 99) * 180)));
+const MoraleIconBadge = ({ morale }: { morale: PlayerMorale }) => {
+  const visual = moraleVisualMap[morale];
+  return <span className={`inline-flex items-center gap-1 font-semibold ${visual.tone}`}><span>{visual.icon}</span>{morale}</span>;
+};
+
+const InjuryStatusBadge = ({ injuryStatus }: { injuryStatus: Player["injuryStatus"] }) => {
+  const injured = injuryStatus === "Lesionado";
+  return <span className={`inline-flex items-center gap-1 font-semibold ${injured ? "text-rose-300" : "text-emerald-300"}`}>{injured ? "🩹" : "✅"}{injured ? "Lesionado" : "Disponível"}</span>;
+};
+
+const PlayerStatusIconRow = ({ player }: { player: Player }) => (
+  <div className="grid gap-2 text-xs text-slate-100 sm:grid-cols-2 lg:grid-cols-3">
+    <div className="rounded-lg border border-white/10 bg-slate-900/70 p-2">📅 Idade: <b>{player.age} anos</b></div>
+    <div className="rounded-lg border border-white/10 bg-slate-900/70 p-2">📍 Posição: <b>{player.position}</b></div>
+    <div className="rounded-lg border border-white/10 bg-slate-900/70 p-2">💰 Salário: <b>${(player.salary ?? 0).toLocaleString()}</b></div>
+    <div className="rounded-lg border border-white/10 bg-slate-900/70 p-2">🏷️ Mercado: <b>{player.isTransferListed ? "Listado" : "Não listado"}</b></div>
+    <div className="rounded-lg border border-white/10 bg-slate-900/70 p-2">💎 Valor: <b>${(player.marketValue / 1000000).toFixed(2)}M</b></div>
+    <div className="rounded-lg border border-white/10 bg-slate-900/70 p-2">⚙️ Playstyles: <b>{player.playstyles.join(", ") || "Nenhum"}</b></div>
+    <div className="rounded-lg border border-white/10 bg-slate-900/70 p-2">🫀 Condição: <b>{player.physicalCondition}%</b></div>
+    <div className="rounded-lg border border-white/10 bg-slate-900/70 p-2">🩺 Lesão: <InjuryStatusBadge injuryStatus={player.injuryStatus} /></div>
+    <div className="rounded-lg border border-white/10 bg-slate-900/70 p-2">😊 Moral: <MoraleIconBadge morale={player.morale ?? "Contente"} /></div>
+  </div>
+);
+
+const CategoryGaugeCard = ({ label, value, icon }: { label: string; value: number; icon: string }) => {
+  const progress = Math.round((Math.max(0, Math.min(99, value)) / 99) * 100);
   return (
-    <div className="rounded-xl border border-white/10 bg-slate-800/80 p-3">
-      <div className="mb-2 flex items-center justify-between text-xs">
-        <span className="font-semibold text-white">{label}</span>
-        <span className="font-black text-cyan-300">{value}</span>
+    <div className={`rounded-2xl border bg-slate-900/80 p-3 ${scoreTone(value)}`}>
+      <div className="flex items-center justify-between">
+        <p className="text-sm font-bold text-white">{icon} {label}</p>
+        <p className="text-xl font-black">{value}</p>
       </div>
-      <div className="relative h-12">
-        <div className="absolute inset-x-0 bottom-0 h-10 rounded-t-full border border-white/10" />
-        <div className="absolute left-1/2 bottom-1 h-8 w-[2px] origin-bottom bg-cyan-300" style={{ transform: `translateX(-50%) rotate(${degrees - 90}deg)` }} />
+      <div className="mt-3 flex items-center gap-3">
+        <div className="relative h-14 w-14 rounded-full" style={{ background: `conic-gradient(rgb(34 211 238) ${progress}%, rgba(148,163,184,0.15) 0)` }}>
+          <div className="absolute inset-[6px] flex items-center justify-center rounded-full bg-slate-950 text-[10px] font-bold text-slate-200">{progress}%</div>
+        </div>
+        <div className="h-2 flex-1 overflow-hidden rounded-full bg-slate-700/70">
+          <div className="h-full rounded-full bg-gradient-to-r from-cyan-500 via-sky-400 to-emerald-300" style={{ width: `${progress}%` }} />
+        </div>
       </div>
     </div>
   );
 };
 
-const AttributeVerticalBars = ({ values }: { values: Array<{ name: string; value: number }> }) => (
-  <div className="grid grid-cols-3 gap-2 sm:grid-cols-4 md:grid-cols-6">
-    {values.map((item) => (
-      <div key={item.name} className="rounded-lg border border-white/10 bg-slate-900/80 p-2 text-center">
-        <div className="mx-auto mb-1 flex h-24 w-6 items-end rounded bg-slate-700">
-          <div className="w-full rounded bg-gradient-to-t from-cyan-500 to-emerald-300" style={{ height: `${Math.max(8, Math.min(100, item.value))}%` }} />
-        </div>
-        <p className="text-[10px] text-slate-300">{item.name}</p>
-        <p className="text-xs font-bold text-white">{item.value}</p>
+const VerticalStatBar = ({ name, value }: { name: string; value: number }) => {
+  const label = statLabelMap[name] ?? name;
+  return (
+    <div className="rounded-xl border border-white/10 bg-slate-950/80 p-2 text-center">
+      <div className="mb-1 text-base">{statIconMap[name] ?? "📊"}</div>
+      <div className="mx-auto mb-2 flex h-28 w-7 items-end rounded-md border border-white/10 bg-slate-800 p-[2px]">
+        <div className="w-full rounded-sm bg-gradient-to-t from-indigo-500 via-cyan-400 to-emerald-300" style={{ height: `${Math.max(8, Math.min(100, value))}%` }} />
       </div>
-    ))}
+      <p className="text-[10px] font-semibold uppercase tracking-wide text-slate-300">{label}</p>
+      <p className="text-xs font-black text-white">{value}</p>
+    </div>
+  );
+};
+
+const PlayerHeaderHero = ({ player, teamName }: { player: Player; teamName: string }) => (
+  <div className="rounded-2xl border border-cyan-400/30 bg-gradient-to-r from-slate-900 via-slate-800 to-slate-900 p-4 shadow-[0_0_40px_rgba(14,165,233,0.2)]">
+    <div className="grid gap-3 lg:grid-cols-[1.5fr,220px]">
+      <div className="space-y-3">
+        <div className="flex flex-wrap items-start gap-4">
+          <PlayerFace player={player} />
+          <div>
+            <p className="text-3xl font-black text-white">{player.name}</p>
+            <p className="text-sm text-cyan-200">🏟️ {teamName} • 🎽 {player.position}</p>
+          </div>
+        </div>
+        <PlayerStatusIconRow player={player} />
+      </div>
+      <OverallScoreBadge value={player.overall} impact={playerEffectiveScore(player)} />
+    </div>
+  </div>
+);
+
+const PlaystyleSelectionModal = ({
+  availablePlaystyles,
+  playstyleTargetPlayerId,
+  mergedPlayers,
+  applyPlaystyle,
+}: {
+  availablePlaystyles: ReturnType<PlaystyleInventoryService["availableItems"]>;
+  playstyleTargetPlayerId: string;
+  mergedPlayers: Player[];
+  applyPlaystyle: (player: Player, playstyle: string) => void;
+}) => (
+  <div className="space-y-3 text-sm text-slate-100">
+    <p>Selecione um playstyle disponível no inventário do clube.</p>
+    {availablePlaystyles.length === 0 ? <p className="text-slate-300">Nenhum playstyle disponível.</p> : (
+      <div className="grid gap-2 sm:grid-cols-2">
+        {availablePlaystyles.map((item) => (
+          <button
+            key={item.name}
+            onClick={() => {
+              const player = mergedPlayers.find((entry) => entry.id === playstyleTargetPlayerId);
+              if (!player) return;
+              applyPlaystyle(player, item.name);
+            }}
+            className="rounded-xl border border-white/20 bg-slate-800 p-3 text-left hover:border-cyan-300"
+          >
+            <p className="font-bold text-cyan-200">✨ {item.name}</p>
+            <p className="text-xs text-slate-300">Disponível: {item.amount}</p>
+          </button>
+        ))}
+      </div>
+    )}
   </div>
 );
 
@@ -492,89 +622,62 @@ export function SquadHomeClient({
         </div>
       </div>
 
-      {selectedPlayer && modalShell("Player Detail Modal V2", () => setSelectedPlayerId(null), (
+      {selectedPlayer && modalShell("Player Detail Modal V3", () => setSelectedPlayerId(null), (
         <div className="space-y-4 text-sm text-slate-100">
-          <div className="grid gap-3 lg:grid-cols-[2fr,1fr]">
-            <div className="rounded-2xl border border-white/20 bg-slate-800/70 p-4">
-              <div className="flex flex-wrap items-start gap-4">
-                <PlayerFace player={selectedPlayer} />
-                <div className="space-y-1">
-                  <p className="text-2xl font-black text-white">{selectedPlayer.name}</p>
-                  <p className="text-sm text-cyan-200">{selectedPlayer.position} • {selectedPlayer.age} anos • {payload.team.name}</p>
-                  <div className="grid gap-1 text-xs text-slate-200 sm:grid-cols-2">
-                    <p>Moral: <b>{selectedPlayer.morale ?? "Contente"}</b></p>
-                    <p>Condição: <b>{selectedPlayer.physicalCondition}%</b></p>
-                    <p>Lesão: <b>{selectedPlayer.injuryStatus ?? "Disponível"}</b></p>
-                    <p>Salário: <b>${(selectedPlayer.salary ?? 0).toLocaleString()}</b></p>
-                    <p>Mercado: <b>{selectedPlayer.isTransferListed ? "Listado" : "Não listado"}</b></p>
-                    <p>Valor: <b>${(selectedPlayer.marketValue / 1000000).toFixed(2)}M</b></p>
+          <PlayerHeaderHero player={selectedPlayer} teamName={payload.team.name} />
+
+          <div className="grid gap-3 lg:grid-cols-[1fr,280px]">
+            <div className="grid gap-3 lg:grid-cols-2">
+              {attributeSections(selectedPlayer).map((section) => (
+                <div key={section.label} className="rounded-2xl border border-white/20 bg-slate-900/70 p-3">
+                  <CategoryGaugeCard label={section.label} value={section.overall} icon={statIconMap[section.values[0]?.name] ?? "📊"} />
+                  <div className="mt-3 grid grid-cols-3 gap-2 sm:grid-cols-4">
+                    {section.values.map((item) => <VerticalStatBar key={item.name} name={item.name} value={item.value} />)}
                   </div>
                 </div>
+              ))}
+            </div>
+
+            <div className="space-y-3">
+              <div className="rounded-2xl border border-white/20 bg-slate-900/80 p-3">
+                <p className="font-semibold text-cyan-300">⚙️ Ações de gestão</p>
+                <div className="mt-2 flex flex-col gap-2">
+                  {!selectedPlayer.isTransferListed ? (
+                    <button onClick={() => onListPlayer(selectedPlayer)} className="rounded bg-amber-500 px-2 py-2 text-xs font-bold text-slate-950">Listar no mercado</button>
+                  ) : (
+                    <button onClick={() => onUnlistPlayer(selectedPlayer)} className="rounded bg-slate-600 px-2 py-2 text-xs font-bold text-white">Deslistar do mercado</button>
+                  )}
+                  <button onClick={() => onSalaryChange(selectedPlayer, Math.round((selectedPlayer.salary ?? 100000) * 1.1))} className="rounded bg-emerald-500 px-2 py-2 text-xs font-bold text-slate-950">Aumentar salário</button>
+                  <button onClick={() => onSalaryChange(selectedPlayer, Math.round((selectedPlayer.salary ?? 100000) * 0.9))} className="rounded bg-rose-500 px-2 py-2 text-xs font-bold text-white">Diminuir salário</button>
+                  <button onClick={() => setPlaystyleTargetPlayerId(selectedPlayer.id)} className="rounded bg-cyan-500 px-2 py-2 text-xs font-bold text-slate-950">Inserir Playstyle</button>
+                </div>
+              </div>
+
+              <div className="rounded-xl border border-white/20 bg-slate-900/80 p-3 text-xs">
+                {(() => {
+                  const risk = injuryService.estimateRisk({
+                    baseInjuryRisk: 0.04,
+                    conditioning: selectedPlayer.physicalCondition,
+                    stamina: selectedPlayer.attributes?.stamina ?? selectedPlayer.physical,
+                    tacticIntensity: "balanced",
+                    contactLevel: 1,
+                  });
+                  return <p>🧪 Risco de lesão: <b>{(risk.injuryRisk * 100).toFixed(2)}%</b> (fatiga {risk.fatigueModifier.toFixed(2)}x / conditioning {risk.conditioningModifier.toFixed(2)}x)</p>;
+                })()}
               </div>
             </div>
-            <OverallBadge value={selectedPlayer.overall} impact={playerEffectiveScore(selectedPlayer)} />
           </div>
 
-          <div className="rounded-xl border border-white/20 p-3">
-            <p className="font-semibold text-cyan-300">Ações de gestão</p>
-            <div className="mt-2 flex flex-wrap gap-2">
-              {!selectedPlayer.isTransferListed ? (
-                <button onClick={() => onListPlayer(selectedPlayer)} className="rounded bg-amber-500 px-2 py-1 text-xs font-bold text-slate-950">Listar no mercado</button>
-              ) : (
-                <button onClick={() => onUnlistPlayer(selectedPlayer)} className="rounded bg-slate-600 px-2 py-1 text-xs font-bold text-white">Desmarcar listar para venda</button>
-              )}
-              <button onClick={() => onSalaryChange(selectedPlayer, Math.round((selectedPlayer.salary ?? 100000) * 1.1))} className="rounded bg-emerald-500 px-2 py-1 text-xs font-bold text-slate-950">Aumentar salário</button>
-              <button onClick={() => onSalaryChange(selectedPlayer, Math.round((selectedPlayer.salary ?? 100000) * 0.9))} className="rounded bg-rose-500 px-2 py-1 text-xs font-bold text-white">Diminuir salário</button>
-              <button onClick={() => setPlaystyleTargetPlayerId(selectedPlayer.id)} className="rounded bg-cyan-500 px-2 py-1 text-xs font-bold text-slate-950">Inserir Playstyle</button>
-            </div>
-          </div>
-
-          <div className="space-y-3">
-            {attributeSections(selectedPlayer).map((section) => (
-              <div key={section.label} className="rounded-xl border border-white/20 p-3">
-                <AttributeSectionGauge label={section.label} value={section.overall} />
-                <AttributeVerticalBars values={section.values} />
-              </div>
-            ))}
-          </div>
-
-          <div className="rounded-xl border border-white/20 bg-slate-900/80 p-3 text-xs">
-            {(() => {
-              const risk = injuryService.estimateRisk({
-                baseInjuryRisk: 0.04,
-                conditioning: selectedPlayer.physicalCondition,
-                stamina: selectedPlayer.attributes?.stamina ?? selectedPlayer.physical,
-                tacticIntensity: "balanced",
-                contactLevel: 1,
-              });
-              return <p>Risco de lesão estimado: <b>{(risk.injuryRisk * 100).toFixed(2)}%</b> (fatiga {risk.fatigueModifier.toFixed(2)}x / conditioning {risk.conditioningModifier.toFixed(2)}x)</p>;
-            })()}
-          </div>
         </div>
       ))}
 
       {playstyleTargetPlayerId && modalShell("Playstyle Selection Modal", () => setPlaystyleTargetPlayerId(null), (
-        <div className="space-y-3 text-sm text-slate-100">
-          <p>Selecione um playstyle disponível no inventário do clube.</p>
-          {availablePlaystyles.length === 0 ? <p className="text-slate-300">Nenhum playstyle disponível.</p> : (
-            <div className="grid gap-2 sm:grid-cols-2">
-              {availablePlaystyles.map((item) => (
-                <button
-                  key={item.name}
-                  onClick={() => {
-                    const player = mergedPlayers.find((entry) => entry.id === playstyleTargetPlayerId);
-                    if (!player) return;
-                    applyPlaystyle(player, item.name);
-                  }}
-                  className="rounded-xl border border-white/20 bg-slate-800 p-3 text-left hover:border-cyan-300"
-                >
-                  <p className="font-bold text-cyan-200">{item.name}</p>
-                  <p className="text-xs text-slate-300">Disponível: {item.amount}</p>
-                </button>
-              ))}
-            </div>
-          )}
-        </div>
+        <PlaystyleSelectionModal
+          availablePlaystyles={availablePlaystyles}
+          playstyleTargetPlayerId={playstyleTargetPlayerId}
+          mergedPlayers={mergedPlayers}
+          applyPlaystyle={applyPlaystyle}
+        />
       ))}
 
       {openModal === "Email" && modalShell("Inbox Modal", () => {
