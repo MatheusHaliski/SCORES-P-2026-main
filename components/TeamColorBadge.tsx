@@ -13,12 +13,14 @@ export function TeamColorBadge({
 
   return (
     <div
-      className={`flex min-w-[110px] items-center gap-2 rounded-md px-2 py-1 text-xs font-black text-white ${isAway ? "justify-end" : "justify-start"}`}
+      className={`flex w-full items-center gap-2 rounded-lg border border-white/20 px-3 py-2 text-xs font-black text-white shadow-[inset_0_1px_0_rgba(255,255,255,0.2)] ${
+        isAway ? "justify-end" : "justify-start"
+      }`}
       style={{ backgroundColor: color }}
     >
-      {!isAway && <span aria-hidden>{logo}</span>}
-      <span className="tracking-wide">{name}</span>
-      {isAway && <span aria-hidden>{logo}</span>}
+      {!isAway && <span aria-hidden className="text-base leading-none">{logo}</span>}
+      <span className="truncate tracking-[0.12em]">{name}</span>
+      {isAway && <span aria-hidden className="text-base leading-none">{logo}</span>}
     </div>
   );
 }
