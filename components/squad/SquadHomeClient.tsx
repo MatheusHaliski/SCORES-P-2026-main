@@ -6,6 +6,7 @@ import { SectionCard } from "@/components/SectionCard";
 import { TeamIdentityHeader } from "@/components/TeamIdentityHeader";
 import { MiniNextMatchCard } from "@/components/MiniNextMatchCard";
 import { SpectatorModeBanner } from "@/components/SpectatorModeBanner";
+import { StandingsTable } from "@/components/StandingsTable";
 import Link from "next/link";
 import Image from "next/image";
 import { PlayerMoraleService } from "@/services/PlayerMoraleService";
@@ -658,6 +659,7 @@ export function SquadHomeClient({
   const selectedLeague = leagues.find((league) => league.id === selectedLeagueId) ?? null;
   const selectedClub = allTeams.find((club) => club.id === selectedClubId) ?? null;
   const selectedGlobalPlayer = marketPool.find((player) => player.id === selectedGlobalPlayerId) ?? null;
+  const currentLeague = leagues.find((league) => league.id === payload.team.leagueId) ?? null;
   const availablePlaystyles = playstyleInventoryService.availableItems(state.inventory);
   const primaryColor = state.teamColors?.primaryColor ?? payload.team.primaryColor;
   const secondaryColor = clubVisualService.ensureReadableAccent(state.teamColors?.secondaryColor ?? payload.team.secondaryColor);
@@ -1041,7 +1043,15 @@ export function SquadHomeClient({
       ))}
 
       {openModal === "Classificações" && modalShell("Classificações", () => setOpenModal(null), (
-        <div className="space-y-1 text-sm text-slate-100">{standings.map((row) => <p key={row.teamId}>#{row.position} {teamsById[row.teamId]?.name} • {row.wins}-{row.losses}</p>)}</div>
+        <StandingsTable
+          rows={standings}
+          teamsById={teamsById}
+          playoffSpots={8}
+          dangerSpots={3}
+          highlightTeamId={payload.team.id}
+          leagueName={currentLeague?.name}
+          leagueLogo={currentLeague?.logoUrl}
+        />
       ))}
 
       {openModal === "Calendário" && modalShell("Calendário", () => setOpenModal(null), (
