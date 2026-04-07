@@ -33,3 +33,86 @@ body {
   background-repeat: no-repeat;
   background-blend-mode: multiply, normal, normal;
 }
+
+/* Auth feedback modal (SweetAlert2) */
+.swal2-popup.vs-auth-alert-popup {
+  width: min(92vw, 34rem) !important;
+  border-radius: 1.5rem !important;
+  border: 5px solid #b45309 !important;
+  background:
+    linear-gradient(rgba(44, 34, 18, 0.78), rgba(44, 34, 18, 0.78)),
+    repeating-linear-gradient(90deg, rgba(210, 190, 116, 0.22) 0 12.5%, rgba(91, 74, 45, 0.28) 12.5% 25%),
+    #3a2f1f !important;
+  color: #f8f5ee !important;
+  box-shadow: 0 24px 70px rgba(0, 0, 0, 0.45) !important;
+  padding: 1.25rem 1.15rem 1rem !important;
+}
+
+.vs-auth-alert-html {
+  margin: 0 !important;
+  padding: 0 !important;
+}
+
+.vs-auth-alert-inner {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  gap: 0.7rem;
+}
+
+.vs-auth-alert-icon {
+  width: clamp(4.2rem, 18vw, 5.8rem);
+  height: clamp(4.2rem, 18vw, 5.8rem);
+  color: rgba(236, 236, 238, 0.94);
+}
+
+.vs-auth-alert-icon-svg {
+  width: 100%;
+  height: 100%;
+  display: block;
+}
+
+.vs-auth-alert-title {
+  margin: 0;
+  font-size: clamp(1.05rem, 2.6vw, 1.35rem);
+  line-height: 1.2;
+  font-weight: 700;
+  letter-spacing: 0.01em;
+}
+
+.vs-auth-alert-message {
+  margin: 0;
+  max-width: 26ch;
+  font-size: clamp(0.9rem, 2.2vw, 1.02rem);
+  line-height: 1.35;
+  color: rgba(248, 245, 238, 0.9);
+}
+
+.swal2-styled.vs-auth-alert-button {
+  min-width: 6.5rem;
+  border-radius: 9999px !important;
+  border: 1px solid rgba(37, 99, 235, 0.4) !important;
+  background: linear-gradient(90deg, #1d4ed8 0%, #0f766e 100%) !important;
+  color: #fff !important;
+  font-size: 0.82rem !important;
+  font-weight: 700 !important;
+  letter-spacing: 0.08em !important;
+  text-transform: uppercase;
+  padding: 0.55rem 1.2rem !important;
+}
+
+.swal2-styled.vs-auth-alert-button:focus {
+  box-shadow: 0 0 0 3px rgba(29, 78, 216, 0.35) !important;
+}
+
+.swal2-progress-steps .swal2-progress-step {
+  width: 1.5rem;
+  height: 1.5rem;
+  font-size: 0.72rem !important;
+  background: #2d7fcb !important;
+}
+
+.swal2-progress-steps .swal2-progress-step-line {
+  background: rgba(210, 190, 116, 0.35) !important;
+}
