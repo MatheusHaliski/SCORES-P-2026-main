@@ -5,18 +5,26 @@ import { MatchEvent } from "@/types/liveMatch";
 import { CreateMatchSessionPayload, LineupPlayer, MatchSession, TeamTactic } from "@/types/matchSession";
 import { StadiumRevenueService } from "@/services/StadiumRevenueService";
 
-const toLineupPlayer = (player: { id: string; name: string; position: string; overall: number; physicalCondition: number; pace: number; shooting: number; passing: number; dribbling: number; defending: number; physical: number; isStarter: boolean; morale?: LineupPlayer["morale"]; injuryStatus?: LineupPlayer["injuryStatus"]; playstyles?: string[] }): LineupPlayer => ({
+const toLineupPlayer = (player: {
+  id: string;
+  name: string;
+  position: string;
+  overall: number;
+  physicalCondition: number;
+  attributes: LineupPlayer["attributes"];
+  macroRatings: LineupPlayer["macroRatings"];
+  isStarter: boolean;
+  morale?: LineupPlayer["morale"];
+  injuryStatus?: LineupPlayer["injuryStatus"];
+  playstyles?: string[];
+}): LineupPlayer => ({
   playerId: player.id,
   playerName: player.name,
   position: player.position,
   overall: player.overall,
   stamina: player.physicalCondition,
-  pace: player.pace,
-  shooting: player.shooting,
-  passing: player.passing,
-  dribbling: player.dribbling,
-  defending: player.defending,
-  physical: player.physical,
+  attributes: player.attributes,
+  macroRatings: player.macroRatings,
   morale: player.morale ?? "Contente",
   injuryStatus: player.injuryStatus ?? "Disponível",
   playstyles: player.playstyles ?? [],

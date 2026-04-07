@@ -6,6 +6,18 @@ import { QuarterFlowEngine } from "@/services/match/QuarterFlowEngine";
 
 const clamp = (value: number, min: number, max: number) => Math.min(max, Math.max(min, value));
 
+const avg = (values: number[]) => (values.length ? values.reduce((sum, value) => sum + value, 0) / values.length : 0);
+
+const lineupSkill = (lineup: MatchSession["userLineup"]) => {
+  const offenseCreation = avg(lineup.map((p) => (p.attributes.pace.acceleration * 0.35 + p.attributes.pace.off_ball_movement * 0.2 + p.attributes.dribbling.change_of_pace_control * 0.25 + p.attributes.dribbling.drive_control * 0.2) / 100));
+  const passingControl = avg(lineup.map((p) => (p.attributes.passing.court_vision * 0.35 + p.attributes.passing.decision_making * 0.35 + p.attributes.passing.passing_accuracy * 0.3) / 100));
+  const contestShooting = avg(lineup.map((p) => (p.attributes.shooting.shot_under_pressure * 0.45 + p.attributes.shooting.shot_release_timing * 0.25 + p.attributes.mental_intangibles.clutch_factor * 0.3) / 100));
+  const defensivePressure = avg(lineup.map((p) => (p.attributes.defending.on_ball_defense * 0.3 + p.attributes.defending.perimeter_defense * 0.2 + p.attributes.defending.interior_defense * 0.2 + p.attributes.defending.defensive_awareness * 0.2 + p.attributes.defending.steal_ability * 0.1) / 100));
+  const transitionPace = avg(lineup.map((p) => (p.attributes.pace.speed * 0.25 + p.attributes.pace.acceleration * 0.35 + p.attributes.pace.off_ball_movement * 0.2 + p.attributes.physical.stamina * 0.2) / 100));
+  const clutchAndIq = avg(lineup.map((p) => (p.attributes.mental_intangibles.game_iq * 0.5 + p.attributes.mental_intangibles.clutch_factor * 0.3 + p.attributes.mental_intangibles.consistency * 0.2) / 100));
+  return { offenseCreation, passingControl, contestShooting, defensivePressure, transitionPace, clutchAndIq };
+};
+
 const formatClock = (seconds: number) => {
   const mins = Math.floor(seconds / 60)
     .toString()
@@ -37,13 +49,17 @@ export class MatchProgressEngine {
         overall: Math.round(player.overall * moraleFactor(player.morale) * Math.max(0.8, player.stamina / 100) * styleBonus(player.playstyles)),
       })) as T;
 
-    const userLineupImpact = LineupImpactEngine.fromLineup(lineupAdjusted(session.userLineup));
-    const oppLineupImpact = LineupImpactEngine.fromLineup(lineupAdjusted(session.opponentLineup));
+    const adjustedUserLineup = lineupAdjusted(session.userLineup);
+    const adjustedOppLineup = lineupAdjusted(session.opponentLineup);
+    const userLineupImpact = LineupImpactEngine.fromLineup(adjustedUserLineup);
+    const oppLineupImpact = LineupImpactEngine.fromLineup(adjustedOppLineup);
+    const userSkill = lineupSkill(adjustedUserLineup);
+    const oppSkill = lineupSkill(adjustedOppLineup);
     const userTacticImpact = TacticImpactEngine.for(session.userTeamTactic);
     const oppTacticImpact = TacticImpactEngine.for(session.opponentTeamTactic);
 
     const basePossessions = 0.23 * ((userTacticImpact.possessions + oppTacticImpact.possessions) / 2);
-    const paceFactor = (userLineupImpact.pace + oppLineupImpact.pace) / 2;
+    const paceFactor = (userSkill.transitionPace + oppSkill.transitionPace) / 2;
     const possessionRoll = basePossessions * paceFactor;
 
     let homeDelta = 0;
@@ -52,9 +68,10 @@ export class MatchProgressEngine {
 
     if (random() < possessionRoll) {
       const userIsHome = userFixture.homeTeamId === session.userTeamId;
-      const attackStrength = userLineupImpact.attack * userTacticImpact.attack * userLineupImpact.staminaPenalty;
-      const defenseResistance = oppLineupImpact.defense * oppTacticImpact.defense * oppLineupImpact.staminaPenalty;
-      const userChanceToScore = clamp(0.38 + (attackStrength - defenseResistance) * 0.8, 0.2, 0.75);
+      const attackStrength = userLineupImpact.attack * userTacticImpact.attack * userLineupImpact.staminaPenalty * (0.45 + userSkill.offenseCreation * 0.3 + userSkill.passingControl * 0.25);
+      const defenseResistance = oppLineupImpact.defense * oppTacticImpact.defense * oppLineupImpact.staminaPenalty * (0.55 + oppSkill.defensivePressure * 0.45);
+      const clutchWindow = nextTimeRemaining < 180 ? (userSkill.clutchAndIq - oppSkill.clutchAndIq) * 0.08 : 0;
+      const userChanceToScore = clamp(0.38 + (attackStrength - defenseResistance) * 0.8 + clutchWindow, 0.2, 0.75);
 
       const scoringTeamIsUser = random() < userChanceToScore;
       const scoringTactic = scoringTeamIsUser ? session.userTeamTactic : session.opponentTeamTactic;
@@ -62,8 +79,10 @@ export class MatchProgressEngine {
       const scoringLineup = scoringTeamIsUser ? session.userLineup : session.opponentLineup;
       const scorer = scoringLineup[Math.floor(random() * scoringLineup.length)];
 
-      const shot3Chance = scoringTactic === "three_point_focus" ? 0.54 : 0.34;
-      const paint2Chance = scoringTactic === "paint_attack" ? 0.78 : 0.6;
+      const shootingLineupSkill = scoringTeamIsUser ? userSkill : oppSkill;
+      const defendingLineupSkill = scoringTeamIsUser ? oppSkill : userSkill;
+      const shot3Chance = (scoringTactic === "three_point_focus" ? 0.48 : 0.3) + (shootingLineupSkill.contestShooting - 0.5) * 0.18;
+      const paint2Chance = (scoringTactic === "paint_attack" ? 0.74 : 0.56) + (shootingLineupSkill.offenseCreation - defendingLineupSkill.defensivePressure) * 0.2;
 
       let points: 2 | 3 = random() < shot3Chance ? 3 : 2;
       if (points === 2 && random() > paint2Chance) points = 3;
@@ -88,7 +107,7 @@ export class MatchProgressEngine {
 
     if (random() < 0.045) {
       const candidates = session.userLineup.filter((player) => player.injuryStatus !== "Lesionado");
-      const risky = [...candidates].sort((a, b) => a.stamina - b.stamina);
+      const risky = [...candidates].sort((a, b) => (a.stamina + a.attributes.physical.durability * 0.25) - (b.stamina + b.attributes.physical.durability * 0.25));
       const victim = risky[0];
       if (victim) {
         newEvents.push({

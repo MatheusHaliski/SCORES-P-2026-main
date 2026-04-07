@@ -47,12 +47,13 @@ export class ScoringEngine {
 
     return {
       avgOverallOnCourt: avg((player) => player.overall),
-      shooting: avg((player) => player.shooting),
-      passing: avg((player) => player.passing),
-      dribbling: avg((player) => player.dribbling),
-      defending: avg((player) => player.defending),
-      pace: avg((player) => player.pace),
-      physicality: avg((player) => player.physical),
+      shooting: avg((player) => player.macroRatings.shooting_rating),
+      passing: avg((player) => player.macroRatings.passing_rating),
+      dribbling: avg((player) => player.macroRatings.dribbling_rating),
+      defending: avg((player) => player.macroRatings.defending_rating),
+      pace: avg((player) => player.macroRatings.pace_rating),
+      physicality: avg((player) => player.macroRatings.physical_rating),
+      mental: avg((player) => player.macroRatings.mental_rating),
       starPower,
     };
   }
@@ -119,8 +120,9 @@ export class ScoringEngine {
       0.38 * (metrics.shooting / 100) +
       0.24 * (metrics.passing / 100) +
       0.18 * (metrics.dribbling / 100) +
-      0.1 * (attacking.tactics.offenseRating / 100) +
-      0.1 * playstyle.offenseSynergy +
+      0.08 * (attacking.tactics.offenseRating / 100) +
+      0.08 * playstyle.offenseSynergy +
+      0.06 * (metrics.mental / 100) +
       playstyle.clutchBonus;
 
     return clamp(raw, 0.32, 0.92);

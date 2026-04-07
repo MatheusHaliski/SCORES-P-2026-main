@@ -45,6 +45,7 @@ export type TeamDerivedMetrics = {
   defending: number;
   pace: number;
   physicality: number;
+  mental: number;
   starPower: number;
 };
 
