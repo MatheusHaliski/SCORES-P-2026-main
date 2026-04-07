@@ -1,4 +1,5 @@
 import Link from "next/link";
+import Image from "next/image";
 import { SectionCard } from "@/components/SectionCard";
 import { GameSetupService } from "@/services/GameSetupService";
 
@@ -10,6 +11,11 @@ export default async function SelectTeamView({ searchParams }: { searchParams: P
 
   const defaultManagerName = selectedTeam?.managerDefaultName ?? "SCORES Manager";
   const defaultSaveName = selectedTeam ? `Carreira ${selectedTeam.shortName}` : "Meu Save";
+  const renderLogo = (logo: string, label: string) => {
+    const isImage = logo.startsWith("/") || logo.startsWith("http") || logo.startsWith("data:");
+    if (isImage) return <Image src={logo} alt={label} width={32} height={32} className="rounded" />;
+    return <span className="inline-flex h-8 w-8 items-center justify-center rounded bg-slate-800 text-lg">{logo}</span>;
+  };
 
   return (
     <main className="mx-auto min-h-screen max-w-7xl p-6">
@@ -30,9 +36,19 @@ export default async function SelectTeamView({ searchParams }: { searchParams: P
         <SectionCard title="Times da liga" subtitle={data.selectedLeague?.name} className="lg:col-span-2">
           <div className="grid gap-3 md:grid-cols-2">
             {data.teams.map((team) => (
-              <Link key={team.id} href={`/select-team?leagueId=${team.leagueId}&teamId=${team.id}`} className={`rounded-lg border p-3 ${selectedTeam?.id === team.id ? "border-emerald-300 bg-emerald-950/30" : "border-white/10"}`}>
-                <p className="font-semibold text-white">{team.logoUrl} {team.name}</p>
-                <p className="text-xs text-slate-300">OVR {team.overall} • Budget ${team.budget.toLocaleString()}</p>
+              <Link
+                key={team.id}
+                href={`/select-team?leagueId=${team.leagueId}&teamId=${team.id}`}
+                className={`rounded-xl border p-3 transition hover:-translate-y-0.5 hover:shadow-[0_10px_30px_rgba(16,185,129,0.25)] ${selectedTeam?.id === team.id ? "border-emerald-300 bg-emerald-950/35" : "border-emerald-300/30"}`}
+                style={{
+                  backgroundImage: `linear-gradient(135deg, rgba(16,185,129,0.25), rgba(5,150,105,0.08)), radial-gradient(circle at 16% 20%, ${team.primaryColor}80 0%, transparent 40%)`,
+                }}
+              >
+                <div className="flex items-center gap-3">
+                  <div className="rounded-lg border border-white/25 bg-slate-900/70 p-1.5">{renderLogo(team.logoUrl, team.name)}</div>
+                  <p className="font-semibold text-white">{team.name}</p>
+                </div>
+                <p className="mt-2 text-xs text-slate-200">OVR {team.overall} • Budget ${team.budget.toLocaleString()}</p>
                 <p className="mt-1 text-xs text-slate-400">{team.summary}</p>
               </Link>
             ))}
