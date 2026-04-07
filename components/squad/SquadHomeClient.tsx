@@ -305,6 +305,10 @@ export function SquadHomeClient({
   const [selectedLeagueId, setSelectedLeagueId] = useState<string | null>(null);
   const [selectedClubId, setSelectedClubId] = useState<string | null>(null);
   const [selectedGlobalPlayerId, setSelectedGlobalPlayerId] = useState<string | null>(null);
+  const [transferLeagueId, setTransferLeagueId] = useState<string | null>(null);
+  const [transferClubId, setTransferClubId] = useState<string | null>(null);
+  const [transferOfferPlayerId, setTransferOfferPlayerId] = useState<string | null>(null);
+  const [transferOfferValue, setTransferOfferValue] = useState<string>("");
   const [colorDraft, setColorDraft] = useState({ primaryColor: payload.team.primaryColor, secondaryColor: payload.team.secondaryColor });
   const [playerFilters, setPlayerFilters] = useState<{ position: string; minOverall: number; listedOnly: boolean }>({
     position: "",
@@ -473,6 +477,36 @@ export function SquadHomeClient({
     }));
   };
 
+  const sendTransferOffer = (player: Player, offerValue: number) => {
+    const sellerClub = teamsById[player.teamId];
+    updateState((prev) => ({
+      ...prev,
+      pendingActions: [
+        ...prev.pendingActions,
+        {
+          id: `buy-${player.id}-${Date.now()}`,
+          dueRound: payload.save.currentRound + (Math.random() > 0.5 ? 1 : 2),
+          type: "buy_offer",
+          payload: { playerId: player.id, offerValue },
+        },
+      ],
+      inbox: [
+        {
+          id: `offer-sent-${player.id}-${Date.now()}`,
+          type: "transfer_offer_sent",
+          subject: "Oferta enviada",
+          body: `Oferta de $${offerValue.toLocaleString()} enviada para ${sellerClub?.name ?? "clube vendedor"} por ${player.name}.`,
+          round: payload.save.currentRound,
+          createdAt: nowIso(),
+          read: false,
+        },
+        ...prev.inbox,
+      ],
+    }));
+    setTransferOfferPlayerId(null);
+    setTransferOfferValue("");
+  };
+
   const selectedPlayer = mergedPlayers.find((player) => player.id === selectedPlayerId) ?? null;
 
   const onListPlayer = (player: Player) => {
@@ -622,6 +656,11 @@ export function SquadHomeClient({
   };
 
   const marketPool = allPlayers.filter((player) => player.teamId !== payload.team.id);
+  const transferMarketClubs = allTeams.filter((team) => team.id !== payload.team.id);
+  const transferMarketLeagues = leagues.filter((league) => transferMarketClubs.some((team) => team.leagueId === league.id));
+  const transferClubsByLeague = transferLeagueId ? transferMarketClubs.filter((team) => team.leagueId === transferLeagueId) : [];
+  const transferPlayersByClub = transferClubId ? allPlayers.filter((player) => player.teamId === transferClubId) : [];
+  const transferOfferTarget = transferOfferPlayerId ? allPlayers.find((player) => player.id === transferOfferPlayerId) ?? null : null;
   const filteredLeagues = globalSearchService.filterLeagues(leagues, searchQuery);
   const filteredClubs = globalSearchService.filterClubs(allTeams, searchQuery);
   const filteredPlayers = globalSearchService.filterPlayers(marketPool, searchQuery, playerFilters);
@@ -852,23 +891,106 @@ export function SquadHomeClient({
         </div>
       ))}
 
-      {openModal === "Comprar Jogador" && modalShell("Transfer Market Modal", () => setOpenModal(null), (
-        <div className="space-y-2 text-sm text-slate-100">
-          {marketPool.slice(0, 30).map((player) => (
-            <div key={player.id} className="flex items-center justify-between rounded border border-white/10 p-2">
-              <p>{player.name} • {player.position} • OVR {player.overall} • {teamsById[player.teamId]?.shortName}</p>
-              <button
-                onClick={() => {
-                  const offerValue = Math.round(player.marketValue * 0.95);
-                  updateState((prev) => ({
-                    ...prev,
-                    pendingActions: [...prev.pendingActions, { id: `buy-${player.id}-${Date.now()}`, dueRound: payload.save.currentRound + (Math.random() > 0.5 ? 1 : 2), type: "buy_offer", payload: { playerId: player.id, offerValue } }],
-                  }));
-                }}
-                className="rounded bg-emerald-500 px-2 py-1 text-xs font-bold text-slate-950"
-              >Fazer oferta</button>
+      {openModal === "Comprar Jogador" && modalShell("Transfer Market Modal", () => {
+        setOpenModal(null);
+        setTransferLeagueId(null);
+        setTransferClubId(null);
+        setTransferOfferPlayerId(null);
+        setTransferOfferValue("");
+      }, (
+        <div className="space-y-3 text-sm text-slate-100">
+          <p className="text-xs text-slate-300">1) Escolha uma liga • 2) Escolha um clube • 3) Envie oferta para um jogador.</p>
+          <div className="grid gap-3 lg:grid-cols-[1fr,1fr,1.4fr]">
+            <div className="rounded-xl border border-white/15 p-3">
+              <p className="mb-2 text-xs font-semibold uppercase tracking-wide text-cyan-300">Ligas</p>
+              <div className="max-h-[55vh] space-y-1 overflow-auto">
+                {transferMarketLeagues.map((league) => (
+                  <button
+                    key={league.id}
+                    onClick={() => {
+                      setTransferLeagueId(league.id);
+                      setTransferClubId(null);
+                    }}
+                    className={`flex w-full items-center gap-2 rounded border px-2 py-2 text-left ${transferLeagueId === league.id ? "border-cyan-300 bg-cyan-500/15" : "border-white/10 bg-slate-900/40"}`}
+                  >
+                    <LogoMark logo={league.logoUrl} label={league.name} size={22} />
+                    <span>{league.name}</span>
+                  </button>
+                ))}
+              </div>
             </div>
-          ))}
+
+            <div className="rounded-xl border border-white/15 p-3">
+              <p className="mb-2 text-xs font-semibold uppercase tracking-wide text-cyan-300">Clubes</p>
+              {!transferLeagueId ? <p className="text-xs text-slate-400">Selecione uma liga.</p> : (
+                <div className="max-h-[55vh] space-y-1 overflow-auto">
+                  {transferClubsByLeague.map((club) => (
+                    <button
+                      key={club.id}
+                      onClick={() => setTransferClubId(club.id)}
+                      className={`flex w-full items-center gap-2 rounded border px-2 py-2 text-left ${transferClubId === club.id ? "border-cyan-300 bg-cyan-500/15" : "border-white/10 bg-slate-900/40"}`}
+                    >
+                      <LogoMark logo={club.logoUrl} label={club.name} size={22} />
+                      <span>{club.shortName}</span>
+                    </button>
+                  ))}
+                </div>
+              )}
+            </div>
+
+            <div className="rounded-xl border border-white/15 p-3">
+              <p className="mb-2 text-xs font-semibold uppercase tracking-wide text-cyan-300">Jogadores do clube</p>
+              {!transferClubId ? <p className="text-xs text-slate-400">Selecione um clube para listar jogadores.</p> : (
+                <div className="max-h-[55vh] space-y-2 overflow-auto">
+                  {transferPlayersByClub.map((player) => (
+                    <div key={player.id} className="flex items-center justify-between rounded border border-white/10 p-2">
+                      <p>{player.name} • {player.position} • OVR {player.overall}</p>
+                      <button
+                        onClick={() => {
+                          setTransferOfferPlayerId(player.id);
+                          setTransferOfferValue(String(Math.round(player.marketValue * 0.95)));
+                        }}
+                        className="rounded bg-emerald-500 px-2 py-1 text-xs font-bold text-slate-950"
+                      >Fazer oferta</button>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          </div>
+
+          {transferOfferTarget && (
+            <div className="fixed inset-0 z-[60] flex items-center justify-center bg-slate-950/70 p-4">
+              <div className="w-full max-w-md rounded-xl border border-white/20 bg-slate-900 p-4">
+                <div className="mb-3 flex items-center justify-between">
+                  <p className="text-lg font-black">Fazer oferta por {transferOfferTarget.name}</p>
+                  <button className="rounded bg-slate-700 px-2 py-1 text-xs" onClick={() => setTransferOfferPlayerId(null)}>Fechar</button>
+                </div>
+                <p className="mb-2 text-xs text-slate-300">Clube dono: {teamsById[transferOfferTarget.teamId]?.name}</p>
+                <p className="mb-3 text-xs text-slate-300">Valor de mercado: ${transferOfferTarget.marketValue.toLocaleString()}</p>
+                <label className="mb-3 block text-xs">
+                  Valor da proposta
+                  <input
+                    type="number"
+                    min={1}
+                    value={transferOfferValue}
+                    onChange={(event) => setTransferOfferValue(event.target.value)}
+                    className="mt-1 w-full rounded border border-white/20 bg-slate-800 px-2 py-1 text-sm"
+                  />
+                </label>
+                <button
+                  onClick={() => {
+                    const value = Number(transferOfferValue);
+                    if (!Number.isFinite(value) || value <= 0) return;
+                    sendTransferOffer(transferOfferTarget, Math.round(value));
+                  }}
+                  className="w-full rounded bg-emerald-500 px-3 py-2 text-xs font-bold text-slate-950"
+                >
+                  Enviar proposta ao clube
+                </button>
+              </div>
+            </div>
+          )}
         </div>
       ))}
 
@@ -940,7 +1062,7 @@ export function SquadHomeClient({
                 <button
                   onClick={() => {
                     const offerValue = Math.round(selectedGlobalPlayer.marketValue * 0.98);
-                    updateState((prev) => ({ ...prev, pendingActions: [...prev.pendingActions, { id: `buy-${selectedGlobalPlayer.id}-${Date.now()}`, dueRound: payload.save.currentRound + (Math.random() > 0.5 ? 1 : 2), type: "buy_offer", payload: { playerId: selectedGlobalPlayer.id, offerValue } }] }));
+                    sendTransferOffer(selectedGlobalPlayer, offerValue);
                     setOpenModal("Email");
                   }}
                   className="rounded bg-emerald-500 px-3 py-1 text-xs font-bold text-slate-950"
