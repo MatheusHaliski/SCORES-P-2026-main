@@ -90,6 +90,7 @@ export class MatchSessionService {
         awayLogo: payload.teamsById[fixture.awayTeamId]?.logoUrl ?? "🏀",
         homeColor: payload.teamsById[fixture.homeTeamId]?.primaryColor ?? "#1e293b",
         awayColor: payload.teamsById[fixture.awayTeamId]?.primaryColor ?? "#1e293b",
+        venueName: `${payload.teamsById[fixture.homeTeamId]?.shortName ?? "HOME"} Arena`,
         homeScore: fixture.homeScore,
         awayScore: fixture.awayScore,
         homeLastScorer: undefined,

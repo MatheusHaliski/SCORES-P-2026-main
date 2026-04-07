@@ -47,6 +47,7 @@ export type LiveFixtureState = {
   awayLogo: string;
   homeColor: string;
   awayColor: string;
+  venueName: string;
   homeScore: number;
   awayScore: number;
   homeLastScorer?: {
