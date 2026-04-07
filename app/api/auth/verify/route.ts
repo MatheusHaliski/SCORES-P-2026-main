@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import crypto from "node:crypto";
 import { getAdminFirestore } from "@/app/lib/firebaseAdmin";
 import { consumeRateLimit, resolveClientIp } from "@/app/lib/security/basicRateLimit";
+import { createSessionToken, setSessionCookie } from "@/app/lib/serverSession";
 import { UserControlRepository } from "@/repositories/UserControlRepository";
 import { AuthUserControlService } from "@/services/AuthUserControlService";
 
@@ -145,10 +146,18 @@ export async function POST(request: NextRequest): Promise<Response> {
 
     await service.validateUserControlAccess(synced.uid);
 
-    return NextResponse.json({
+    const token = createSessionToken({
+      sub: synced.uid,
+      email: synced.email,
+    });
+
+    const response = NextResponse.json({
       ok: true,
       profile: { uid: synced.uid, email: synced.email, displayName: synced.displayName, role: synced.role },
     });
+
+    setSessionCookie(response, token);
+    return response;
   } catch (error) {
     const message = error instanceof Error ? error.message : "Unable to verify credentials right now.";
     const isAccessError = message.includes("SCORES") || message.includes("blocked");

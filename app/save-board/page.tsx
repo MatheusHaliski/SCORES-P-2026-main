@@ -1,8 +1,15 @@
 import { SaveGameService } from "@/services/SaveGameService";
 import { SaveBoardClient } from "@/app/save-board/SaveBoardClient";
+import { cookies } from "next/headers";
+import { AUTH_COOKIE_NAME, verifySessionToken } from "@/app/lib/serverSession";
 
 export default async function SavingBoardView() {
-  const slots = await new SaveGameService().getSaveSlots("u-1");
+  const cookieStore = await cookies();
+  const authToken = cookieStore.get(AUTH_COOKIE_NAME)?.value ?? "";
+  const session = authToken ? verifySessionToken(authToken) : null;
+  const slots = session?.sub
+    ? await new SaveGameService().getSaveSlots(session.sub)
+    : [];
 
   return (
     <main className="mx-auto min-h-screen max-w-5xl p-6">
