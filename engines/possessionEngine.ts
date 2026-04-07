@@ -23,8 +23,8 @@ export class PossessionEngine {
     const attacking = attackingSide === "home" ? state.homeTeam : state.awayTeam;
     const defending = attackingSide === "home" ? state.awayTeam : state.homeTeam;
 
-    const basePace = (attacking.playersOnCourt.reduce((sum, p) => sum + p.pace, 0) / attacking.playersOnCourt.length +
-      defending.playersOnCourt.reduce((sum, p) => sum + p.pace, 0) / defending.playersOnCourt.length) / 2;
+    const basePace = (attacking.playersOnCourt.reduce((sum, p) => sum + p.macroRatings.pace_rating, 0) / attacking.playersOnCourt.length +
+      defending.playersOnCourt.reduce((sum, p) => sum + p.macroRatings.pace_rating, 0) / defending.playersOnCourt.length) / 2;
 
     const paceFactor = clamp(basePace / 100 + (attacking.tactics.paceModifier + defending.tactics.paceModifier) / 100, 0.75, 1.35);
 

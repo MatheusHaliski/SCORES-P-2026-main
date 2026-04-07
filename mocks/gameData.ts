@@ -11,6 +11,7 @@ import {
   User,
   UserSave,
 } from "@/types/game";
+import { calculateMacroRatings, calculateOverallRating, PlayerAttributes } from "@/lib/playerRatings";
 
 export const mockLeagues: League[] = [
   { id: "lg-nba", name: "North Atlantic Basketball League", country: "USA", format: "Regular Season + Playoffs", teamCount: 20, season: "2026", logoUrl: "🏀" },
@@ -55,15 +56,81 @@ export const mockTeams: Team[] = [
   { id: "t-blaze", leagueId: "lg-euro", name: "Berlin Blaze", shortName: "BLZ", logoUrl: "🔥", overall: 80, attackOverall: 79, defenseOverall: 81, physicality: 83, budget: 76000000, stadiumId: "st-blaze", managerDefaultName: "Jonas Kruger", reputationBoard: 73, reputationFans: 76, currentLeaguePosition: 3, primaryColor: "#ef4444", secondaryColor: "#450a0a", visualId: "v-blaze", uniformIds: ["u-blaze-home", "u-blaze-away"], summary: "Defesa intensa e jogo coletivo disciplinado." },
 ];
 
+const archetypeAttributes: Record<string, PlayerAttributes> = {
+  elite_point_guard_playmaker: {
+    pace: { speed: 88, acceleration: 91, agility: 90, reaction_time: 88, off_ball_movement: 84 },
+    dribbling: { ball_control: 92, handle_creativity: 91, tight_dribble: 90, change_of_pace_control: 93, drive_control: 86 },
+    passing: { passing_accuracy: 93, passing_speed: 90, court_vision: 95, decision_making: 91, playmaking_iq: 94 },
+    shooting: { close_shot: 76, mid_range_shot: 80, three_point_shot: 78, free_throw: 84, shot_release_timing: 82, shot_under_pressure: 79 },
+    defending: { on_ball_defense: 76, perimeter_defense: 78, interior_defense: 55, steal_ability: 81, block_ability: 42, defensive_awareness: 80 },
+    physical: { strength: 62, vertical: 73, stamina: 90, durability: 82, balance: 84, body_control: 86 },
+    mental_intangibles: { clutch_factor: 84, consistency: 86, confidence: 88, leadership: 90, game_iq: 93 },
+  },
+  scoring_shooting_guard: {
+    pace: { speed: 85, acceleration: 87, agility: 86, reaction_time: 83, off_ball_movement: 88 },
+    dribbling: { ball_control: 87, handle_creativity: 85, tight_dribble: 84, change_of_pace_control: 86, drive_control: 85 },
+    passing: { passing_accuracy: 74, passing_speed: 75, court_vision: 73, decision_making: 76, playmaking_iq: 74 },
+    shooting: { close_shot: 84, mid_range_shot: 90, three_point_shot: 89, free_throw: 88, shot_release_timing: 91, shot_under_pressure: 88 },
+    defending: { on_ball_defense: 71, perimeter_defense: 74, interior_defense: 52, steal_ability: 72, block_ability: 40, defensive_awareness: 70 },
+    physical: { strength: 68, vertical: 78, stamina: 86, durability: 80, balance: 79, body_control: 84 },
+    mental_intangibles: { clutch_factor: 89, consistency: 84, confidence: 90, leadership: 74, game_iq: 82 },
+  },
+  three_and_d_wing: {
+    pace: { speed: 82, acceleration: 80, agility: 81, reaction_time: 82, off_ball_movement: 84 },
+    dribbling: { ball_control: 74, handle_creativity: 68, tight_dribble: 73, change_of_pace_control: 72, drive_control: 74 },
+    passing: { passing_accuracy: 76, passing_speed: 75, court_vision: 74, decision_making: 80, playmaking_iq: 78 },
+    shooting: { close_shot: 75, mid_range_shot: 79, three_point_shot: 87, free_throw: 82, shot_release_timing: 85, shot_under_pressure: 82 },
+    defending: { on_ball_defense: 87, perimeter_defense: 90, interior_defense: 74, steal_ability: 83, block_ability: 71, defensive_awareness: 88 },
+    physical: { strength: 82, vertical: 80, stamina: 88, durability: 85, balance: 83, body_control: 82 },
+    mental_intangibles: { clutch_factor: 79, consistency: 88, confidence: 81, leadership: 77, game_iq: 86 },
+  },
+  rim_protecting_center: {
+    pace: { speed: 66, acceleration: 69, agility: 64, reaction_time: 76, off_ball_movement: 70 },
+    dribbling: { ball_control: 58, handle_creativity: 45, tight_dribble: 56, change_of_pace_control: 52, drive_control: 60 },
+    passing: { passing_accuracy: 70, passing_speed: 66, court_vision: 72, decision_making: 76, playmaking_iq: 74 },
+    shooting: { close_shot: 86, mid_range_shot: 68, three_point_shot: 44, free_throw: 67, shot_release_timing: 70, shot_under_pressure: 76 },
+    defending: { on_ball_defense: 78, perimeter_defense: 67, interior_defense: 92, steal_ability: 65, block_ability: 94, defensive_awareness: 89 },
+    physical: { strength: 92, vertical: 88, stamina: 82, durability: 88, balance: 86, body_control: 84 },
+    mental_intangibles: { clutch_factor: 80, consistency: 86, confidence: 78, leadership: 82, game_iq: 85 },
+  },
+  athletic_slasher_forward: {
+    pace: { speed: 87, acceleration: 89, agility: 84, reaction_time: 80, off_ball_movement: 83 },
+    dribbling: { ball_control: 80, handle_creativity: 79, tight_dribble: 78, change_of_pace_control: 85, drive_control: 89 },
+    passing: { passing_accuracy: 73, passing_speed: 74, court_vision: 72, decision_making: 74, playmaking_iq: 73 },
+    shooting: { close_shot: 88, mid_range_shot: 75, three_point_shot: 69, free_throw: 72, shot_release_timing: 74, shot_under_pressure: 78 },
+    defending: { on_ball_defense: 79, perimeter_defense: 78, interior_defense: 76, steal_ability: 77, block_ability: 80, defensive_awareness: 79 },
+    physical: { strength: 84, vertical: 92, stamina: 86, durability: 82, balance: 81, body_control: 86 },
+    mental_intangibles: { clutch_factor: 77, consistency: 74, confidence: 84, leadership: 73, game_iq: 78 },
+  },
+  balanced_all_around: {
+    pace: { speed: 80, acceleration: 80, agility: 79, reaction_time: 81, off_ball_movement: 80 },
+    dribbling: { ball_control: 78, handle_creativity: 76, tight_dribble: 77, change_of_pace_control: 78, drive_control: 77 },
+    passing: { passing_accuracy: 80, passing_speed: 78, court_vision: 81, decision_making: 82, playmaking_iq: 82 },
+    shooting: { close_shot: 80, mid_range_shot: 80, three_point_shot: 78, free_throw: 79, shot_release_timing: 79, shot_under_pressure: 80 },
+    defending: { on_ball_defense: 80, perimeter_defense: 80, interior_defense: 79, steal_ability: 79, block_ability: 76, defensive_awareness: 82 },
+    physical: { strength: 80, vertical: 80, stamina: 82, durability: 82, balance: 81, body_control: 82 },
+    mental_intangibles: { clutch_factor: 80, consistency: 83, confidence: 81, leadership: 81, game_iq: 84 },
+  },
+};
+
+const makePlayer = (base: Omit<Player, "overall" | "macroRatings" | "attributes"> & { attributes: PlayerAttributes }): Player => {
+  const macroRatings = calculateMacroRatings(base.attributes);
+  return {
+    ...base,
+    macroRatings,
+    overall: calculateOverallRating(base.attributes, base.position),
+  };
+};
+
 const createPlayers = (teamId: string, prefix: string): Player[] => [
-  { id: `${teamId}-p1`, teamId, name: `${prefix} Grant`, age: 24, position: "PG", overall: 80, marketValue: 11000000, physicalCondition: 92, pace: 85, shooting: 79, passing: 88, dribbling: 86, defending: 74, physical: 72, playstyles: ["Floor General"], isStarter: true, isBench: false },
-  { id: `${teamId}-p2`, teamId, name: `${prefix} Reed`, age: 26, position: "SG", overall: 82, marketValue: 14000000, physicalCondition: 89, pace: 84, shooting: 86, passing: 77, dribbling: 83, defending: 75, physical: 74, playstyles: ["Catch & Shoot"], isStarter: true, isBench: false },
-  { id: `${teamId}-p3`, teamId, name: `${prefix} Miles`, age: 27, position: "SF", overall: 84, marketValue: 17000000, physicalCondition: 88, pace: 82, shooting: 81, passing: 78, dribbling: 80, defending: 84, physical: 83, playstyles: ["Two-way Wing"], isStarter: true, isBench: false },
-  { id: `${teamId}-p4`, teamId, name: `${prefix} Coleman`, age: 29, position: "PF", overall: 83, marketValue: 16000000, physicalCondition: 86, pace: 75, shooting: 78, passing: 76, dribbling: 72, defending: 85, physical: 86, playstyles: ["Post Defender"], isStarter: true, isBench: false },
-  { id: `${teamId}-p5`, teamId, name: `${prefix} Stone`, age: 30, position: "C", overall: 85, marketValue: 18000000, physicalCondition: 87, pace: 71, shooting: 74, passing: 70, dribbling: 65, defending: 88, physical: 90, playstyles: ["Rim Protector"], isStarter: true, isBench: false },
-  { id: `${teamId}-p6`, teamId, name: `${prefix} Young`, age: 22, position: "PG", overall: 75, marketValue: 6000000, physicalCondition: 94, pace: 88, shooting: 71, passing: 79, dribbling: 84, defending: 68, physical: 67, playstyles: ["Spark Plug"], isStarter: false, isBench: true },
-  { id: `${teamId}-p7`, teamId, name: `${prefix} Brooks`, age: 25, position: "SG", overall: 74, marketValue: 5200000, physicalCondition: 91, pace: 80, shooting: 75, passing: 70, dribbling: 74, defending: 71, physical: 70, playstyles: ["Microwave Scorer"], isStarter: false, isBench: true },
-  { id: `${teamId}-p8`, teamId, name: `${prefix} Silva`, age: 23, position: "SF", overall: 73, marketValue: 4800000, physicalCondition: 93, pace: 79, shooting: 72, passing: 68, dribbling: 71, defending: 74, physical: 76, playstyles: ["Hustle"], isStarter: false, isBench: true },
+  makePlayer({ id: `${teamId}-p1`, teamId, name: `${prefix} Grant`, age: 24, position: "PG", marketValue: 11000000, physicalCondition: 92, attributes: archetypeAttributes.elite_point_guard_playmaker, playstyles: ["Floor General"], isStarter: true, isBench: false }),
+  makePlayer({ id: `${teamId}-p2`, teamId, name: `${prefix} Reed`, age: 26, position: "SG", marketValue: 14000000, physicalCondition: 89, attributes: archetypeAttributes.scoring_shooting_guard, playstyles: ["Catch & Shoot"], isStarter: true, isBench: false }),
+  makePlayer({ id: `${teamId}-p3`, teamId, name: `${prefix} Miles`, age: 27, position: "SF", marketValue: 17000000, physicalCondition: 88, attributes: archetypeAttributes.three_and_d_wing, playstyles: ["Two-way Wing"], isStarter: true, isBench: false }),
+  makePlayer({ id: `${teamId}-p4`, teamId, name: `${prefix} Coleman`, age: 29, position: "PF", marketValue: 16000000, physicalCondition: 86, attributes: archetypeAttributes.athletic_slasher_forward, playstyles: ["Post Defender"], isStarter: true, isBench: false }),
+  makePlayer({ id: `${teamId}-p5`, teamId, name: `${prefix} Stone`, age: 30, position: "C", marketValue: 18000000, physicalCondition: 87, attributes: archetypeAttributes.rim_protecting_center, playstyles: ["Rim Protector"], isStarter: true, isBench: false }),
+  makePlayer({ id: `${teamId}-p6`, teamId, name: `${prefix} Young`, age: 22, position: "PG", marketValue: 6000000, physicalCondition: 94, attributes: archetypeAttributes.elite_point_guard_playmaker, playstyles: ["Spark Plug"], isStarter: false, isBench: true }),
+  makePlayer({ id: `${teamId}-p7`, teamId, name: `${prefix} Brooks`, age: 25, position: "SG", marketValue: 5200000, physicalCondition: 91, attributes: archetypeAttributes.scoring_shooting_guard, playstyles: ["Microwave Scorer"], isStarter: false, isBench: true }),
+  makePlayer({ id: `${teamId}-p8`, teamId, name: `${prefix} Silva`, age: 23, position: "SF", marketValue: 4800000, physicalCondition: 93, attributes: archetypeAttributes.balanced_all_around, playstyles: ["Hustle"], isStarter: false, isBench: true }),
 ];
 
 export const mockPlayers: Player[] = mockTeams.flatMap((team) => createPlayers(team.id, team.shortName));
@@ -75,26 +142,6 @@ export const enrichedMockPlayers: Player[] = mockPlayers.map((player) => ({
   injuryRecoveryRounds: 0,
   transferStatus: "not_listed",
   isTransferListed: false,
-  attributes: {
-    acceleration: player.pace,
-    sprintSpeed: Math.max(50, player.pace - 2),
-    positioning: player.overall,
-    finishing: player.shooting,
-    shotPower: Math.max(50, player.shooting - 1),
-    longShots: Math.max(45, player.shooting - 3),
-    vision: player.passing,
-    shortPass: Math.max(40, player.passing - 1),
-    longPass: Math.max(40, player.passing - 3),
-    curve: Math.max(35, player.passing - 5),
-    ballControl: player.dribbling,
-    agility: Math.max(40, player.dribbling - 1),
-    composure: Math.max(40, player.overall - 2),
-    interceptions: Math.max(35, player.defending - 2),
-    defensiveAwareness: player.defending,
-    strength: player.physical,
-    stamina: player.physicalCondition,
-    aggression: Math.max(40, player.physical - 4),
-  },
 }));
 
 export const mockUsers: User[] = [{ id: "u-1", displayName: "Coach Demo", email: "coach@scores.gg", createdAt: "2026-01-10T10:00:00.000Z" }];

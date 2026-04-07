@@ -1,3 +1,5 @@
+import { MacroRatings, PlayerAttributes } from "@/lib/playerRatings";
+
 export type PlayerPosition = "PG" | "SG" | "SF" | "PF" | "C";
 export type UniformType = "home" | "away" | "alternate";
 export type FixtureStatus = "scheduled" | "live" | "halftime" | "finished";
@@ -48,12 +50,8 @@ export interface Player {
   overall: number;
   marketValue: number;
   physicalCondition: number;
-  pace: number;
-  shooting: number;
-  passing: number;
-  dribbling: number;
-  defending: number;
-  physical: number;
+  attributes: PlayerAttributes;
+  macroRatings: MacroRatings;
   playstyles: string[];
   salary?: number;
   morale?: PlayerMorale;
@@ -61,26 +59,6 @@ export interface Player {
   injuryRecoveryRounds?: number;
   transferStatus?: TransferStatus;
   isTransferListed?: boolean;
-  attributes?: {
-    acceleration: number;
-    sprintSpeed: number;
-    positioning: number;
-    finishing: number;
-    shotPower: number;
-    longShots: number;
-    vision: number;
-    shortPass: number;
-    longPass: number;
-    curve: number;
-    ballControl: number;
-    agility: number;
-    composure: number;
-    interceptions: number;
-    defensiveAwareness: number;
-    strength: number;
-    stamina: number;
-    aggression: number;
-  };
   isStarter: boolean;
   isBench: boolean;
 }

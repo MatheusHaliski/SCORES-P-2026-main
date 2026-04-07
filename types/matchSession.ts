@@ -1,4 +1,5 @@
 import { Fixture, Player } from "@/types/game";
+import { MacroRatings, PlayerAttributes } from "@/lib/playerRatings";
 import { MatchEvent } from "@/types/liveMatch";
 
 export type MatchPhase =
@@ -25,12 +26,8 @@ export type LineupPlayer = {
   position: string;
   overall: number;
   stamina: number;
-  pace: number;
-  shooting: number;
-  passing: number;
-  dribbling: number;
-  defending: number;
-  physical: number;
+  attributes: PlayerAttributes;
+  macroRatings: MacroRatings;
   morale: "Muito Feliz" | "Feliz" | "Contente" | "Insatisfeito" | "Muito Insatisfeito";
   injuryStatus: "Disponível" | "Lesionado";
   playstyles: string[];
