@@ -5,6 +5,9 @@ import { StandingsRepository } from "@/repositories/StandingsRepository";
 import { LeaguesRepository } from "@/repositories/LeaguesRepository";
 import { PlayersRepository } from "@/repositories/PlayersRepository";
 import { SquadHomeClient } from "@/components/squad/SquadHomeClient";
+import { UserProfileSidebar } from "@/components/UserProfileSidebar";
+import { cookies } from "next/headers";
+import { AUTH_COOKIE_NAME, verifySessionToken } from "@/app/lib/serverSession";
 
 export default async function SquadHomeView({ searchParams }: { searchParams: Promise<{ saveId?: string }> }) {
   const params = await searchParams;
@@ -12,6 +15,10 @@ export default async function SquadHomeView({ searchParams }: { searchParams: Pr
 
   const payload = await new SquadHomeService().getSquadHomePayload(saveId);
   const teamsById = getTeamsById();
+
+  const cookieStore = await cookies();
+  const authToken = cookieStore.get(AUTH_COOKIE_NAME)?.value ?? "";
+  const session = authToken ? verifySessionToken(authToken) : null;
 
   const [standings, champions, leagues, allTeams, allPlayers, stadium] = await Promise.all([
     new StandingsRepository().getStandingsByLeague(payload.league.id, saveId),
@@ -31,16 +38,22 @@ export default async function SquadHomeView({ searchParams }: { searchParams: Pr
   );
 
   return (
-    <SquadHomeClient
-      payload={payload}
-      teamsById={teamsById}
-      standings={standings}
-      champions={champions}
-      leagues={leagues}
-      allTeams={allTeams}
-      allPlayers={allPlayers}
-      stadium={stadium ?? null}
-      stadiumsByTeamId={stadiumsByTeamId}
-    />
+    <div className="mx-auto grid min-h-screen max-w-[1500px] gap-4 p-4 lg:grid-cols-[280px,1fr]">
+      <UserProfileSidebar
+        userIdentifier={session?.email ?? payload.save.managerName}
+        activeSaveName={payload.save.saveName ?? payload.save.id}
+      />
+      <SquadHomeClient
+        payload={payload}
+        teamsById={teamsById}
+        standings={standings}
+        champions={champions}
+        leagues={leagues}
+        allTeams={allTeams}
+        allPlayers={allPlayers}
+        stadium={stadium ?? null}
+        stadiumsByTeamId={stadiumsByTeamId}
+      />
+    </div>
   );
 }
