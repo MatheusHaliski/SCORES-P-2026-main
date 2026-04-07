@@ -276,6 +276,35 @@ const LogoMark = ({ logo, label, size = 24 }: { logo: string; label: string; siz
   return <span className="inline-flex items-center justify-center rounded bg-slate-800 px-2 py-1 text-lg">{logo}</span>;
 };
 
+const TeamPremiumTile = ({
+  team,
+  onClick,
+  isActive = false,
+}: {
+  team: Team;
+  onClick: () => void;
+  isActive?: boolean;
+}) => (
+  <button
+    type="button"
+    onClick={onClick}
+    className={`w-full rounded-xl border p-3 text-left transition hover:-translate-y-0.5 hover:shadow-[0_10px_30px_rgba(16,185,129,0.25)] ${isActive ? "border-emerald-300/80" : "border-emerald-300/30"}`}
+    style={{
+      backgroundImage: `linear-gradient(135deg, rgba(16,185,129,0.28), rgba(5,150,105,0.1)), radial-gradient(circle at 16% 20%, ${team.primaryColor}80 0%, transparent 40%)`,
+    }}
+  >
+    <div className="flex items-center gap-3">
+      <div className="rounded-lg border border-white/25 bg-slate-900/70 p-1.5">
+        <LogoMark logo={team.logoUrl} label={team.name} size={30} />
+      </div>
+      <div className="min-w-0">
+        <p className="truncate text-sm font-black text-white">{team.name}</p>
+        <p className="text-xs text-emerald-100/90">{team.shortName}</p>
+      </div>
+    </div>
+  </button>
+);
+
 export function SquadHomeClient({
   payload,
   teamsById,
@@ -883,7 +912,13 @@ export function SquadHomeClient({
             <input className="w-full rounded border border-white/20 bg-slate-800 px-2 py-1 text-sm" placeholder="Buscar por nome" value={searchQuery} onChange={(event) => setSearchQuery(event.target.value)} />
 
             {searchTab === "Ligas" && <div className="max-h-[60vh] space-y-1 overflow-auto">{filteredLeagues.map((league) => <button key={league.id} onClick={() => setSelectedLeagueId(league.id)} className="flex w-full items-center gap-2 rounded border border-white/10 p-2 text-left"><LogoMark logo={league.logoUrl} label={league.name} size={24} /><span>{league.name}</span></button>)}</div>}
-            {searchTab === "Clubes" && <div className="max-h-[60vh] space-y-1 overflow-auto">{filteredClubs.map((club) => <button key={club.id} onClick={() => setSelectedClubId(club.id)} className="flex w-full items-center gap-2 rounded border border-white/10 p-2 text-left"><LogoMark logo={club.logoUrl} label={club.name} size={24} /><span>{club.name}</span></button>)}</div>}
+            {searchTab === "Clubes" && (
+              <div className="max-h-[60vh] space-y-2 overflow-auto">
+                {filteredClubs.map((club) => (
+                  <TeamPremiumTile key={club.id} team={club} isActive={selectedClubId === club.id} onClick={() => setSelectedClubId(club.id)} />
+                ))}
+              </div>
+            )}
             {searchTab === "Jogadores" && (
               <div className="space-y-2">
                 <div className="grid grid-cols-2 gap-2">
@@ -904,7 +939,18 @@ export function SquadHomeClient({
                 <p>Classificação (top 8):</p>
                 {standings.slice(0, 8).map((row) => <p key={row.teamId}>#{row.position} {teamsById[row.teamId]?.name} ({row.wins}-{row.losses})</p>)}
                 <p className="font-semibold">Clubes participantes</p>
-                <div className="grid grid-cols-2 gap-2">{allTeams.filter((team) => team.leagueId === selectedLeague.id).map((team) => <div key={team.id} className="rounded border border-white/10 p-2"><p>{team.shortName}</p></div>)}</div>
+                <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
+                  {allTeams.filter((team) => team.leagueId === selectedLeague.id).map((team) => (
+                    <TeamPremiumTile
+                      key={team.id}
+                      team={team}
+                      onClick={() => {
+                        setSearchTab("Clubes");
+                        setSelectedClubId(team.id);
+                      }}
+                    />
+                  ))}
+                </div>
               </div>
             )}
 
