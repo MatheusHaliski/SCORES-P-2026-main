@@ -49,10 +49,11 @@ export class MatchSessionService {
     const revenueEstimate = this.stadiumRevenueService.estimate({
       capacity: stadiumCapacity,
       ticketPrice,
-      demand: 0.92,
-      teamForm: 0.1,
+      baseDemand: 0.92,
+      teamMomentum: 1.02,
       reputation: 74,
-      roundImportance: payload.round > 10 ? 0.16 : 0.08,
+      rivalry: 1.01,
+      matchImportance: payload.round > 10 ? 1.12 : 1.04,
     });
 
     const session: MatchSession = {
@@ -78,7 +79,7 @@ export class MatchSessionService {
       pendingInjury: null,
       venueName: `${payload.teamsById[payload.userTeamId]?.shortName ?? "HOME"} Arena`,
       attendance: revenueEstimate.attendance,
-      ticketRevenueEstimate: revenueEstimate.revenue,
+      ticketRevenueEstimate: revenueEstimate.matchRevenue,
       fixtures: payload.fixtures.map((fixture) => ({
         id: fixture.id,
         homeTeamId: fixture.homeTeamId,
