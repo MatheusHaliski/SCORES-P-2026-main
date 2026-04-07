@@ -335,7 +335,26 @@ export function SquadHomeClient({
     const raw = window.localStorage.getItem(`${STORAGE_PREFIX}${payload.save.id}`);
     if (!raw) return initial;
     try {
-      return JSON.parse(raw) as CareerState;
+      const parsed = JSON.parse(raw) as Partial<CareerState> | null;
+      if (!parsed || typeof parsed !== "object") return initial;
+
+      return {
+        ...initial,
+        ...parsed,
+        loans: Array.isArray(parsed.loans) ? parsed.loans : initial.loans,
+        inventory: parsed.inventory && typeof parsed.inventory === "object" ? parsed.inventory : initial.inventory,
+        playerOverrides: parsed.playerOverrides && typeof parsed.playerOverrides === "object" ? parsed.playerOverrides : initial.playerOverrides,
+        signedPlayers: Array.isArray(parsed.signedPlayers) ? parsed.signedPlayers : initial.signedPlayers,
+        inbox: Array.isArray(parsed.inbox) ? parsed.inbox : initial.inbox,
+        financeLog: Array.isArray(parsed.financeLog) ? parsed.financeLog : initial.financeLog,
+        pendingActions: Array.isArray(parsed.pendingActions) ? parsed.pendingActions : initial.pendingActions,
+        teamColors: parsed.teamColors && typeof parsed.teamColors === "object"
+          ? {
+            primaryColor: parsed.teamColors.primaryColor ?? initial.teamColors.primaryColor,
+            secondaryColor: parsed.teamColors.secondaryColor ?? initial.teamColors.secondaryColor,
+          }
+          : initial.teamColors,
+      };
     } catch {
       return initial;
     }
