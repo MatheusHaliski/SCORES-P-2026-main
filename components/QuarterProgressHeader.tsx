@@ -6,7 +6,7 @@ export function QuarterProgressHeader({ session }: { session: MatchSession }) {
   const progress = ((session.quarterDuration - session.timeRemaining) / session.quarterDuration) * 100;
 
   return (
-    <header className="rounded-2xl border border-white/15 bg-slate-900/70 p-4">
+    <header className="premium-surface p-4">
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div>
           <h1 className="text-2xl font-black text-white">Live Round Panel</h1>

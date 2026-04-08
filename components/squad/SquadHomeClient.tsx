@@ -55,7 +55,7 @@ type CareerState = {
 
 const STORAGE_PREFIX = "scores:career-state:";
 
-const topActions = ["Calendário", "Classificações", "Campeões", "Comprar Jogador", "Salvar Jogo", "Sair", "Buscar", "Empréstimo", "Orçamento", "Estádio", "Email", "Consumíveis", "Identidade do Clube"] as const;
+const topActions = ["Calendário", "Classificações", "Campeões", "Comprar Jogador", "Salvar Jogo", "Sair", "Buscar", "Empréstimo", "Orçamento", "Estádio", "Email", "Consumíveis", "Identidade do Clube", "Editar Clubes/Ligas/Jogadores"] as const;
 const moraleService = new PlayerMoraleService();
 const injuryService = new PlayerInjuryService();
 const playstyleInventoryService = new PlaystyleInventoryService();
@@ -85,10 +85,10 @@ const playerEffectiveScore = (player: Player) => {
 function modalShell(title: string, onClose: () => void, content: ReactNode) {
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/80 p-4">
-      <div className="max-h-[92vh] w-full max-w-6xl overflow-auto rounded-2xl border border-white/20 bg-slate-900 p-4">
+      <div className="premium-surface max-h-[92vh] w-full max-w-6xl overflow-auto p-4">
         <div className="mb-3 flex items-center justify-between">
           <h2 className="text-xl font-black text-white">{title}</h2>
-          <button className="rounded bg-slate-700 px-3 py-1 text-xs text-white" onClick={onClose}>Fechar</button>
+          <button className="premium-control px-3 py-1 text-xs" onClick={onClose}>Fechar</button>
         </div>
         {content}
       </div>
@@ -98,7 +98,11 @@ function modalShell(title: string, onClose: () => void, content: ReactNode) {
 
 const PlayerFace = ({ player }: { player: Player }) => (
   <div className="relative h-24 w-24 overflow-hidden rounded-2xl border border-white/20 bg-gradient-to-br from-cyan-500/30 to-indigo-600/30">
-    <div className="absolute inset-0 flex items-center justify-center text-3xl font-black text-white">{player.name.slice(0, 1)}</div>
+    {player.photoUrl ? (
+      <Image src={player.photoUrl} alt={player.name} fill className="object-cover" />
+    ) : (
+      <div className="absolute inset-0 flex items-center justify-center text-3xl font-black text-white">{player.name.slice(0, 1)}</div>
+    )}
     <div className="absolute inset-x-0 bottom-0 h-8 bg-slate-950/60" />
   </div>
 );
@@ -343,9 +347,12 @@ const TeamPremiumTile = ({
   </button>
 );
 
+type EditableTab = "Ligas" | "Clubes" | "Jogadores" | "Novo Time";
+
+const createId = (prefix: string) => `${prefix}-${Math.random().toString(36).slice(2, 10)}`;
+
 export function SquadHomeClient({
   payload,
-  teamsById,
   standings,
   champions,
   leagues,
@@ -355,7 +362,6 @@ export function SquadHomeClient({
   stadiumsByTeamId,
 }: {
   payload: SquadHomePayload;
-  teamsById: Record<string, Team>;
   standings: StandingRow[];
   champions: LeagueChampionHistory[];
   leagues: League[];
@@ -381,6 +387,19 @@ export function SquadHomeClient({
     position: "",
     minOverall: 70,
     listedOnly: false,
+  });
+  const [editableLeagues, setEditableLeagues] = useState<League[]>(leagues);
+  const [editableTeams, setEditableTeams] = useState<Team[]>(allTeams);
+  const [editablePlayers, setEditablePlayers] = useState<Player[]>(allPlayers);
+  const [editorTab, setEditorTab] = useState<EditableTab>("Ligas");
+  const [newTeamDraft, setNewTeamDraft] = useState({
+    leagueId: leagues[0]?.id ?? payload.team.leagueId,
+    name: "",
+    shortName: "",
+    venueName: "",
+    primaryColor: "#5B21B6",
+    secondaryColor: "#22D3EE",
+    players: Array.from({ length: 8 }).map((_, idx) => ({ name: `Novo Jogador ${idx + 1}`, position: (["PG", "SG", "SF", "PF", "C", "PG", "SG", "SF"] as const)[idx], overall: 72 })),
   });
 
   const [state, setState] = useState<CareerState>(() => {
@@ -435,6 +454,15 @@ export function SquadHomeClient({
     window.localStorage.setItem(`${STORAGE_PREFIX}${payload.save.id}`, JSON.stringify(state));
   }, [payload.save.id, state]);
 
+  const teamsMap = useMemo(
+    () => Object.fromEntries(editableTeams.map((team) => [team.id, team])) as Record<string, Team>,
+    [editableTeams],
+  );
+  const leaguesMap = useMemo(
+    () => Object.fromEntries(editableLeagues.map((league) => [league.id, league])) as Record<string, League>,
+    [editableLeagues],
+  );
+
   const mergedPlayers = useMemo(() => {
     const base = [...payload.players, ...state.signedPlayers.filter((player) => !payload.players.find((p) => p.id === player.id))];
     return base.map((player) => ({ ...player, ...state.playerOverrides[player.id] }));
@@ -457,14 +485,14 @@ export function SquadHomeClient({
       if (action.type === "buy_offer") {
         const playerId = String(action.payload.playerId);
         const offerValue = Number(action.payload.offerValue);
-        const player = allPlayers.find((entry) => entry.id === playerId);
+        const player = editablePlayers.find((entry) => entry.id === playerId);
         if (!player) return;
 
         const outcome = transferService.getOfferAcceptanceScore({
           player,
           offerValue,
           isTransferListed: !!player.isTransferListed,
-          sellerBudget: teamsById[player.teamId]?.budget ?? 30000000,
+          sellerBudget: teamsMap[player.teamId]?.budget ?? 30000000,
         });
 
         if (outcome.accepted && financeService.canAfford(next.budget, offerValue)) {
@@ -545,7 +573,7 @@ export function SquadHomeClient({
   };
 
   const sendTransferOffer = (player: Player, offerValue: number) => {
-    const sellerClub = teamsById[player.teamId];
+    const sellerClub = teamsMap[player.teamId];
     updateState((prev) => ({
       ...prev,
       pendingActions: [
@@ -690,6 +718,56 @@ export function SquadHomeClient({
     setOpenModal(null);
   };
 
+  const addCustomTeam = () => {
+    if (!newTeamDraft.name.trim() || !newTeamDraft.shortName.trim()) return;
+    const teamId = createId("team");
+    const stadiumId = createId("stadium");
+    const newTeam: Team = {
+      id: teamId,
+      leagueId: newTeamDraft.leagueId,
+      name: newTeamDraft.name.trim(),
+      shortName: newTeamDraft.shortName.trim(),
+      logoUrl: "🛡️",
+      overall: Math.round(newTeamDraft.players.reduce((sum, p) => sum + p.overall, 0) / Math.max(1, newTeamDraft.players.length)),
+      attackOverall: 74,
+      defenseOverall: 74,
+      physicality: 74,
+      budget: 25000000,
+      stadiumId,
+      managerDefaultName: "Manager Custom",
+      reputationBoard: 5,
+      reputationFans: 5,
+      currentLeaguePosition: editableTeams.filter((team) => team.leagueId === newTeamDraft.leagueId).length + 1,
+      primaryColor: newTeamDraft.primaryColor,
+      secondaryColor: newTeamDraft.secondaryColor,
+      visualId: createId("visual"),
+      uniformIds: [],
+      summary: "Equipe customizada criada no editor.",
+    };
+    const customPlayers: Player[] = newTeamDraft.players.map((entry, idx) => ({
+      id: createId(`player${idx + 1}`),
+      teamId: teamId,
+      name: entry.name.trim() || `Jogador ${idx + 1}`,
+      position: entry.position,
+      overall: entry.overall,
+      age: 24,
+      marketValue: entry.overall * 110000,
+      physicalCondition: 92,
+      attributes: payload.players[0].attributes,
+      macroRatings: payload.players[0].macroRatings,
+      playstyles: [],
+      isStarter: idx < 5,
+      isBench: idx >= 5,
+      morale: "Contente",
+      injuryStatus: "Disponível",
+      salary: 500000,
+    }));
+    setEditableTeams((prev) => [...prev, newTeam]);
+    setEditablePlayers((prev) => [...prev, ...customPlayers]);
+    setNewTeamDraft((prev) => ({ ...prev, name: "", shortName: "", venueName: "" }));
+    setEditorTab("Clubes");
+  };
+
   const attributeSections = (player: Player) => {
     const attrs = player.attributes;
     return [
@@ -703,20 +781,20 @@ export function SquadHomeClient({
     ];
   };
 
-  const marketPool = allPlayers.filter((player) => player.teamId !== payload.team.id);
-  const transferMarketClubs = allTeams.filter((team) => team.id !== payload.team.id);
-  const transferMarketLeagues = leagues.filter((league) => transferMarketClubs.some((team) => team.leagueId === league.id));
+  const marketPool = editablePlayers.filter((player) => player.teamId !== payload.team.id);
+  const transferMarketClubs = editableTeams.filter((team) => team.id !== payload.team.id);
+  const transferMarketLeagues = editableLeagues.filter((league) => transferMarketClubs.some((team) => team.leagueId === league.id));
   const transferClubsByLeague = transferLeagueId ? transferMarketClubs.filter((team) => team.leagueId === transferLeagueId) : [];
-  const transferPlayersByClub = transferClubId ? allPlayers.filter((player) => player.teamId === transferClubId) : [];
-  const transferOfferTarget = transferOfferPlayerId ? allPlayers.find((player) => player.id === transferOfferPlayerId) ?? null : null;
-  const filteredLeagues = globalSearchService.filterLeagues(leagues, searchQuery);
-  const filteredClubs = globalSearchService.filterClubs(allTeams, searchQuery);
+  const transferPlayersByClub = transferClubId ? editablePlayers.filter((player) => player.teamId === transferClubId) : [];
+  const transferOfferTarget = transferOfferPlayerId ? editablePlayers.find((player) => player.id === transferOfferPlayerId) ?? null : null;
+  const filteredLeagues = globalSearchService.filterLeagues(editableLeagues, searchQuery);
+  const filteredClubs = globalSearchService.filterClubs(editableTeams, searchQuery);
   const filteredPlayers = globalSearchService.filterPlayers(marketPool, searchQuery, playerFilters);
 
-  const selectedLeague = leagues.find((league) => league.id === selectedLeagueId) ?? null;
-  const selectedClub = allTeams.find((club) => club.id === selectedClubId) ?? null;
+  const selectedLeague = editableLeagues.find((league) => league.id === selectedLeagueId) ?? null;
+  const selectedClub = editableTeams.find((club) => club.id === selectedClubId) ?? null;
   const selectedGlobalPlayer = marketPool.find((player) => player.id === selectedGlobalPlayerId) ?? null;
-  const currentLeague = leagues.find((league) => league.id === payload.team.leagueId) ?? null;
+  const currentLeague = editableLeagues.find((league) => league.id === payload.team.leagueId) ?? null;
   const availablePlaystyles = playstyleInventoryService.availableItems(state.inventory);
   const primaryColor = state.teamColors?.primaryColor ?? payload.team.primaryColor;
   const secondaryColor = clubVisualService.ensureReadableAccent(state.teamColors?.secondaryColor ?? payload.team.secondaryColor);
@@ -730,7 +808,7 @@ export function SquadHomeClient({
   const nextVenue = payload.nextFixture
     ? isHomeNextMatch
       ? stadium?.name ?? `${payload.team.shortName} Arena`
-      : stadiumsByTeamId[payload.nextFixture.awayTeamId === payload.team.id ? payload.nextFixture.homeTeamId : payload.nextFixture.awayTeamId]?.name ?? `${teamsById[payload.nextFixture.awayTeamId === payload.team.id ? payload.nextFixture.homeTeamId : payload.nextFixture.awayTeamId]?.shortName ?? "Arena"} Arena`
+      : stadiumsByTeamId[payload.nextFixture.awayTeamId === payload.team.id ? payload.nextFixture.homeTeamId : payload.nextFixture.awayTeamId]?.name ?? `${teamsMap[payload.nextFixture.awayTeamId === payload.team.id ? payload.nextFixture.homeTeamId : payload.nextFixture.awayTeamId]?.shortName ?? "Arena"} Arena`
     : "";
 
   const stadiumProjection = stadiumRevenueService.estimate({
@@ -751,9 +829,9 @@ export function SquadHomeClient({
       }}
     >
       <div className="mx-auto max-w-7xl space-y-4">
-        <header className="flex flex-wrap gap-2 rounded-2xl border border-white/20 bg-slate-950/70 p-3">
+        <header className="premium-surface flex flex-wrap gap-2 p-3">
           {topActions.map((action) => (
-            <button key={action} onClick={() => setOpenModal(action)} className="rounded border border-white/20 bg-slate-800 px-3 py-1 text-xs font-semibold text-slate-100 hover:bg-slate-700">
+            <button key={action} onClick={() => setOpenModal(action)} className="premium-control px-3 py-1 text-xs font-semibold">
               {action} {action === "Email" && unreadCount > 0 && <span className="ml-1 rounded-full bg-red-500 px-1.5 py-0.5 text-[10px]">{unreadCount}</span>}
             </button>
           ))}
@@ -780,8 +858,8 @@ export function SquadHomeClient({
               <MiniNextMatchCard
                 fixture={payload.nextFixture}
                 userTeam={payload.team}
-                homeTeam={teamsById[payload.nextFixture.homeTeamId]}
-                awayTeam={teamsById[payload.nextFixture.awayTeamId]}
+                homeTeam={teamsMap[payload.nextFixture.homeTeamId]}
+                awayTeam={teamsMap[payload.nextFixture.awayTeamId]}
                 venue={nextVenue}
                 primaryColor={primaryColor}
                 secondaryColor={secondaryColor}
@@ -799,8 +877,11 @@ export function SquadHomeClient({
           <SectionCard title="Elenco Principal" subtitle="Hub de gestão do save" className="lg:col-span-3">
             <div className="space-y-2">
               {mergedPlayers.map((player) => (
-                <button key={player.id} onClick={() => setSelectedPlayerId(player.id)} className="grid w-full grid-cols-8 gap-2 rounded-xl border border-white/10 bg-slate-800/70 p-2 text-left text-xs text-slate-100 hover:border-cyan-300/60">
-                  <p className="col-span-2 font-semibold" style={{ color: secondaryColor }}>{player.name}</p>
+                <button key={player.id} onClick={() => setSelectedPlayerId(player.id)} className="premium-surface grid w-full grid-cols-[auto,2fr,repeat(6,minmax(0,1fr))] gap-2 p-2 text-left text-xs text-slate-100 hover:border-cyan-300/60">
+                  <div className="relative h-8 w-8 overflow-hidden rounded-full border border-white/20">
+                    {player.photoUrl ? <Image src={player.photoUrl} alt={player.name} fill className="object-cover" /> : <span className="flex h-full w-full items-center justify-center bg-slate-800 text-[11px] font-black">{player.name.slice(0, 1)}</span>}
+                  </div>
+                  <p className="font-semibold" style={{ color: secondaryColor }}>{player.name}</p>
                   <p>{player.position}</p>
                   <p>OVR {player.overall}</p>
                   <p>{player.age} anos</p>
@@ -1015,7 +1096,7 @@ export function SquadHomeClient({
                   <p className="text-lg font-black">Fazer oferta por {transferOfferTarget.name}</p>
                   <button className="rounded bg-slate-700 px-2 py-1 text-xs" onClick={() => setTransferOfferPlayerId(null)}>Fechar</button>
                 </div>
-                <p className="mb-2 text-xs text-slate-300">Clube dono: {teamsById[transferOfferTarget.teamId]?.name}</p>
+                <p className="mb-2 text-xs text-slate-300">Clube dono: {teamsMap[transferOfferTarget.teamId]?.name}</p>
                 <p className="mb-3 text-xs text-slate-300">Valor de mercado: ${transferOfferTarget.marketValue.toLocaleString()}</p>
                 <label className="mb-3 block text-xs">
                   Valor da proposta
@@ -1024,7 +1105,7 @@ export function SquadHomeClient({
                     min={1}
                     value={transferOfferValue}
                     onChange={(event) => setTransferOfferValue(event.target.value)}
-                    className="mt-1 w-full rounded border border-white/20 bg-slate-800 px-2 py-1 text-sm"
+                    className="premium-control mt-1 w-full px-3 py-2 text-sm"
                   />
                 </label>
                 <button
@@ -1051,7 +1132,7 @@ export function SquadHomeClient({
                 <button key={tab} onClick={() => setSearchTab(tab)} className={`rounded px-2 py-1 text-xs ${searchTab === tab ? "bg-cyan-500 font-bold text-slate-950" : "bg-slate-700"}`}>{tab}</button>
               ))}
             </div>
-            <input className="w-full rounded border border-white/20 bg-slate-800 px-2 py-1 text-sm" placeholder="Buscar por nome" value={searchQuery} onChange={(event) => setSearchQuery(event.target.value)} />
+            <input className="premium-control w-full px-3 py-2 text-sm" placeholder="Buscar por nome" value={searchQuery} onChange={(event) => setSearchQuery(event.target.value)} />
 
             {searchTab === "Ligas" && <div className="max-h-[60vh] space-y-1 overflow-auto">{filteredLeagues.map((league) => <button key={league.id} onClick={() => setSelectedLeagueId(league.id)} className="flex w-full items-center gap-2 rounded border border-white/10 p-2 text-left"><LogoMark logo={league.logoUrl} label={league.name} size={24} /><span>{league.name}</span></button>)}</div>}
             {searchTab === "Clubes" && (
@@ -1064,11 +1145,11 @@ export function SquadHomeClient({
             {searchTab === "Jogadores" && (
               <div className="space-y-2">
                 <div className="grid grid-cols-2 gap-2">
-                  <input value={playerFilters.position} onChange={(event) => setPlayerFilters((prev) => ({ ...prev, position: event.target.value.toUpperCase() }))} placeholder="Posição (PG)" className="rounded border border-white/20 bg-slate-800 px-2 py-1 text-xs" />
-                  <input type="number" value={playerFilters.minOverall} onChange={(event) => setPlayerFilters((prev) => ({ ...prev, minOverall: Number(event.target.value) }))} placeholder="OVR mín" className="rounded border border-white/20 bg-slate-800 px-2 py-1 text-xs" />
+                  <input value={playerFilters.position} onChange={(event) => setPlayerFilters((prev) => ({ ...prev, position: event.target.value.toUpperCase() }))} placeholder="Posição (PG)" className="premium-control px-3 py-2 text-xs" />
+                  <input type="number" value={playerFilters.minOverall} onChange={(event) => setPlayerFilters((prev) => ({ ...prev, minOverall: Number(event.target.value) }))} placeholder="OVR mín" className="premium-control px-3 py-2 text-xs" />
                 </div>
                 <label className="flex items-center gap-2 text-xs"><input type="checkbox" checked={playerFilters.listedOnly} onChange={(event) => setPlayerFilters((prev) => ({ ...prev, listedOnly: event.target.checked }))} />Somente listados no mercado</label>
-                <div className="max-h-[45vh] space-y-1 overflow-auto">{filteredPlayers.map((player) => <button key={player.id} onClick={() => setSelectedGlobalPlayerId(player.id)} className="w-full rounded border border-white/10 p-2 text-left"><p className="font-semibold">{player.name}</p><p className="text-xs text-slate-300">{player.position} • OVR {player.overall} • {teamsById[player.teamId]?.shortName}</p></button>)}</div>
+                <div className="max-h-[45vh] space-y-1 overflow-auto">{filteredPlayers.map((player) => <button key={player.id} onClick={() => setSelectedGlobalPlayerId(player.id)} className="premium-surface w-full p-2 text-left"><p className="font-semibold">{player.name}</p><p className="text-xs text-slate-300">{player.position} • OVR {player.overall} • {teamsMap[player.teamId]?.shortName}</p></button>)}</div>
               </div>
             )}
           </div>
@@ -1079,10 +1160,10 @@ export function SquadHomeClient({
                 <div className="flex items-center gap-3"><LogoMark logo={selectedLeague.logoUrl} label={selectedLeague.name} size={48} /><div><p className="text-lg font-black">{selectedLeague.name}</p><p>{selectedLeague.country} • {selectedLeague.format}</p></div></div>
                 <p>Times: {selectedLeague.teamCount}</p>
                 <p>Classificação (top 8):</p>
-                {standings.slice(0, 8).map((row) => <p key={row.teamId}>#{row.position} {teamsById[row.teamId]?.name} ({row.wins}-{row.losses})</p>)}
+                {standings.slice(0, 8).map((row) => <p key={row.teamId}>#{row.position} {teamsMap[row.teamId]?.name} ({row.wins}-{row.losses})</p>)}
                 <p className="font-semibold">Clubes participantes</p>
                 <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
-                  {allTeams.filter((team) => team.leagueId === selectedLeague.id).map((team) => (
+                  {editableTeams.filter((team) => team.leagueId === selectedLeague.id).map((team) => (
                     <TeamPremiumTile
                       key={team.id}
                       team={team}
@@ -1098,11 +1179,11 @@ export function SquadHomeClient({
 
             {searchTab === "Clubes" && selectedClub && (
               <div className="space-y-2">
-                <div className="flex items-center gap-3"><LogoMark logo={selectedClub.logoUrl} label={selectedClub.name} size={48} /><div><p className="text-lg font-black">{selectedClub.name}</p><p>{leagues.find((league) => league.id === selectedClub.leagueId)?.name}</p></div></div>
+                <div className="flex items-center gap-3"><LogoMark logo={selectedClub.logoUrl} label={selectedClub.name} size={48} /><div><p className="text-lg font-black">{selectedClub.name}</p><p>{leaguesMap[selectedClub.leagueId]?.name}</p></div></div>
                 <p>Orçamento: ${selectedClub.budget.toLocaleString()} • Overall: {selectedClub.overall}</p>
                 <p>Posição liga: {selectedClub.currentLeaguePosition} • Reputação: {selectedClub.reputationFans}/10</p>
                 <p className="font-semibold text-cyan-300">Elenco do clube</p>
-                <div className="max-h-[42vh] space-y-2 overflow-auto">{allPlayers.filter((player) => player.teamId === selectedClub.id).map((player) => (
+                <div className="max-h-[42vh] space-y-2 overflow-auto">{editablePlayers.filter((player) => player.teamId === selectedClub.id).map((player) => (
                   <button key={player.id} onClick={() => setSelectedPlayerId(player.id)} className="flex w-full items-center justify-between rounded border border-white/10 p-2 text-left">
                     <div>
                       <p className="font-semibold">{player.name}</p>
@@ -1120,7 +1201,7 @@ export function SquadHomeClient({
                   <PlayerFace player={selectedGlobalPlayer} />
                   <div>
                     <p className="text-lg font-black">{selectedGlobalPlayer.name}</p>
-                    <p>{selectedGlobalPlayer.position} • OVR {selectedGlobalPlayer.overall} • {teamsById[selectedGlobalPlayer.teamId]?.name}</p>
+                    <p>{selectedGlobalPlayer.position} • OVR {selectedGlobalPlayer.overall} • {teamsMap[selectedGlobalPlayer.teamId]?.name}</p>
                     <p>Valor: ${(selectedGlobalPlayer.marketValue / 1000000).toFixed(2)}M • Salário: ${(selectedGlobalPlayer.salary ?? 0).toLocaleString()}</p>
                     <p>Moral: {selectedGlobalPlayer.morale ?? "Contente"} • Mercado: {selectedGlobalPlayer.isTransferListed ? "Listado" : "Não listado"}</p>
                   </div>
@@ -1143,17 +1224,100 @@ export function SquadHomeClient({
         </div>
       ))}
 
+      {openModal === "Editar Clubes/Ligas/Jogadores" && modalShell("Editor Mestre de Dados", () => setOpenModal(null), (
+        <div className="space-y-4 text-sm text-slate-100">
+          <div className="flex flex-wrap gap-2">
+            {(["Ligas", "Clubes", "Jogadores", "Novo Time"] as const).map((tab) => (
+              <button key={tab} onClick={() => setEditorTab(tab)} className={`premium-control px-3 py-1 text-xs ${editorTab === tab ? "border-fuchsia-400 bg-fuchsia-600/40" : ""}`}>{tab}</button>
+            ))}
+          </div>
+
+          {editorTab === "Ligas" && (
+            <div className="space-y-2">
+              {editableLeagues.map((league) => (
+                <div key={league.id} className="premium-surface grid gap-2 p-3 md:grid-cols-4">
+                  <input className="premium-control px-3 py-2 text-xs" value={league.name} onChange={(event) => setEditableLeagues((prev) => prev.map((item) => item.id === league.id ? { ...item, name: event.target.value } : item))} />
+                  <input className="premium-control px-3 py-2 text-xs" value={league.country} onChange={(event) => setEditableLeagues((prev) => prev.map((item) => item.id === league.id ? { ...item, country: event.target.value } : item))} />
+                  <input className="premium-control px-3 py-2 text-xs" value={league.format} onChange={(event) => setEditableLeagues((prev) => prev.map((item) => item.id === league.id ? { ...item, format: event.target.value } : item))} />
+                  <input className="premium-control px-3 py-2 text-xs" type="number" value={league.teamCount} onChange={(event) => setEditableLeagues((prev) => prev.map((item) => item.id === league.id ? { ...item, teamCount: Number(event.target.value) } : item))} />
+                </div>
+              ))}
+            </div>
+          )}
+
+          {editorTab === "Clubes" && (
+            <div className="space-y-2">
+              {editableTeams.map((team) => (
+                <div key={team.id} className="premium-surface grid gap-2 p-3 md:grid-cols-5">
+                  <input className="premium-control px-3 py-2 text-xs" value={team.name} onChange={(event) => setEditableTeams((prev) => prev.map((item) => item.id === team.id ? { ...item, name: event.target.value } : item))} />
+                  <input className="premium-control px-3 py-2 text-xs" value={team.shortName} onChange={(event) => setEditableTeams((prev) => prev.map((item) => item.id === team.id ? { ...item, shortName: event.target.value } : item))} />
+                  <input className="premium-control px-3 py-2 text-xs" type="number" value={team.overall} onChange={(event) => setEditableTeams((prev) => prev.map((item) => item.id === team.id ? { ...item, overall: Number(event.target.value) } : item))} />
+                  <input className="premium-control h-9 px-2 py-1 text-xs" type="color" value={team.primaryColor} onChange={(event) => setEditableTeams((prev) => prev.map((item) => item.id === team.id ? { ...item, primaryColor: event.target.value } : item))} />
+                  <input className="premium-control h-9 px-2 py-1 text-xs" type="color" value={team.secondaryColor} onChange={(event) => setEditableTeams((prev) => prev.map((item) => item.id === team.id ? { ...item, secondaryColor: event.target.value } : item))} />
+                </div>
+              ))}
+            </div>
+          )}
+
+          {editorTab === "Jogadores" && (
+            <div className="space-y-2">
+              {editablePlayers.slice(0, 60).map((player) => (
+                <div key={player.id} className="premium-surface grid gap-2 p-3 md:grid-cols-6">
+                  <input className="premium-control px-3 py-2 text-xs" value={player.name} onChange={(event) => setEditablePlayers((prev) => prev.map((item) => item.id === player.id ? { ...item, name: event.target.value } : item))} />
+                  <input className="premium-control px-3 py-2 text-xs" value={player.photoUrl ?? ""} placeholder="URL da foto" onChange={(event) => setEditablePlayers((prev) => prev.map((item) => item.id === player.id ? { ...item, photoUrl: event.target.value } : item))} />
+                  <select className="premium-control px-3 py-2 text-xs" value={player.position} onChange={(event) => setEditablePlayers((prev) => prev.map((item) => item.id === player.id ? { ...item, position: event.target.value as Player["position"] } : item))}>
+                    {(["PG", "SG", "SF", "PF", "C"] as const).map((position) => <option key={position} value={position}>{position}</option>)}
+                  </select>
+                  <input className="premium-control px-3 py-2 text-xs" type="number" value={player.overall} onChange={(event) => setEditablePlayers((prev) => prev.map((item) => item.id === player.id ? { ...item, overall: Number(event.target.value) } : item))} />
+                  <input className="premium-control px-3 py-2 text-xs" type="number" value={player.age} onChange={(event) => setEditablePlayers((prev) => prev.map((item) => item.id === player.id ? { ...item, age: Number(event.target.value) } : item))} />
+                  <input className="premium-control px-3 py-2 text-xs" type="number" value={player.marketValue} onChange={(event) => setEditablePlayers((prev) => prev.map((item) => item.id === player.id ? { ...item, marketValue: Number(event.target.value) } : item))} />
+                </div>
+              ))}
+            </div>
+          )}
+
+          {editorTab === "Novo Time" && (
+            <div className="premium-surface space-y-3 p-3">
+              <p className="font-semibold text-cyan-300">Adicionar novo time customizado</p>
+              <div className="grid gap-2 md:grid-cols-3">
+                <select className="premium-control px-3 py-2 text-xs" value={newTeamDraft.leagueId} onChange={(event) => setNewTeamDraft((prev) => ({ ...prev, leagueId: event.target.value }))}>
+                  {editableLeagues.map((league) => <option key={league.id} value={league.id}>{league.name}</option>)}
+                </select>
+                <input className="premium-control px-3 py-2 text-xs" placeholder="Nome do time" value={newTeamDraft.name} onChange={(event) => setNewTeamDraft((prev) => ({ ...prev, name: event.target.value }))} />
+                <input className="premium-control px-3 py-2 text-xs" placeholder="Sigla" value={newTeamDraft.shortName} onChange={(event) => setNewTeamDraft((prev) => ({ ...prev, shortName: event.target.value }))} />
+              </div>
+              <div className="grid gap-2 md:grid-cols-2">
+                <label className="premium-label">Cor primária<input className="premium-control ml-2 h-9 w-full px-2 py-1" type="color" value={newTeamDraft.primaryColor} onChange={(event) => setNewTeamDraft((prev) => ({ ...prev, primaryColor: event.target.value }))} /></label>
+                <label className="premium-label">Cor secundária<input className="premium-control ml-2 h-9 w-full px-2 py-1" type="color" value={newTeamDraft.secondaryColor} onChange={(event) => setNewTeamDraft((prev) => ({ ...prev, secondaryColor: event.target.value }))} /></label>
+              </div>
+              <div className="space-y-2">
+                {newTeamDraft.players.map((player, idx) => (
+                  <div key={`${idx}-${player.position}`} className="grid gap-2 md:grid-cols-3">
+                    <input className="premium-control px-3 py-2 text-xs" value={player.name} onChange={(event) => setNewTeamDraft((prev) => ({ ...prev, players: prev.players.map((entry, entryIdx) => entryIdx === idx ? { ...entry, name: event.target.value } : entry) }))} />
+                    <select className="premium-control px-3 py-2 text-xs" value={player.position} onChange={(event) => setNewTeamDraft((prev) => ({ ...prev, players: prev.players.map((entry, entryIdx) => entryIdx === idx ? { ...entry, position: event.target.value as Player["position"] } : entry) }))}>
+                      {(["PG", "SG", "SF", "PF", "C"] as const).map((position) => <option key={position} value={position}>{position}</option>)}
+                    </select>
+                    <input className="premium-control px-3 py-2 text-xs" type="number" value={player.overall} onChange={(event) => setNewTeamDraft((prev) => ({ ...prev, players: prev.players.map((entry, entryIdx) => entryIdx === idx ? { ...entry, overall: Number(event.target.value) } : entry) }))} />
+                  </div>
+                ))}
+              </div>
+              <button onClick={addCustomTeam} className="premium-control bg-cyan-500/40 px-4 py-2 text-xs font-bold">Adicionar time</button>
+            </div>
+          )}
+        </div>
+      ))}
+
       {openModal === "Identidade do Clube" && modalShell("ClubColorEditorModal", () => setOpenModal(null), (
         <div className="space-y-4 text-sm text-slate-100">
           <p>Editor visual de identidade do clube com preview em tempo real.</p>
           <div className="grid gap-3 sm:grid-cols-2">
-            <label className="rounded border border-white/20 p-3">
+            <label className="premium-surface p-3">
               <p className="mb-2 text-xs uppercase text-slate-300">Primary Color</p>
-              <input type="color" value={colorDraft.primaryColor} onChange={(event) => setColorDraft((prev) => ({ ...prev, primaryColor: event.target.value }))} className="h-10 w-full cursor-pointer rounded" />
+              <input type="color" value={colorDraft.primaryColor} onChange={(event) => setColorDraft((prev) => ({ ...prev, primaryColor: event.target.value }))} className="premium-control h-10 w-full cursor-pointer rounded" />
             </label>
-            <label className="rounded border border-white/20 p-3">
+            <label className="premium-surface p-3">
               <p className="mb-2 text-xs uppercase text-slate-300">Secondary Color</p>
-              <input type="color" value={colorDraft.secondaryColor} onChange={(event) => setColorDraft((prev) => ({ ...prev, secondaryColor: event.target.value }))} className="h-10 w-full cursor-pointer rounded" />
+              <input type="color" value={colorDraft.secondaryColor} onChange={(event) => setColorDraft((prev) => ({ ...prev, secondaryColor: event.target.value }))} className="premium-control h-10 w-full cursor-pointer rounded" />
             </label>
           </div>
 
@@ -1178,14 +1342,14 @@ export function SquadHomeClient({
 
       {openModal === "Campeões" && modalShell("Champions History Modal", () => setOpenModal(null), (
         <div className="space-y-2 text-sm text-slate-100">
-          {champions.map((ch) => <p key={ch.id}>Temporada {ch.season}: {teamsById[ch.championTeamId]?.name ?? ch.championTeamId}</p>)}
+          {champions.map((ch) => <p key={ch.id}>Temporada {ch.season}: {teamsMap[ch.championTeamId]?.name ?? ch.championTeamId}</p>)}
         </div>
       ))}
 
       {openModal === "Classificações" && modalShell("Classificações", () => setOpenModal(null), (
         <StandingsTable
           rows={standings}
-          teamsById={teamsById}
+          teamsById={teamsMap}
           playoffSpots={8}
           dangerSpots={3}
           highlightTeamId={payload.team.id}
@@ -1195,7 +1359,7 @@ export function SquadHomeClient({
       ))}
 
       {openModal === "Calendário" && modalShell("Calendário", () => setOpenModal(null), (
-        <div className="space-y-1 text-sm text-slate-100">{(payload.seasonCalendar?.entries ?? []).map((entry) => <p key={entry.fixtureId}>R{entry.round} • {teamsById[entry.homeTeamId]?.shortName} vs {teamsById[entry.awayTeamId]?.shortName}</p>)}</div>
+        <div className="space-y-1 text-sm text-slate-100">{(payload.seasonCalendar?.entries ?? []).map((entry) => <p key={entry.fixtureId}>R{entry.round} • {teamsMap[entry.homeTeamId]?.shortName} vs {teamsMap[entry.awayTeamId]?.shortName}</p>)}</div>
       ))}
 
       {openModal === "Salvar Jogo" && modalShell("Salvar Jogo", () => setOpenModal(null), (
