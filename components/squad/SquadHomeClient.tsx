@@ -1355,6 +1355,9 @@ export function SquadHomeClient({
           highlightTeamId={payload.team.id}
           leagueName={currentLeague?.name}
           leagueLogo={currentLeague?.logoUrl}
+          players={allPlayers}
+          seasonEntries={payload.seasonCalendar?.entries ?? []}
+          stadiumsByTeamId={stadiumsByTeamId}
         />
       ))}
 
