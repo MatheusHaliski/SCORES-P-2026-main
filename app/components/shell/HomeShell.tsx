@@ -9,10 +9,13 @@ import { ensureSharedAccessToken } from '@/app/lib/accessTokenShare';
 import { useRouter } from 'next/navigation';
 import Image from 'next/image';
 import { getAuthSessionToken } from '@/app/lib/authSession';
+import { getShellBackgroundOption, SHELL_BACKGROUND_KEY } from '@/app/lib/shellBackground';
+import { getLS } from '@/app/lib/SafeStorage';
 
 export default function HomeShell() {
   const [activeRoute, setActiveRoute] = useState<AppRoute>('home');
   const [mobileOpen, setMobileOpen] = useState(false);
+  const [shellBackground, setShellBackground] = useState(() => getShellBackgroundOption(getLS(SHELL_BACKGROUND_KEY)));
   const router = useRouter();
   const hasAccess = Boolean(ensureSharedAccessToken());
 
@@ -25,6 +28,21 @@ export default function HomeShell() {
     }
   }, [hasAccess, router]);
 
+  useEffect(() => {
+    const applyBackgroundFromStorage = () => {
+      setShellBackground(getShellBackgroundOption(getLS(SHELL_BACKGROUND_KEY)));
+    };
+
+    applyBackgroundFromStorage();
+    window.addEventListener('storage', applyBackgroundFromStorage);
+    window.addEventListener('scores-shell-background-change', applyBackgroundFromStorage);
+
+    return () => {
+      window.removeEventListener('storage', applyBackgroundFromStorage);
+      window.removeEventListener('scores-shell-background-change', applyBackgroundFromStorage);
+    };
+  }, []);
+
   const token1 = getAuthSessionToken();
   if (!token1) {
     return (
@@ -35,7 +53,7 @@ export default function HomeShell() {
   }
 
   return (
-    <div className="sa-home-shell flex min-h-screen text-white">
+    <div className="sa-home-shell flex min-h-screen text-white" style={shellBackground.style}>
       <SidebarNav
         activeRoute={activeRoute}
         onRouteChange={setActiveRoute}

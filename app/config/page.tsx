@@ -4,6 +4,7 @@ import { useMemo, useState } from "react";
 import { SectionCard } from "@/components/SectionCard";
 import { getLS, setLS } from "@/app/lib/SafeStorage";
 import { getSimulationSpeedOption, SIMULATION_SPEED_KEY, SIMULATION_SPEED_OPTIONS } from "@/app/lib/simulationConfig";
+import { getShellBackgroundOption, SHELL_BACKGROUND_KEY, SHELL_BACKGROUND_OPTIONS } from "@/app/lib/shellBackground";
 
 export default function ConfigView() {
   const [simulationSpeed, setSimulationSpeed] = useState(() => {
@@ -11,9 +12,19 @@ export default function ConfigView() {
     return getSimulationSpeedOption(storedSpeed).id;
   });
 
+  const [shellBackground, setShellBackground] = useState(() => {
+    const storedBackground = getLS(SHELL_BACKGROUND_KEY);
+    return getShellBackgroundOption(storedBackground).id;
+  });
+
   const selectedSimulationSpeed = useMemo(
     () => getSimulationSpeedOption(simulationSpeed),
     [simulationSpeed],
+  );
+
+  const selectedShellBackground = useMemo(
+    () => getShellBackgroundOption(shellBackground),
+    [shellBackground],
   );
 
   const configFields = [
@@ -29,6 +40,16 @@ export default function ConfigView() {
     const safeSpeed = getSimulationSpeedOption(nextSpeed).id;
     setSimulationSpeed(safeSpeed);
     setLS(SIMULATION_SPEED_KEY, safeSpeed);
+  };
+
+
+  const handleShellBackgroundChange = (nextBackground: string) => {
+    const safeBackground = getShellBackgroundOption(nextBackground).id;
+    setShellBackground(safeBackground);
+    setLS(SHELL_BACKGROUND_KEY, safeBackground);
+    if (typeof window !== 'undefined') {
+      window.dispatchEvent(new Event('scores-shell-background-change'));
+    }
   };
 
   return (
@@ -56,6 +77,27 @@ export default function ConfigView() {
             })}
           </div>
         </div>
+        <div className="mb-4 rounded-lg border border-fuchsia-400/30 bg-slate-800/80 p-4">
+          <p className="text-xs text-fuchsia-300">Background Studio da Shell</p>
+          <p className="mt-1 text-sm text-slate-200">{selectedShellBackground.description}</p>
+          <div className="mt-3 grid gap-2 md:grid-cols-3">
+            {SHELL_BACKGROUND_OPTIONS.map((option) => {
+              const isSelected = option.id === shellBackground;
+              return (
+                <button
+                  key={option.id}
+                  type="button"
+                  onClick={() => handleShellBackgroundChange(option.id)}
+                  className={`rounded-lg border px-3 py-2 text-left transition ${isSelected ? "border-fuchsia-300 bg-fuchsia-500/20 text-white" : "border-white/10 bg-slate-900/60 text-slate-300 hover:border-fuchsia-400/50"}`}
+                >
+                  <p className="text-sm font-bold">{option.label}</p>
+                  <p className="text-[11px] opacity-80">{option.description}</p>
+                </button>
+              );
+            })}
+          </div>
+        </div>
+
         <div className="grid gap-2 md:grid-cols-2">
           {configFields.map((field) => (
             <div key={field.label} className="rounded-lg border border-white/10 bg-slate-800/70 p-3">
