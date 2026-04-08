@@ -45,6 +45,7 @@ export interface Player {
   id: string;
   teamId: string;
   name: string;
+  photoUrl?: string;
   age: number;
   position: PlayerPosition;
   overall: number;

@@ -45,7 +45,6 @@ export default async function SquadHomeView({ searchParams }: { searchParams: Pr
       />
       <SquadHomeClient
         payload={payload}
-        teamsById={teamsById}
         standings={standings}
         champions={champions}
         leagues={leagues}
