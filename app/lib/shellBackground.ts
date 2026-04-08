@@ -23,7 +23,7 @@ export const SHELL_BACKGROUND_OPTIONS: ShellBackgroundOption[] = [
     style: {
       backgroundColor: '#5b4a2d',
       backgroundImage:
-        "linear-gradient(rgba(44, 34, 18, 0.46), rgba(44, 34, 18, 0.46)), repeating-linear-gradient(90deg, #d2be74 0 12.5%, #5b4a2d 12.5% 25%), url('/Sem%20t%C3%ADtulo%20(26).png')",
+        "linear-gradient(rgba(44, 34, 18, 0.46), rgba(44, 34, 18, 0.46)), repeating-linear-gradient(90deg, #d2be74 0 12.5%, #5b4a2d 12.5% 25%), url('/scores_bg.png')",
       backgroundSize: 'cover',
       backgroundPosition: 'center',
       backgroundRepeat: 'no-repeat',
