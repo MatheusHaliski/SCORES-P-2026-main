@@ -18,6 +18,7 @@ export function PlayerPhotoNode({
 }) {
   const stamina = Math.max(0, Math.min(100, Math.round(player.stamina)));
   const alertTone = player.injuryStatus === "Lesionado" ? "border-rose-400" : stamina < 35 ? "border-amber-400" : "border-cyan-300";
+  const photoUrl = (player as unknown as { photoUrl?: string }).photoUrl;
 
   return (
     <div
@@ -26,11 +27,8 @@ export function PlayerPhotoNode({
     >
       <div className={`relative h-14 w-14 rounded-full border-2 ${alertTone} bg-slate-950/85 p-0.5 shadow-[0_0_25px_rgba(56,189,248,0.35)] ${active ? "ring-2 ring-cyan-300/60" : ""}`}>
         <div className="relative h-full w-full overflow-hidden rounded-full">
-          {player.playerName && player.playerId ? (
-            player as unknown as { photoUrl?: string }
-          ) : null}
-          {(player as unknown as { photoUrl?: string }).photoUrl ? (
-            <Image src={(player as unknown as { photoUrl?: string }).photoUrl ?? ""} alt={player.playerName} fill className="object-cover" />
+          {photoUrl ? (
+            <Image src={photoUrl} alt={player.playerName} fill className="object-cover" />
           ) : uniformUrl ? (
             <Image src={uniformUrl} alt="Uniforme" fill className="object-cover opacity-90" />
           ) : (
