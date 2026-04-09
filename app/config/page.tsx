@@ -4,7 +4,7 @@ import { useMemo, useState } from "react";
 import { SectionCard } from "@/components/SectionCard";
 import { getLS, setLS } from "@/app/lib/SafeStorage";
 import { getSimulationSpeedOption, SIMULATION_SPEED_KEY, SIMULATION_SPEED_OPTIONS } from "@/app/lib/simulationConfig";
-import { getShellBackgroundOption, SHELL_BACKGROUND_KEY, SHELL_BACKGROUND_OPTIONS } from "@/app/lib/shellBackground";
+import { getShellBackgroundOption, SHELL_BACKGROUND_CUSTOM_STYLE_KEY, SHELL_BACKGROUND_KEY, SHELL_BACKGROUND_OPTIONS } from "@/app/lib/shellBackground";
 
 export default function ConfigView() {
   const [simulationSpeed, setSimulationSpeed] = useState(() => {
@@ -23,7 +23,7 @@ export default function ConfigView() {
   );
 
   const selectedShellBackground = useMemo(
-    () => getShellBackgroundOption(shellBackground),
+    () => getShellBackgroundOption(shellBackground, getLS(SHELL_BACKGROUND_CUSTOM_STYLE_KEY)),
     [shellBackground],
   );
 

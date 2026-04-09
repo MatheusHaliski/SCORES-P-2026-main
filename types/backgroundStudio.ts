@@ -11,6 +11,8 @@ export type StudioPresetId =
 export type ShapeLanguage = "none" | "orb" | "diamond" | "mesh" | "shards" | "court-lines" | "hex-grid";
 export type PatternStyle = "smooth" | "broadcast" | "gradient-wave" | "high-contrast";
 export type MotionDirection = "none" | "left-to-right" | "right-to-left" | "top-down" | "center-pulse";
+export type PageBackgroundMode = "preset-gradient" | "solid-color" | "upload-image" | "auth-default-image";
+export type PageBackgroundGradientId = "deep-night" | "arena-purple" | "emerald-glow" | "sunset-lights";
 
 export type SoundtrackCategory = "Hype" | "Arena" | "Calm Focus" | "Playoffs" | "Premium Lounge" | "Retro Sports" | "Urban Energy";
 
@@ -46,6 +48,91 @@ export interface BackgroundStudioConfig {
     volume: number;
     autoPlay: boolean;
     loop: boolean;
+  };
+  pageBackground: {
+    mode: PageBackgroundMode;
+    gradientId: PageBackgroundGradientId;
+    solidColor: string;
+    imageDataUrl: string | null;
+  };
+}
+
+export interface PageBackgroundGradientOption {
+  id: PageBackgroundGradientId;
+  name: string;
+  css: string;
+  backgroundColor: string;
+}
+
+export const AUTHVIEW_DEFAULT_BACKGROUND_CSS = "url('/ChatGPT Image 9 de abr. de 2026, 13_10_17.png')";
+
+export const PAGE_BACKGROUND_GRADIENTS: PageBackgroundGradientOption[] = [
+  {
+    id: "deep-night",
+    name: "Deep Night",
+    backgroundColor: "#020617",
+    css: "radial-gradient(circle at 22% 18%, rgba(56, 189, 248, 0.2) 0%, transparent 40%), linear-gradient(145deg, #0f172a 0%, #020617 100%)",
+  },
+  {
+    id: "arena-purple",
+    name: "Arena Purple",
+    backgroundColor: "#1e1b4b",
+    css: "radial-gradient(circle at 14% 22%, rgba(236, 72, 153, 0.3) 0%, transparent 36%), radial-gradient(circle at 84% 78%, rgba(34, 211, 238, 0.2) 0%, transparent 34%), linear-gradient(150deg, #1e1b4b 0%, #312e81 100%)",
+  },
+  {
+    id: "emerald-glow",
+    name: "Emerald Glow",
+    backgroundColor: "#052e2b",
+    css: "radial-gradient(circle at 18% 20%, rgba(16, 185, 129, 0.35) 0%, transparent 40%), radial-gradient(circle at 85% 30%, rgba(34, 211, 238, 0.22) 0%, transparent 36%), linear-gradient(150deg, #052e2b 0%, #0f172a 100%)",
+  },
+  {
+    id: "sunset-lights",
+    name: "Sunset Lights",
+    backgroundColor: "#1f2937",
+    css: "radial-gradient(circle at 18% 22%, rgba(251, 146, 60, 0.35) 0%, transparent 36%), radial-gradient(circle at 82% 20%, rgba(236, 72, 153, 0.28) 0%, transparent 32%), linear-gradient(150deg, #111827 0%, #1d4ed8 45%, #0f766e 100%)",
+  },
+];
+
+export function buildPageBackgroundStyle(config: BackgroundStudioConfig) {
+  const gradient = PAGE_BACKGROUND_GRADIENTS.find((option) => option.id === config.pageBackground.gradientId) ?? PAGE_BACKGROUND_GRADIENTS[0];
+  if (config.pageBackground.mode === "solid-color") {
+    return {
+      backgroundColor: config.pageBackground.solidColor,
+      backgroundImage: "none",
+      backgroundSize: "cover",
+      backgroundPosition: "center",
+      backgroundRepeat: "no-repeat",
+      backgroundAttachment: "fixed",
+    };
+  }
+  if (config.pageBackground.mode === "upload-image" && config.pageBackground.imageDataUrl) {
+    return {
+      backgroundColor: "#020617",
+      backgroundImage: `linear-gradient(rgba(2,6,23,0.45), rgba(2,6,23,0.45)), url('${config.pageBackground.imageDataUrl}')`,
+      backgroundSize: "cover",
+      backgroundPosition: "center",
+      backgroundRepeat: "no-repeat",
+      backgroundAttachment: "fixed",
+      backgroundBlendMode: "multiply, normal",
+    };
+  }
+  if (config.pageBackground.mode === "auth-default-image") {
+    return {
+      backgroundColor: "#0f172a",
+      backgroundImage: AUTHVIEW_DEFAULT_BACKGROUND_CSS,
+      backgroundSize: "cover",
+      backgroundPosition: "center",
+      backgroundRepeat: "no-repeat",
+      backgroundAttachment: "fixed",
+    };
+  }
+  return {
+    backgroundColor: gradient.backgroundColor,
+    backgroundImage: gradient.css,
+    backgroundSize: "cover",
+    backgroundPosition: "center",
+    backgroundRepeat: "no-repeat",
+    backgroundAttachment: "fixed",
   };
 }
 
@@ -119,6 +206,38 @@ export function createDefaultStudioConfig(clubPrimary: string, clubSecondary: st
       volume: 55,
       autoPlay: true,
       loop: true,
+    },
+    pageBackground: {
+      mode: "auth-default-image",
+      gradientId: "deep-night",
+      solidColor: "#020617",
+      imageDataUrl: null,
+    },
+  };
+}
+
+export function normalizeBackgroundStudioConfig(
+  candidate: Partial<BackgroundStudioConfig> | null | undefined,
+  clubPrimary: string,
+  clubSecondary: string,
+): BackgroundStudioConfig {
+  const base = createDefaultStudioConfig(clubPrimary, clubSecondary);
+  if (!candidate) return base;
+  return {
+    ...base,
+    ...candidate,
+    palette: {
+      ...base.palette,
+      ...(candidate.palette ?? {}),
+    },
+    soundtrack: {
+      ...base.soundtrack,
+      ...(candidate.soundtrack ?? {}),
+      tracks: candidate.soundtrack?.tracks ?? base.soundtrack.tracks,
+    },
+    pageBackground: {
+      ...base.pageBackground,
+      ...(candidate.pageBackground ?? {}),
     },
   };
 }

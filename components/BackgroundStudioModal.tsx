@@ -2,11 +2,15 @@
 
 import { useMemo, useRef, useState } from "react";
 import {
+  AUTHVIEW_DEFAULT_BACKGROUND_CSS,
   BackgroundStudioConfig,
+  PAGE_BACKGROUND_GRADIENTS,
+  PageBackgroundMode,
   SoundtrackCategory,
   SoundtrackItem,
   STUDIO_PRESETS,
   buildBackgroundImage,
+  buildPageBackgroundStyle,
   getPresetById,
 } from "@/types/backgroundStudio";
 
@@ -30,9 +34,11 @@ const sliderClass = "w-full accent-cyan-300";
 export function BackgroundStudioModal({ open, onClose, config, onChange, onSave, clubPrimary, clubSecondary }: Props) {
   const [trackDraft, setTrackDraft] = useState({ name: "", category: "Hype" as SoundtrackCategory, fileName: "", fileUrl: "" });
   const fileInputRef = useRef<HTMLInputElement | null>(null);
+  const imageInputRef = useRef<HTMLInputElement | null>(null);
 
   const activeTrack = config.soundtrack.tracks.find((track) => track.id === config.soundtrack.activeTrackId) ?? null;
   const previewBackground = useMemo(() => buildBackgroundImage(config), [config]);
+  const shellPreviewStyle = useMemo(() => buildPageBackgroundStyle(config), [config]);
 
   if (!open) return null;
 
@@ -111,6 +117,16 @@ export function BackgroundStudioModal({ open, onClose, config, onChange, onSave,
       },
       glowIntensity: Math.max(55, config.glowIntensity),
       contrast: Math.max(102, config.contrast),
+    });
+  };
+
+  const updatePageBackgroundMode = (mode: PageBackgroundMode) => {
+    onChange({
+      ...config,
+      pageBackground: {
+        ...config.pageBackground,
+        mode,
+      },
     });
   };
 
@@ -216,8 +232,96 @@ export function BackgroundStudioModal({ open, onClose, config, onChange, onSave,
               </div>
             </section>
 
+            <section className="rounded-2xl border border-indigo-300/30 bg-indigo-500/5 p-3">
+              <p className="mb-2 text-sm font-black text-indigo-100">4) Background da página inteira</p>
+              <p className="mb-3 text-xs text-indigo-200/85">Define o fundo global da shell (não apenas cards internos).</p>
+              <div className="grid gap-2 md:grid-cols-2">
+                {[
+                  { id: "preset-gradient", label: "Gradientes prontos" },
+                  { id: "solid-color", label: "Cor sólida" },
+                  { id: "upload-image", label: "Upload de imagem" },
+                  { id: "auth-default-image", label: "Imagem padrão AuthView" },
+                ].map((mode) => (
+                  <button
+                    key={mode.id}
+                    type="button"
+                    onClick={() => updatePageBackgroundMode(mode.id as PageBackgroundMode)}
+                    className={`rounded-lg border px-3 py-2 text-left text-xs transition ${config.pageBackground.mode === mode.id ? "border-cyan-300/70 bg-cyan-500/20 text-cyan-100" : "border-white/10 bg-slate-900/70 text-slate-300 hover:border-cyan-500/40"}`}
+                  >
+                    {mode.label}
+                  </button>
+                ))}
+              </div>
+              {config.pageBackground.mode === "preset-gradient" && (
+                <div className="mt-3 grid gap-2 md:grid-cols-2">
+                  {PAGE_BACKGROUND_GRADIENTS.map((gradient) => (
+                    <button
+                      key={gradient.id}
+                      type="button"
+                      onClick={() => onChange({ ...config, pageBackground: { ...config.pageBackground, gradientId: gradient.id } })}
+                      className={`rounded-lg border p-2 text-left ${config.pageBackground.gradientId === gradient.id ? "border-cyan-300/70" : "border-white/10"}`}
+                      style={{ backgroundImage: gradient.css }}
+                    >
+                      <span className="text-xs font-semibold text-white">{gradient.name}</span>
+                    </button>
+                  ))}
+                </div>
+              )}
+              {config.pageBackground.mode === "solid-color" && (
+                <label className="mt-3 block text-xs text-slate-200">
+                  Cor da página
+                  <input
+                    type="color"
+                    value={config.pageBackground.solidColor}
+                    onChange={(event) => onChange({ ...config, pageBackground: { ...config.pageBackground, solidColor: event.target.value } })}
+                    className="mt-1 h-10 w-full rounded-lg border border-white/20 bg-transparent"
+                  />
+                </label>
+              )}
+              {config.pageBackground.mode === "upload-image" && (
+                <div className="mt-3 space-y-2">
+                  <button
+                    type="button"
+                    onClick={() => imageInputRef.current?.click()}
+                    className="rounded-lg border border-white/15 bg-slate-800 px-2 py-1 text-xs text-white"
+                  >
+                    Upload imagem de fundo
+                  </button>
+                  <input
+                    ref={imageInputRef}
+                    type="file"
+                    accept="image/*"
+                    className="hidden"
+                    onChange={(event) => {
+                      const file = event.target.files?.[0];
+                      if (!file) return;
+                      const reader = new FileReader();
+                      reader.onload = () => {
+                        if (typeof reader.result === "string") {
+                          onChange({
+                            ...config,
+                            pageBackground: {
+                              ...config.pageBackground,
+                              imageDataUrl: reader.result,
+                            },
+                          });
+                        }
+                      };
+                      reader.readAsDataURL(file);
+                    }}
+                  />
+                  <p className="text-[11px] text-slate-300">
+                    {config.pageBackground.imageDataUrl ? "Imagem carregada no studio." : "Nenhuma imagem carregada."}
+                  </p>
+                </div>
+              )}
+              {config.pageBackground.mode === "auth-default-image" && (
+                <p className="mt-3 text-[11px] text-slate-300">Usando imagem padrão: <span className="text-cyan-200">{AUTHVIEW_DEFAULT_BACKGROUND_CSS}</span></p>
+              )}
+            </section>
+
             <section className="rounded-2xl border border-emerald-300/30 bg-emerald-500/5 p-3">
-              <p className="mb-2 text-sm font-black text-emerald-100">4) Soundtrack Studio</p>
+              <p className="mb-2 text-sm font-black text-emerald-100">5) Soundtrack Studio</p>
               <div className="grid gap-3 md:grid-cols-2">
                 <div className="space-y-2 rounded-xl border border-white/10 bg-slate-900/70 p-2">
                   <p className="text-xs uppercase tracking-[0.14em] text-emerald-200">Adicionar música</p>
@@ -283,7 +387,7 @@ export function BackgroundStudioModal({ open, onClose, config, onChange, onSave,
           </div>
 
           <section className="rounded-2xl border border-cyan-300/30 bg-slate-900/70 p-3">
-            <p className="text-sm font-black text-cyan-100">5) Preview em tempo real</p>
+            <p className="text-sm font-black text-cyan-100">6) Preview em tempo real</p>
             <div className="mt-2 space-y-3">
               <div className="rounded-xl border border-white/15 p-3" style={{ backgroundImage: previewBackground, filter: `contrast(${config.contrast}%) blur(${Math.max(0, config.blurStrength - 12)}px)` }}>
                 <p className="text-xs uppercase tracking-[0.18em] text-cyan-100">Painel principal</p>
@@ -300,6 +404,11 @@ export function BackgroundStudioModal({ open, onClose, config, onChange, onSave,
               <div className="rounded-xl border border-white/15 p-3" style={{ backgroundImage: previewBackground }}>
                 <p className="text-[11px] uppercase tracking-[0.16em] text-slate-200">Squad/Home ambience</p>
                 <p className="text-sm text-white">Glow {config.glowIntensity}% • Density {config.density}% • Depth {config.depth}%</p>
+              </div>
+
+              <div className="rounded-xl border border-white/15 p-3" style={shellPreviewStyle}>
+                <p className="text-[11px] uppercase tracking-[0.16em] text-slate-200">Page background system</p>
+                <p className="text-sm text-white">Modo: {config.pageBackground.mode}</p>
               </div>
             </div>
           </section>

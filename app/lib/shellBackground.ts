@@ -1,4 +1,6 @@
 export const SHELL_BACKGROUND_KEY = 'scores.shellBackground';
+export const SHELL_BACKGROUND_CUSTOM_STYLE_KEY = 'scores.shellBackground.customStyle';
+export const SHELL_BACKGROUND_CUSTOM_OPTION_ID = 'studio-custom';
 
 export type ShellBackgroundOption = {
   id: string;
@@ -14,6 +16,8 @@ export type ShellBackgroundOption = {
     backgroundBlendMode?: string;
   };
 };
+
+export type ShellBackgroundStyle = ShellBackgroundOption["style"];
 
 export const SHELL_BACKGROUND_OPTIONS: ShellBackgroundOption[] = [
   {
@@ -59,9 +63,53 @@ export const SHELL_BACKGROUND_OPTIONS: ShellBackgroundOption[] = [
       backgroundAttachment: 'fixed',
     },
   },
+  {
+    id: SHELL_BACKGROUND_CUSTOM_OPTION_ID,
+    label: 'Studio Custom',
+    description: 'Aplicado automaticamente pelo Background Studio.',
+    style: {
+      backgroundColor: '#020617',
+      backgroundImage: "linear-gradient(145deg, #0f172a 0%, #020617 100%)",
+      backgroundSize: 'cover',
+      backgroundPosition: 'center',
+      backgroundRepeat: 'no-repeat',
+      backgroundAttachment: 'fixed',
+    },
+  },
 ];
 
-export function getShellBackgroundOption(optionId: string | null | undefined): ShellBackgroundOption {
+function isValidStyle(value: unknown): value is ShellBackgroundStyle {
+  if (!value || typeof value !== 'object') return false;
+  const maybeStyle = value as Record<string, unknown>;
+  return typeof maybeStyle.backgroundImage === 'string';
+}
+
+export function resolveShellBackgroundStyle(customStyleRaw: string | null | undefined): ShellBackgroundStyle | null {
+  if (!customStyleRaw) return null;
+  try {
+    const parsed = JSON.parse(customStyleRaw) as unknown;
+    if (!isValidStyle(parsed)) return null;
+    return parsed;
+  } catch {
+    return null;
+  }
+}
+
+export function getShellBackgroundOption(
+  optionId: string | null | undefined,
+  customStyleRaw?: string | null,
+): ShellBackgroundOption {
+  if (optionId === SHELL_BACKGROUND_CUSTOM_OPTION_ID) {
+    const resolvedCustomStyle = resolveShellBackgroundStyle(customStyleRaw);
+    if (resolvedCustomStyle) {
+      return {
+        id: SHELL_BACKGROUND_CUSTOM_OPTION_ID,
+        label: 'Studio Custom',
+        description: 'Tema personalizado via Background Studio.',
+        style: resolvedCustomStyle,
+      };
+    }
+  }
   if (!optionId) return SHELL_BACKGROUND_OPTIONS[0];
   return SHELL_BACKGROUND_OPTIONS.find((option) => option.id === optionId) ?? SHELL_BACKGROUND_OPTIONS[0];
 }
