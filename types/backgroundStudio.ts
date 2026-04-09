@@ -8,6 +8,7 @@ export type StudioPresetId =
   | "playoffs-night"
   | "minimal-club-premium"
   | "scores-metallic-premium";
+export type BackgroundStudioPresetId = "arena-night" | "champions-gold" | "deep-ocean" | "auth-default";
 
 export type ShapeLanguage = "none" | "orb" | "diamond" | "mesh" | "shards" | "court-lines" | "hex-grid";
 export type PatternStyle = "smooth" | "broadcast" | "gradient-wave" | "high-contrast";
@@ -33,7 +34,15 @@ export interface BackgroundPalette {
 }
 
 export interface BackgroundStudioConfig {
-  preset: StudioPresetId;
+  preset: BackgroundStudioPresetId;
+  shellBackgroundUrl: string | null;
+  nextMatchBackgroundUrl: string | null;
+  shellOverlay: number;
+  nextMatchOverlay: number;
+  shellBlur: number;
+  shellGlow: number;
+  nextMatchBlur: number;
+  nextMatchGlow: number;
   skinMode: "default" | "scores-metallic-premium";
   palette: BackgroundPalette;
   glowIntensity: number;
@@ -66,6 +75,21 @@ export interface BackgroundStudioPreset {
   id: BackgroundStudioPresetId;
   name: string;
   description: string;
+  skinMode: BackgroundStudioConfig["skinMode"];
+  primary: string;
+  secondary: string;
+  highlight: string;
+  glowIntensity: number;
+  blurStrength: number;
+  density: number;
+  depth: number;
+  textureIntensity: number;
+  glossIntensity: number;
+  borderPolishIntensity: number;
+  shapeLanguage: ShapeLanguage;
+  pattern: PatternStyle;
+  motionDirection: MotionDirection;
+  contrast: number;
   shellBackgroundUrl: string | null;
   nextMatchBackgroundUrl: string | null;
   shellOverlay: number;
@@ -83,6 +107,21 @@ export const BACKGROUND_STUDIO_PRESETS: BackgroundStudioPreset[] = [
     id: "arena-night",
     name: "Arena Night",
     description: "Visual escuro de arena para shell e cartão de jogo.",
+    skinMode: "default",
+    primary: "#0f172a",
+    secondary: "#2563eb",
+    highlight: "#22d3ee",
+    glowIntensity: 82,
+    blurStrength: 18,
+    density: 75,
+    depth: 78,
+    textureIntensity: 48,
+    glossIntensity: 50,
+    borderPolishIntensity: 52,
+    shapeLanguage: "court-lines",
+    pattern: "broadcast",
+    motionDirection: "left-to-right",
+    contrast: 108,
     shellBackgroundUrl: "/9C7464B5-579E-4D0D-947F-B24A4D449097.png",
     nextMatchBackgroundUrl: "/F7B8D2E0-9994-4BFC-8D62-0206D32198DA.png",
     shellOverlay: 42,
@@ -96,6 +135,21 @@ export const BACKGROUND_STUDIO_PRESETS: BackgroundStudioPreset[] = [
     id: "champions-gold",
     name: "Champions Gold",
     description: "Arte premium em tons dourados para fases decisivas.",
+    skinMode: "default",
+    primary: "#111827",
+    secondary: "#b45309",
+    highlight: "#fbbf24",
+    glowIntensity: 75,
+    blurStrength: 15,
+    density: 72,
+    depth: 80,
+    textureIntensity: 56,
+    glossIntensity: 60,
+    borderPolishIntensity: 66,
+    shapeLanguage: "shards",
+    pattern: "high-contrast",
+    motionDirection: "top-down",
+    contrast: 115,
     shellBackgroundUrl: "/1968F4FE-A4FF-44BB-944E-08BE533C975E.png",
     nextMatchBackgroundUrl: "/8F897497-4F06-4D51-8537-1FEF8E0386E1.png",
     shellOverlay: 36,
@@ -109,6 +163,21 @@ export const BACKGROUND_STUDIO_PRESETS: BackgroundStudioPreset[] = [
     id: "deep-ocean",
     name: "Deep Ocean",
     description: "Profundidade azul com contraste de palco esportivo.",
+    skinMode: "default",
+    primary: "#020617",
+    secondary: "#1d4ed8",
+    highlight: "#a78bfa",
+    glowIntensity: 68,
+    blurStrength: 20,
+    density: 55,
+    depth: 70,
+    textureIntensity: 44,
+    glossIntensity: 54,
+    borderPolishIntensity: 50,
+    shapeLanguage: "mesh",
+    pattern: "smooth",
+    motionDirection: "center-pulse",
+    contrast: 103,
     shellBackgroundUrl: "/3EBDF5AB-F316-409D-9580-2361B8552B33.png",
     nextMatchBackgroundUrl: "/7E8229A2-91F0-4EE7-A227-8B9CF14A4F2B.png",
     shellOverlay: 48,
@@ -122,6 +191,21 @@ export const BACKGROUND_STUDIO_PRESETS: BackgroundStudioPreset[] = [
     id: "auth-default",
     name: "Auth Default",
     description: "Usa o wallpaper principal padrão do produto.",
+    skinMode: "default",
+    primary: "#020617",
+    secondary: "#0f172a",
+    highlight: "#38bdf8",
+    glowIntensity: 50,
+    blurStrength: 24,
+    density: 40,
+    depth: 85,
+    textureIntensity: 30,
+    glossIntensity: 35,
+    borderPolishIntensity: 42,
+    shapeLanguage: "none",
+    pattern: "smooth",
+    motionDirection: "none",
+    contrast: 98,
     shellBackgroundUrl: null,
     nextMatchBackgroundUrl: "/4EF8DF9F-0088-4132-8F71-282EED3B7506.png",
     shellOverlay: 40,
@@ -139,6 +223,7 @@ export function getBackgroundStudioPreset(presetId: BackgroundStudioPresetId): B
 
 export function createDefaultStudioConfig(): BackgroundStudioConfig {
   const preset = BACKGROUND_STUDIO_PRESETS[0];
+  const visualPreset = STUDIO_PRESETS[0];
   return {
     preset: preset.id,
     shellBackgroundUrl: preset.shellBackgroundUrl,
@@ -149,6 +234,37 @@ export function createDefaultStudioConfig(): BackgroundStudioConfig {
     shellGlow: preset.shellGlow,
     nextMatchBlur: preset.nextMatchBlur,
     nextMatchGlow: preset.nextMatchGlow,
+    skinMode: visualPreset.skinMode,
+    palette: {
+      useClubColors: true,
+      primary: visualPreset.primary,
+      secondary: visualPreset.secondary,
+      highlight: visualPreset.highlight,
+    },
+    glowIntensity: visualPreset.glowIntensity,
+    blurStrength: visualPreset.blurStrength,
+    density: visualPreset.density,
+    depth: visualPreset.depth,
+    textureIntensity: visualPreset.textureIntensity,
+    glossIntensity: visualPreset.glossIntensity,
+    borderPolishIntensity: visualPreset.borderPolishIntensity,
+    shapeLanguage: visualPreset.shapeLanguage,
+    pattern: visualPreset.pattern,
+    motionDirection: visualPreset.motionDirection,
+    contrast: visualPreset.contrast,
+    soundtrack: {
+      tracks: DEFAULT_TRACKS,
+      activeTrackId: DEFAULT_TRACKS[0]?.id ?? null,
+      volume: 55,
+      autoPlay: true,
+      loop: true,
+    },
+    pageBackground: {
+      mode: "auth-default-image",
+      gradientId: "deep-night",
+      solidColor: "#020617",
+      imageDataUrl: null,
+    },
   };
 }
 
@@ -206,37 +322,77 @@ export function buildShellBackgroundStyle(config: BackgroundStudioConfig) {
     : AUTHVIEW_DEFAULT_BACKGROUND_CSS;
 
   return {
-    preset: preset.id,
-    skinMode: preset.skinMode,
+    backgroundColor: "#020617",
+    backgroundImage: `linear-gradient(rgba(2, 6, 23, ${overlayOpacity}), rgba(2, 6, 23, ${overlayOpacity})), ${shellImage}`,
+    backgroundSize: "cover",
+    backgroundPosition: "center",
+    backgroundRepeat: "no-repeat",
+    backgroundAttachment: "fixed",
+    backgroundBlendMode: "normal",
+  };
+}
+
+const SHAPES: ShapeLanguage[] = ["none", "orb", "diamond", "mesh", "shards", "court-lines", "hex-grid"];
+const PATTERNS: PatternStyle[] = ["smooth", "broadcast", "gradient-wave", "high-contrast"];
+const MOTIONS: MotionDirection[] = ["none", "left-to-right", "right-to-left", "top-down", "center-pulse"];
+const PAGE_MODES: PageBackgroundMode[] = ["preset-gradient", "solid-color", "upload-image", "auth-default-image"];
+const PAGE_GRADIENTS: PageBackgroundGradientId[] = ["deep-night", "arena-purple", "emerald-glow", "sunset-lights"];
+
+function clampPercent(value: number, min = 0, max = 100) {
+  if (!Number.isFinite(value)) return min;
+  return Math.min(max, Math.max(min, Math.round(value)));
+}
+
+export function normalizeBackgroundStudioConfig(
+  input?: Partial<BackgroundStudioConfig> | null,
+): BackgroundStudioConfig {
+  const fallback = createDefaultStudioConfig();
+  const preset = input?.preset ? getBackgroundStudioPreset(input.preset) : getBackgroundStudioPreset(fallback.preset);
+
+  return {
+    preset: input?.preset ?? fallback.preset,
+    shellBackgroundUrl: input?.shellBackgroundUrl ?? preset.shellBackgroundUrl ?? fallback.shellBackgroundUrl,
+    nextMatchBackgroundUrl: input?.nextMatchBackgroundUrl ?? preset.nextMatchBackgroundUrl ?? fallback.nextMatchBackgroundUrl,
+    shellOverlay: clampPercent(input?.shellOverlay ?? preset.shellOverlay ?? fallback.shellOverlay, 0, 90),
+    nextMatchOverlay: clampPercent(input?.nextMatchOverlay ?? preset.nextMatchOverlay ?? fallback.nextMatchOverlay, 0, 90),
+    shellBlur: clampPercent(input?.shellBlur ?? preset.shellBlur ?? fallback.shellBlur, 0, 20),
+    shellGlow: clampPercent(input?.shellGlow ?? preset.shellGlow ?? fallback.shellGlow, 0, 120),
+    nextMatchBlur: clampPercent(input?.nextMatchBlur ?? preset.nextMatchBlur ?? fallback.nextMatchBlur, 0, 20),
+    nextMatchGlow: clampPercent(input?.nextMatchGlow ?? preset.nextMatchGlow ?? fallback.nextMatchGlow, 0, 120),
+    skinMode: input?.skinMode === "scores-metallic-premium" ? "scores-metallic-premium" : "default",
     palette: {
-      useClubColors: true,
-      primary: clubPrimary,
-      secondary: clubSecondary,
-      highlight: preset.highlight,
+      useClubColors: input?.palette?.useClubColors ?? fallback.palette.useClubColors,
+      primary: input?.palette?.primary ?? fallback.palette.primary,
+      secondary: input?.palette?.secondary ?? fallback.palette.secondary,
+      highlight: input?.palette?.highlight ?? fallback.palette.highlight,
     },
-    glowIntensity: preset.glowIntensity,
-    blurStrength: preset.blurStrength,
-    density: preset.density,
-    depth: preset.depth,
-    textureIntensity: preset.textureIntensity,
-    glossIntensity: preset.glossIntensity,
-    borderPolishIntensity: preset.borderPolishIntensity,
-    shapeLanguage: preset.shapeLanguage,
-    pattern: preset.pattern,
-    motionDirection: preset.motionDirection,
-    contrast: preset.contrast,
+    glowIntensity: clampPercent(input?.glowIntensity ?? fallback.glowIntensity),
+    blurStrength: clampPercent(input?.blurStrength ?? fallback.blurStrength, 0, 40),
+    density: clampPercent(input?.density ?? fallback.density),
+    depth: clampPercent(input?.depth ?? fallback.depth),
+    textureIntensity: clampPercent(input?.textureIntensity ?? fallback.textureIntensity),
+    glossIntensity: clampPercent(input?.glossIntensity ?? fallback.glossIntensity),
+    borderPolishIntensity: clampPercent(input?.borderPolishIntensity ?? fallback.borderPolishIntensity),
+    shapeLanguage: SHAPES.includes(input?.shapeLanguage as ShapeLanguage) ? (input?.shapeLanguage as ShapeLanguage) : fallback.shapeLanguage,
+    pattern: PATTERNS.includes(input?.pattern as PatternStyle) ? (input?.pattern as PatternStyle) : fallback.pattern,
+    motionDirection: MOTIONS.includes(input?.motionDirection as MotionDirection) ? (input?.motionDirection as MotionDirection) : fallback.motionDirection,
+    contrast: clampPercent(input?.contrast ?? fallback.contrast, 80, 130),
     soundtrack: {
-      tracks: DEFAULT_TRACKS,
-      activeTrackId: DEFAULT_TRACKS[0].id,
-      volume: 55,
-      autoPlay: true,
-      loop: true,
+      tracks: input?.soundtrack?.tracks ?? fallback.soundtrack.tracks,
+      activeTrackId: input?.soundtrack?.activeTrackId ?? fallback.soundtrack.activeTrackId,
+      volume: clampPercent(input?.soundtrack?.volume ?? fallback.soundtrack.volume),
+      autoPlay: input?.soundtrack?.autoPlay ?? fallback.soundtrack.autoPlay,
+      loop: input?.soundtrack?.loop ?? fallback.soundtrack.loop,
     },
     pageBackground: {
-      mode: "auth-default-image",
-      gradientId: "deep-night",
-      solidColor: "#020617",
-      imageDataUrl: null,
+      mode: PAGE_MODES.includes(input?.pageBackground?.mode as PageBackgroundMode)
+        ? (input?.pageBackground?.mode as PageBackgroundMode)
+        : fallback.pageBackground.mode,
+      gradientId: PAGE_GRADIENTS.includes(input?.pageBackground?.gradientId as PageBackgroundGradientId)
+        ? (input?.pageBackground?.gradientId as PageBackgroundGradientId)
+        : fallback.pageBackground.gradientId,
+      solidColor: input?.pageBackground?.solidColor ?? fallback.pageBackground.solidColor,
+      imageDataUrl: input?.pageBackground?.imageDataUrl ?? fallback.pageBackground.imageDataUrl,
     },
   };
 }
