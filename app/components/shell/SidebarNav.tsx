@@ -17,7 +17,7 @@ function NavContent({
   return (
     <div className="flex h-full flex-col gap-4 p-4 pt-4">
       <div className="flex items-center justify-between">
-        <h1 className="text-lg font-semibold text-white">Fashion Dashboard</h1>
+        <h1 className="text-lg font-semibold text-white">SCORES Dashboard</h1>
       </div>
 
       <nav className="space-y-2">

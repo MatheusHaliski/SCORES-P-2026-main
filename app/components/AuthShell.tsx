@@ -99,16 +99,20 @@ export default function AuthShell({
               ].join(" ")}
             >
               <div className="grid grid-cols-1 items-center gap-6 lg:grid-cols-2">
-                <div className="flex flex-col items-center justify-center gap-3">
+                <div className="flex flex-col items-center justify-center gap-5">
                   <img
                     src="/1968F4FE-A4FF-44BB-944E-08BE533C975E.png"
                     alt="SCORES"
                     className="h-64 w-full max-w-[720px] object-contain sm:h-62 md:h-66 lg:h-68"
                   />
 
-                  <div className="hidden font-sharetech leading-tight sm:block">
-                    <div className="text-center font-sharetech text-2xl font-bold uppercase tracking-[0.22em] text-orange-500 sm:text-5xl md:text-6xl">
-                      SCORES 
+                  <div className="w-full max-w-[840px]">
+                    <div className="overflow-hidden rounded-2xl border-8 border-orange-500 shadow-[0_18px_60px_rgba(0,0,0,0.25)]">
+                      <img
+                        src="/Firefly_Gemini Flash_Consegue melhorar a quadra e os jogadores para deixar com brilho gradiente metalico i 18815.png"
+                        alt="SCORES metallic court and players"
+                        className="h-full w-full object-cover"
+                      />
                     </div>
                   </div>
                 </div>
@@ -116,7 +120,7 @@ export default function AuthShell({
                 <div className="w-full">
                   <div className="overflow-hidden rounded-2xl border-8 border-orange-500 shadow-[0_18px_60px_rgba(0,0,0,0.25)]">
                     <img
-                      src="/Firefly_Gemini Flash_Consegue melhorar a quadra e os jogadores para deixar com brilho gradiente metalico i 18815.png"
+                      src="/ChatGPT Image 6 de mar. de 2026, 18_03_49.png"
                       alt="SCORES featured visual"
                       className="h-full w-full object-cover"
                     />

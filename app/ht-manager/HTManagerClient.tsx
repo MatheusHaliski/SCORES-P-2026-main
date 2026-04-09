@@ -22,7 +22,7 @@ export function HTManagerClient({ saveId }: { saveId: string }) {
   return (
     <div className="space-y-4">
       <SectionCard title={`HTManagerBoardView • ${session.phase}`}>
-        <div className="premium-surface mb-3 p-2 text-xs text-slate-200">
+        <div className="sa-premium-gradient-surface mb-3 rounded-2xl p-2 text-xs text-slate-200">
           <p>Público: <strong>{(session.attendance ?? 0).toLocaleString()}</strong></p>
           <p>Receita de bilheteria estimada (IA): <strong>${(session.ticketRevenueEstimate ?? 0).toLocaleString()}</strong></p>
         </div>
@@ -48,7 +48,7 @@ export function HTManagerClient({ saveId }: { saveId: string }) {
           setSession(next);
           router.push(`/match-board?saveId=${saveId}`);
         }}
-        className="premium-control bg-emerald-600/70 px-4 py-2 text-sm font-bold text-white"
+        className="sa-premium-gradient-surface-soft border border-white/30 px-4 py-2 text-sm font-bold text-white"
       >
         Confirmar ajustes e continuar para Q{session.quarter + 1}
       </button>

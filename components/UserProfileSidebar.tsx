@@ -84,14 +84,14 @@ export function UserProfileSidebar({
 
   return (
     <>
-      <aside className="relative z-20 w-full max-w-xs rounded-3xl border border-white/20 bg-slate-950/80 p-5 shadow-2xl">
+      <aside className="sa-premium-gradient-surface relative z-20 w-full max-w-xs rounded-3xl border border-white/20 p-5 shadow-2xl">
         <h2 className="text-xs font-bold uppercase tracking-[0.2em] text-cyan-300">Perfil</h2>
         <div className="mt-3 space-y-3 text-sm text-slate-200">
-          <div className="rounded-xl border border-white/10 bg-slate-900/80 p-3">
+          <div className="sa-premium-gradient-surface-soft rounded-xl border border-white/10 p-3">
             <p className="text-[11px] uppercase tracking-wide text-slate-400">Usuário</p>
             <p className="font-semibold text-white">{userIdentifier || "Usuário autenticado"}</p>
           </div>
-          <div className="rounded-xl border border-white/10 bg-slate-900/80 p-3">
+          <div className="sa-premium-gradient-surface-soft rounded-xl border border-white/10 p-3">
             <p className="text-[11px] uppercase tracking-wide text-slate-400">Save atual</p>
             <p className="font-semibold text-white">{activeSaveName || "Nenhum save ativo"}</p>
           </div>
@@ -100,7 +100,7 @@ export function UserProfileSidebar({
         <button
           type="button"
           onClick={() => setOpenStudio(true)}
-          className="mt-5 w-full rounded-xl border border-cyan-300/40 bg-gradient-to-r from-cyan-500/25 to-indigo-500/20 px-4 py-2 text-sm font-black text-cyan-100 shadow-[0_0_20px_rgba(34,211,238,0.24)] transition hover:scale-[1.01]"
+          className="sa-premium-gradient-surface-soft mt-5 w-full rounded-xl border border-cyan-300/40 px-4 py-2 text-sm font-black text-cyan-100 shadow-[0_0_20px_rgba(34,211,238,0.24)] transition hover:scale-[1.01]"
         >
           Abrir Background Studio
         </button>
@@ -108,7 +108,7 @@ export function UserProfileSidebar({
         <button
           type="button"
           onClick={handleLogout}
-          className="mt-3 w-full rounded-xl bg-rose-600 px-4 py-2 text-sm font-bold text-white transition hover:bg-rose-500"
+          className="sa-premium-gradient-surface-soft mt-3 w-full rounded-xl border border-rose-300/40 px-4 py-2 text-sm font-bold text-white transition hover:border-rose-200/60"
         >
           Logout
         </button>
