@@ -28,7 +28,7 @@ export function MiniNextMatchCard({
 
   return (
     <div
-      className="relative overflow-hidden rounded-2xl border border-white/30 p-4 text-sm"
+      className="sa-premium-metallic-panel relative overflow-hidden rounded-2xl border border-white/30 p-4 text-sm"
       style={{
         backgroundImage: `linear-gradient(140deg, ${primaryColor}cc, #0f172acc), radial-gradient(circle at 20% 10%, ${secondaryColor}55 0%, transparent 40%), repeating-linear-gradient(45deg, transparent 0 10px, rgba(255,255,255,0.05) 10px 20px)`,
       }}

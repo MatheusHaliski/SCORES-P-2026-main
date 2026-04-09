@@ -7,6 +7,9 @@
   --scores-gold: #d2be74;
   --scores-brown: #5b4a2d;
   --scores-green: #155e4b;
+  --scores-metallic-texture: 0.45;
+  --scores-metallic-gloss: 0.42;
+  --scores-metallic-polish: 0.5;
 }
 
 body {
@@ -147,7 +150,8 @@ body {
 
 .sa-premium-gradient-surface,
 .sa-premium-gradient-surface-soft,
-.sa-surface-topbar {
+.sa-surface-topbar,
+.sa-surface-header {
   position: relative;
   overflow: hidden;
   border-color: rgba(210, 190, 116, 0.5);
@@ -162,7 +166,8 @@ body {
 
 .sa-premium-gradient-surface::before,
 .sa-premium-gradient-surface-soft::before,
-.sa-surface-topbar::before {
+.sa-surface-topbar::before,
+.sa-surface-header::before {
   content: "";
   position: absolute;
   inset: 0;
@@ -178,6 +183,107 @@ body {
   box-shadow:
     inset 0 1px 0 rgba(255, 255, 255, 0.2),
     0 8px 18px rgba(0, 0, 0, 0.22);
+}
+
+.sa-premium-metallic-panel {
+  border-radius: 1rem;
+  border: 1px solid rgba(227, 198, 128, calc(0.2 + (var(--scores-metallic-polish) * 0.45)));
+  background:
+    linear-gradient(166deg, rgba(12, 49, 40, 0.94), rgba(8, 34, 31, 0.96)),
+    linear-gradient(118deg, rgba(228, 194, 112, calc(0.06 + (var(--scores-metallic-gloss) * 0.12))), transparent 30%, transparent 74%, rgba(216, 226, 233, calc(0.05 + (var(--scores-metallic-gloss) * 0.08)))),
+    repeating-linear-gradient(-14deg, rgba(228, 203, 135, calc(0.03 + (var(--scores-metallic-texture) * 0.055))) 0 2px, rgba(78, 65, 38, calc(0.025 + (var(--scores-metallic-texture) * 0.04))) 2px 4px);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, calc(0.08 + (var(--scores-metallic-gloss) * 0.18))),
+    inset 0 -1px 0 rgba(0, 0, 0, 0.45),
+    0 16px 30px rgba(0, 0, 0, 0.35);
+}
+
+:root[data-scores-skin="scores-metallic-premium"] {
+  --scores-metallic-enamel: #103b31;
+  --scores-metallic-enamel-deep: #0a2622;
+  --scores-metallic-gold: #d8ba72;
+  --scores-metallic-gold-deep: #8c6425;
+  --scores-metallic-silver: #d5dde4;
+  --scores-metallic-border: rgba(220, 190, 117, 0.48);
+  --scores-metallic-border-strong: rgba(234, 211, 155, 0.72);
+  --scores-metallic-text-primary: #f5efe1;
+  --scores-metallic-text-secondary: rgba(231, 223, 202, 0.82);
+}
+
+:root[data-scores-skin="scores-metallic-premium"] .premium-surface,
+:root[data-scores-skin="scores-metallic-premium"] .premium-control,
+:root[data-scores-skin="scores-metallic-premium"] .sa-premium-gradient-surface,
+:root[data-scores-skin="scores-metallic-premium"] .sa-premium-gradient-surface-soft,
+:root[data-scores-skin="scores-metallic-premium"] .sa-surface-topbar,
+:root[data-scores-skin="scores-metallic-premium"] .sa-surface-header {
+  border-color: var(--scores-metallic-border);
+  background:
+    linear-gradient(152deg, color-mix(in srgb, var(--scores-metallic-enamel) 85%, black 15%), color-mix(in srgb, var(--scores-metallic-enamel-deep) 94%, black 6%)),
+    linear-gradient(112deg, rgba(245, 228, 179, calc(0.08 + (var(--scores-metallic-gloss) * 0.18))) 0%, transparent 34%, transparent 68%, rgba(210, 218, 227, calc(0.04 + (var(--scores-metallic-gloss) * 0.1))) 100%),
+    repeating-linear-gradient(-12deg, rgba(225, 201, 136, calc(0.03 + (var(--scores-metallic-texture) * 0.06))) 0 2px, rgba(90, 72, 38, calc(0.03 + (var(--scores-metallic-texture) * 0.04))) 2px 4px);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, calc(0.11 + (var(--scores-metallic-gloss) * 0.2))),
+    inset 0 -1px 0 rgba(0, 0, 0, 0.5),
+    0 18px 46px rgba(0, 0, 0, 0.38);
+}
+
+:root[data-scores-skin="scores-metallic-premium"] .premium-control {
+  color: var(--scores-metallic-text-primary);
+  border-color: var(--scores-metallic-border-strong);
+}
+
+:root[data-scores-skin="scores-metallic-premium"] .sa-premium-gradient-surface::before,
+:root[data-scores-skin="scores-metallic-premium"] .sa-premium-gradient-surface-soft::before,
+:root[data-scores-skin="scores-metallic-premium"] .sa-surface-topbar::before,
+:root[data-scores-skin="scores-metallic-premium"] .sa-surface-header::before {
+  opacity: calc(0.5 + (var(--scores-metallic-gloss) * 0.5));
+}
+
+:root[data-scores-skin="scores-metallic-premium"] .premium-label,
+:root[data-scores-skin="scores-metallic-premium"] .text-slate-400,
+:root[data-scores-skin="scores-metallic-premium"] .text-slate-300,
+:root[data-scores-skin="scores-metallic-premium"] .text-slate-200 {
+  color: var(--scores-metallic-text-secondary);
+}
+
+:root[data-scores-skin="scores-metallic-premium"] .bg-slate-900\/70,
+:root[data-scores-skin="scores-metallic-premium"] .bg-slate-900\/80,
+:root[data-scores-skin="scores-metallic-premium"] .bg-slate-950\/80,
+:root[data-scores-skin="scores-metallic-premium"] .bg-slate-800\/70,
+:root[data-scores-skin="scores-metallic-premium"] .bg-slate-800\/80 {
+  background-color: color-mix(in srgb, var(--scores-metallic-enamel-deep) 88%, black 12%) !important;
+  border-color: var(--scores-metallic-border) !important;
+}
+
+:root[data-scores-skin="scores-metallic-premium"] button,
+:root[data-scores-skin="scores-metallic-premium"] [role="button"] {
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, calc(0.08 + var(--scores-metallic-gloss) * 0.16));
+}
+
+:root[data-scores-skin="scores-metallic-premium"] button:hover {
+  border-color: var(--scores-metallic-border-strong) !important;
+}
+
+:root[data-scores-skin="scores-metallic-premium"] input,
+:root[data-scores-skin="scores-metallic-premium"] select,
+:root[data-scores-skin="scores-metallic-premium"] textarea {
+  border-color: var(--scores-metallic-border) !important;
+  background-color: color-mix(in srgb, var(--scores-metallic-enamel-deep) 82%, black 18%) !important;
+  color: var(--scores-metallic-text-primary) !important;
+}
+
+:root[data-scores-skin="scores-metallic-premium"] ::placeholder {
+  color: rgba(223, 210, 176, 0.64) !important;
+}
+
+:root[data-scores-skin="scores-metallic-premium"] tr,
+:root[data-scores-skin="scores-metallic-premium"] .list-row {
+  border-color: rgba(218, 187, 118, 0.28) !important;
+}
+
+:root[data-scores-skin="scores-metallic-premium"] tr:hover,
+:root[data-scores-skin="scores-metallic-premium"] .list-row:hover {
+  background-color: rgba(214, 183, 112, 0.1) !important;
 }
 
 .tactical-court {

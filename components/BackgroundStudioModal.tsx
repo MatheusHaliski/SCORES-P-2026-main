@@ -47,10 +47,14 @@ export function BackgroundStudioModal({ open, onClose, config, onChange, onSave,
     onChange({
       ...config,
       preset: preset.id,
+      skinMode: preset.skinMode,
       glowIntensity: preset.glowIntensity,
       blurStrength: preset.blurStrength,
       density: preset.density,
       depth: preset.depth,
+      textureIntensity: preset.textureIntensity,
+      glossIntensity: preset.glossIntensity,
+      borderPolishIntensity: preset.borderPolishIntensity,
       shapeLanguage: preset.shapeLanguage,
       pattern: preset.pattern,
       motionDirection: preset.motionDirection,
@@ -171,6 +175,9 @@ export function BackgroundStudioModal({ open, onClose, config, onChange, onSave,
                   { label: "Densidade", key: "density", min: 0, max: 100 },
                   { label: "Depth", key: "depth", min: 0, max: 100 },
                   { label: "Contraste", key: "contrast", min: 80, max: 130 },
+                  { label: "Textura", key: "textureIntensity", min: 0, max: 100 },
+                  { label: "Gloss/Reflexo", key: "glossIntensity", min: 0, max: 100 },
+                  { label: "Polimento de borda", key: "borderPolishIntensity", min: 0, max: 100 },
                 ].map((control) => (
                   <label key={control.key} className="rounded-xl border border-white/10 bg-slate-900/70 p-2 text-xs text-slate-200">
                     <div className="mb-1 flex items-center justify-between"><span>{control.label}</span><b>{config[control.key as keyof BackgroundStudioConfig] as number}</b></div>
@@ -388,6 +395,7 @@ export function BackgroundStudioModal({ open, onClose, config, onChange, onSave,
 
           <section className="rounded-2xl border border-cyan-300/30 bg-slate-900/70 p-3">
             <p className="text-sm font-black text-cyan-100">6) Preview em tempo real</p>
+            <p className="mt-1 text-[11px] text-cyan-100/80">Skin ativa: <span className="font-semibold">{config.skinMode === "scores-metallic-premium" ? "SCORES Metallic Premium" : "Default"}</span></p>
             <div className="mt-2 space-y-3">
               <div className="rounded-xl border border-white/15 p-3" style={{ backgroundImage: previewBackground, filter: `contrast(${config.contrast}%) blur(${Math.max(0, config.blurStrength - 12)}px)` }}>
                 <p className="text-xs uppercase tracking-[0.18em] text-cyan-100">Painel principal</p>
@@ -395,7 +403,7 @@ export function BackgroundStudioModal({ open, onClose, config, onChange, onSave,
                 <p className="text-xs text-slate-200">Preset: {getPresetById(config.preset).name}</p>
               </div>
 
-              <div className="rounded-xl border border-white/15 bg-slate-900/65 p-3" style={{ boxShadow: `0 0 ${Math.max(18, config.glowIntensity)}px ${config.palette.highlight}55` }}>
+              <div className={`rounded-xl border border-white/15 p-3 ${config.skinMode === "scores-metallic-premium" ? "sa-premium-metallic-panel" : "bg-slate-900/65"}`} style={{ boxShadow: `0 0 ${Math.max(18, config.glowIntensity)}px ${config.palette.highlight}55` }}>
                 <p className="text-[11px] uppercase tracking-[0.16em] text-slate-300">Next Match Card</p>
                 <p className="mt-1 text-sm font-bold text-white">Home vs Away</p>
                 <p className="text-xs text-slate-300">Mood: {config.shapeLanguage} • {config.motionDirection}</p>

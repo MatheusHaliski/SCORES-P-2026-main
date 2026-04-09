@@ -6,7 +6,8 @@ export type StudioPresetId =
   | "electric-court"
   | "retro-broadcast"
   | "playoffs-night"
-  | "minimal-club-premium";
+  | "minimal-club-premium"
+  | "scores-metallic-premium";
 
 export type ShapeLanguage = "none" | "orb" | "diamond" | "mesh" | "shards" | "court-lines" | "hex-grid";
 export type PatternStyle = "smooth" | "broadcast" | "gradient-wave" | "high-contrast";
@@ -33,11 +34,15 @@ export interface BackgroundPalette {
 
 export interface BackgroundStudioConfig {
   preset: StudioPresetId;
+  skinMode: "default" | "scores-metallic-premium";
   palette: BackgroundPalette;
   glowIntensity: number;
   blurStrength: number;
   density: number;
   depth: number;
+  textureIntensity: number;
+  glossIntensity: number;
+  borderPolishIntensity: number;
   shapeLanguage: ShapeLanguage;
   pattern: PatternStyle;
   motionDirection: MotionDirection;
@@ -140,6 +145,7 @@ export interface BackgroundPreset {
   id: StudioPresetId;
   name: string;
   description: string;
+  skinMode: BackgroundStudioConfig["skinMode"];
   primary: string;
   secondary: string;
   highlight: string;
@@ -147,6 +153,9 @@ export interface BackgroundPreset {
   blurStrength: number;
   density: number;
   depth: number;
+  textureIntensity: number;
+  glossIntensity: number;
+  borderPolishIntensity: number;
   shapeLanguage: ShapeLanguage;
   pattern: PatternStyle;
   motionDirection: MotionDirection;
@@ -154,14 +163,15 @@ export interface BackgroundPreset {
 }
 
 export const STUDIO_PRESETS: BackgroundPreset[] = [
-  { id: "arena-neon", name: "Arena Neon", description: "Luzes vibrantes e energia de arena.", primary: "#0f172a", secondary: "#2563eb", highlight: "#22d3ee", glowIntensity: 82, blurStrength: 18, density: 75, depth: 78, shapeLanguage: "court-lines", pattern: "broadcast", motionDirection: "left-to-right", contrast: 108 },
-  { id: "luxury-blue", name: "Luxury Blue", description: "Estética premium azul profunda.", primary: "#020617", secondary: "#1d4ed8", highlight: "#a78bfa", glowIntensity: 68, blurStrength: 20, density: 55, depth: 70, shapeLanguage: "mesh", pattern: "smooth", motionDirection: "center-pulse", contrast: 103 },
-  { id: "championship-gold", name: "Championship Gold", description: "Aura de título e troféu.", primary: "#111827", secondary: "#b45309", highlight: "#fbbf24", glowIntensity: 75, blurStrength: 15, density: 72, depth: 80, shapeLanguage: "shards", pattern: "high-contrast", motionDirection: "top-down", contrast: 115 },
-  { id: "dark-tunnel", name: "Dark Tunnel", description: "Pré-jogo sombrio com foco total.", primary: "#020617", secondary: "#0f172a", highlight: "#38bdf8", glowIntensity: 50, blurStrength: 24, density: 40, depth: 85, shapeLanguage: "none", pattern: "smooth", motionDirection: "none", contrast: 98 },
-  { id: "electric-court", name: "Electric Court", description: "Linhas elétricas de quadra.", primary: "#111827", secondary: "#4f46e5", highlight: "#22d3ee", glowIntensity: 88, blurStrength: 14, density: 82, depth: 74, shapeLanguage: "court-lines", pattern: "gradient-wave", motionDirection: "right-to-left", contrast: 112 },
-  { id: "retro-broadcast", name: "Retro Sports Broadcast", description: "Pacote visual broadcast retrô.", primary: "#1e1b4b", secondary: "#0e7490", highlight: "#f59e0b", glowIntensity: 65, blurStrength: 18, density: 64, depth: 62, shapeLanguage: "diamond", pattern: "broadcast", motionDirection: "left-to-right", contrast: 109 },
-  { id: "playoffs-night", name: "Playoffs Night", description: "Noite de playoffs com tensão máxima.", primary: "#020617", secondary: "#7c3aed", highlight: "#22d3ee", glowIntensity: 90, blurStrength: 16, density: 70, depth: 88, shapeLanguage: "hex-grid", pattern: "high-contrast", motionDirection: "center-pulse", contrast: 118 },
-  { id: "minimal-club-premium", name: "Minimal Club Premium", description: "Visual clean e sofisticado.", primary: "#0f172a", secondary: "#334155", highlight: "#38bdf8", glowIntensity: 40, blurStrength: 10, density: 25, depth: 55, shapeLanguage: "none", pattern: "smooth", motionDirection: "none", contrast: 100 },
+  { id: "arena-neon", name: "Arena Neon", description: "Luzes vibrantes e energia de arena.", skinMode: "default", primary: "#0f172a", secondary: "#2563eb", highlight: "#22d3ee", glowIntensity: 82, blurStrength: 18, density: 75, depth: 78, textureIntensity: 48, glossIntensity: 50, borderPolishIntensity: 52, shapeLanguage: "court-lines", pattern: "broadcast", motionDirection: "left-to-right", contrast: 108 },
+  { id: "luxury-blue", name: "Luxury Blue", description: "Estética premium azul profunda.", skinMode: "default", primary: "#020617", secondary: "#1d4ed8", highlight: "#a78bfa", glowIntensity: 68, blurStrength: 20, density: 55, depth: 70, textureIntensity: 44, glossIntensity: 54, borderPolishIntensity: 50, shapeLanguage: "mesh", pattern: "smooth", motionDirection: "center-pulse", contrast: 103 },
+  { id: "championship-gold", name: "Championship Gold", description: "Aura de título e troféu.", skinMode: "default", primary: "#111827", secondary: "#b45309", highlight: "#fbbf24", glowIntensity: 75, blurStrength: 15, density: 72, depth: 80, textureIntensity: 56, glossIntensity: 60, borderPolishIntensity: 66, shapeLanguage: "shards", pattern: "high-contrast", motionDirection: "top-down", contrast: 115 },
+  { id: "dark-tunnel", name: "Dark Tunnel", description: "Pré-jogo sombrio com foco total.", skinMode: "default", primary: "#020617", secondary: "#0f172a", highlight: "#38bdf8", glowIntensity: 50, blurStrength: 24, density: 40, depth: 85, textureIntensity: 30, glossIntensity: 35, borderPolishIntensity: 42, shapeLanguage: "none", pattern: "smooth", motionDirection: "none", contrast: 98 },
+  { id: "electric-court", name: "Electric Court", description: "Linhas elétricas de quadra.", skinMode: "default", primary: "#111827", secondary: "#4f46e5", highlight: "#22d3ee", glowIntensity: 88, blurStrength: 14, density: 82, depth: 74, textureIntensity: 58, glossIntensity: 64, borderPolishIntensity: 57, shapeLanguage: "court-lines", pattern: "gradient-wave", motionDirection: "right-to-left", contrast: 112 },
+  { id: "retro-broadcast", name: "Retro Sports Broadcast", description: "Pacote visual broadcast retrô.", skinMode: "default", primary: "#1e1b4b", secondary: "#0e7490", highlight: "#f59e0b", glowIntensity: 65, blurStrength: 18, density: 64, depth: 62, textureIntensity: 52, glossIntensity: 43, borderPolishIntensity: 49, shapeLanguage: "diamond", pattern: "broadcast", motionDirection: "left-to-right", contrast: 109 },
+  { id: "playoffs-night", name: "Playoffs Night", description: "Noite de playoffs com tensão máxima.", skinMode: "default", primary: "#020617", secondary: "#7c3aed", highlight: "#22d3ee", glowIntensity: 90, blurStrength: 16, density: 70, depth: 88, textureIntensity: 53, glossIntensity: 61, borderPolishIntensity: 58, shapeLanguage: "hex-grid", pattern: "high-contrast", motionDirection: "center-pulse", contrast: 118 },
+  { id: "minimal-club-premium", name: "Minimal Club Premium", description: "Visual clean e sofisticado.", skinMode: "default", primary: "#0f172a", secondary: "#334155", highlight: "#38bdf8", glowIntensity: 40, blurStrength: 10, density: 25, depth: 55, textureIntensity: 20, glossIntensity: 28, borderPolishIntensity: 32, shapeLanguage: "none", pattern: "smooth", motionDirection: "none", contrast: 100 },
+  { id: "scores-metallic-premium", name: "SCORES Metallic Premium", description: "Luxo esportivo com metal escovado dourado e esmalte verde.", skinMode: "scores-metallic-premium", primary: "#123930", secondary: "#8a6425", highlight: "#e8d086", glowIntensity: 62, blurStrength: 9, density: 58, depth: 86, textureIntensity: 84, glossIntensity: 74, borderPolishIntensity: 88, shapeLanguage: "mesh", pattern: "smooth", motionDirection: "center-pulse", contrast: 112 },
 ];
 
 const DEFAULT_TRACKS: SoundtrackItem[] = [
@@ -186,6 +196,7 @@ export function createDefaultStudioConfig(clubPrimary: string, clubSecondary: st
   const preset = STUDIO_PRESETS[0];
   return {
     preset: preset.id,
+    skinMode: preset.skinMode,
     palette: {
       useClubColors: true,
       primary: clubPrimary,
@@ -196,6 +207,9 @@ export function createDefaultStudioConfig(clubPrimary: string, clubSecondary: st
     blurStrength: preset.blurStrength,
     density: preset.density,
     depth: preset.depth,
+    textureIntensity: preset.textureIntensity,
+    glossIntensity: preset.glossIntensity,
+    borderPolishIntensity: preset.borderPolishIntensity,
     shapeLanguage: preset.shapeLanguage,
     pattern: preset.pattern,
     motionDirection: preset.motionDirection,
