@@ -19,6 +19,8 @@ import { StadiumRevenueService } from "@/services/StadiumRevenueService";
 import { ClubVisualService } from "@/services/ClubVisualService";
 import { ClubUniformAssets, defaultTacticalPreset, defaultUniformAssets, resolveUniformUrl, TacticalPreset, UniformSlot } from "@/types/tactical";
 import { writeClubUniforms, writePreMatchTactic } from "@/lib/tacticalState";
+import { ClubIdentityTheme, createDefaultClubIdentityTheme, normalizeClubIdentityTheme } from "@/types/clubIdentityTheme";
+import { BackgroundStudioConfig, createDefaultStudioConfig, normalizeBackgroundStudioConfig } from "@/types/backgroundStudio";
 
 type InboxMessage = {
   id: string;
@@ -53,6 +55,7 @@ type CareerState = {
     primaryColor: string;
     secondaryColor: string;
   };
+  clubIdentityTheme: ClubIdentityTheme;
   uniformAssets: ClubUniformAssets;
   preMatchTactic: TacticalPreset;
 };
@@ -422,6 +425,7 @@ export function SquadHomeClient({
         primaryColor: payload.team.primaryColor,
         secondaryColor: payload.team.secondaryColor,
       },
+      clubIdentityTheme: createDefaultClubIdentityTheme(payload.team.primaryColor, payload.team.secondaryColor),
       uniformAssets: defaultUniformAssets,
       preMatchTactic: defaultTacticalPreset,
       financeLog: [{ id: "init", type: "setup", amount: payload.save.budgetSnapshot, note: "Saldo inicial", round: payload.save.currentRound }],
@@ -450,6 +454,11 @@ export function SquadHomeClient({
             secondaryColor: parsed.teamColors.secondaryColor ?? initial.teamColors.secondaryColor,
           }
           : initial.teamColors,
+        clubIdentityTheme: normalizeClubIdentityTheme(
+          parsed.clubIdentityTheme && typeof parsed.clubIdentityTheme === "object" ? parsed.clubIdentityTheme : null,
+          parsed.teamColors?.primaryColor ?? initial.teamColors.primaryColor,
+          parsed.teamColors?.secondaryColor ?? initial.teamColors.secondaryColor,
+        ),
         uniformAssets: parsed.uniformAssets && typeof parsed.uniformAssets === "object" ? { ...initial.uniformAssets, ...parsed.uniformAssets } : initial.uniformAssets,
         preMatchTactic: parsed.preMatchTactic && typeof parsed.preMatchTactic === "object" ? { ...initial.preMatchTactic, ...parsed.preMatchTactic } : initial.preMatchTactic,
       };
@@ -461,6 +470,40 @@ export function SquadHomeClient({
   useEffect(() => {
     window.localStorage.setItem(`${STORAGE_PREFIX}${payload.save.id}`, JSON.stringify(state));
   }, [payload.save.id, state]);
+
+  const [backgroundStudio, setBackgroundStudio] = useState<BackgroundStudioConfig>(() => {
+    if (typeof window === "undefined") return createDefaultStudioConfig();
+    const raw = window.localStorage.getItem(`scores:background-studio:${payload.save.id}`);
+    if (!raw) return createDefaultStudioConfig();
+    try {
+      return normalizeBackgroundStudioConfig(JSON.parse(raw) as Partial<BackgroundStudioConfig>);
+    } catch {
+      return createDefaultStudioConfig();
+    }
+  });
+
+  useEffect(() => {
+    const syncBackgroundStudio = () => {
+      const raw = window.localStorage.getItem(`scores:background-studio:${payload.save.id}`);
+      if (!raw) {
+        setBackgroundStudio(createDefaultStudioConfig());
+        return;
+      }
+      try {
+        setBackgroundStudio(normalizeBackgroundStudioConfig(JSON.parse(raw) as Partial<BackgroundStudioConfig>));
+      } catch {
+        setBackgroundStudio(createDefaultStudioConfig());
+      }
+    };
+
+    syncBackgroundStudio();
+    window.addEventListener("storage", syncBackgroundStudio);
+    window.addEventListener("scores-shell-background-change", syncBackgroundStudio);
+    return () => {
+      window.removeEventListener("storage", syncBackgroundStudio);
+      window.removeEventListener("scores-shell-background-change", syncBackgroundStudio);
+    };
+  }, [payload.save.id]);
 
   const teamsMap = useMemo(
     () => Object.fromEntries(editableTeams.map((team) => [team.id, team])) as Record<string, Team>,
@@ -709,7 +752,17 @@ export function SquadHomeClient({
       secondaryColor: colorDraft.secondaryColor,
     };
 
-    updateState((prev) => ({ ...prev, teamColors: nextColors }));
+    updateState((prev) => ({
+      ...prev,
+      teamColors: nextColors,
+      clubIdentityTheme: {
+        ...prev.clubIdentityTheme,
+        primaryColor: nextColors.primaryColor,
+        secondaryColor: nextColors.secondaryColor,
+        accentColor: nextColors.secondaryColor,
+        glowColor: nextColors.secondaryColor,
+      },
+    }));
     try {
       await fetch("/api/team/colors", {
         method: "POST",
@@ -827,6 +880,7 @@ export function SquadHomeClient({
   const availablePlaystyles = playstyleInventoryService.availableItems(state.inventory);
   const primaryColor = state.teamColors?.primaryColor ?? payload.team.primaryColor;
   const secondaryColor = clubVisualService.ensureReadableAccent(state.teamColors?.secondaryColor ?? payload.team.secondaryColor);
+  const identityTheme = normalizeClubIdentityTheme(state.clubIdentityTheme, primaryColor, secondaryColor);
   const activeUniformUrl = resolveUniformUrl(state.uniformAssets ?? defaultUniformAssets);
   const boardMoraleLabel = clubVisualService.reputationToLabel(payload.save.boardReputation);
   const fansMoraleLabel = clubVisualService.reputationToLabel(payload.save.fansReputation);
@@ -855,16 +909,16 @@ export function SquadHomeClient({
     <main
       className="min-h-screen p-6"
       style={{
-        backgroundImage: `var(--scores-bg-image, radial-gradient(circle at 15% 15%, ${secondaryColor}40 0%, transparent 30%), radial-gradient(circle at 85% 75%, ${primaryColor}55 0%, transparent 35%), linear-gradient(135deg, ${primaryColor}f2, #020617)))`,
-        filter: "contrast(var(--scores-bg-contrast, 100%))",
+        backgroundImage: `linear-gradient(rgba(2,6,23,${backgroundStudio.shellOverlay / 100}), rgba(2,6,23,${backgroundStudio.shellOverlay / 100})), ${backgroundStudio.shellBackgroundUrl ? `url('${backgroundStudio.shellBackgroundUrl}')` : "linear-gradient(135deg,#0f172a,#020617)"}`,
         backgroundSize: "cover",
         backgroundPosition: "center",
+        color: identityTheme.textColor,
       }}
     >
       <div className="mx-auto max-w-7xl space-y-4">
-        <header className="premium-surface flex flex-wrap gap-2 p-3">
+        <header className="premium-surface flex flex-wrap gap-2 p-3" style={{ borderColor: identityTheme.borderColor, boxShadow: `0 0 30px ${identityTheme.glowColor}40` }}>
           {topActions.map((action) => (
-            <button key={action} onClick={() => setOpenModal(action)} className="premium-control px-3 py-1 text-xs font-semibold">
+            <button key={action} onClick={() => setOpenModal(action)} className="premium-control px-3 py-1 text-xs font-semibold" style={{ borderColor: identityTheme.borderColor, color: identityTheme.textColor }}>
               {action} {action === "Email" && unreadCount > 0 && <span className="ml-1 rounded-full bg-red-500 px-1.5 py-0.5 text-[10px]">{unreadCount}</span>}
             </button>
           ))}
@@ -894,8 +948,13 @@ export function SquadHomeClient({
                 homeTeam={teamsMap[payload.nextFixture.homeTeamId]}
                 awayTeam={teamsMap[payload.nextFixture.awayTeamId]}
                 venue={nextVenue}
-                primaryColor={primaryColor}
-                secondaryColor={secondaryColor}
+                identityTheme={identityTheme}
+                nextMatchBackground={{
+                  nextMatchBackgroundUrl: backgroundStudio.nextMatchBackgroundUrl,
+                  nextMatchOverlay: backgroundStudio.nextMatchOverlay,
+                  nextMatchBlur: backgroundStudio.nextMatchBlur,
+                  nextMatchGlow: backgroundStudio.nextMatchGlow,
+                }}
               />
             ) : null}
             {payload.save.employmentStatus !== "employed" && <SpectatorModeBanner />}
@@ -1358,9 +1417,13 @@ export function SquadHomeClient({
         </div>
       ))}
 
-      {openModal === "Identidade do Clube" && modalShell("ClubColorEditorModal", () => setOpenModal(null), (
+      {openModal === "Identidade do Clube" && modalShell("Identidade do Clube • Tema interno da UI", () => setOpenModal(null), (
         <div className="space-y-4 text-sm text-slate-100">
-          <p>Editor premium de identidade: cores + uniformes 2D ativos para elenco, banco e board tático.</p>
+          <div className="rounded-xl border border-cyan-300/35 bg-cyan-500/10 p-3">
+            <p className="text-xs uppercase tracking-[0.18em] text-cyan-200">Identidade do Clube</p>
+            <p className="mt-1 text-sm text-cyan-100">Este editor altera o tema interno: textos, bordas, cards, modais, botões e acentos glow.</p>
+            <p className="text-xs text-cyan-100/80">Não altera wallpaper da página. O fundo da view e do Next Match é editado apenas no Background Studio.</p>
+          </div>
           <div className="grid gap-3 sm:grid-cols-2">
             <label className="premium-surface p-3">
               <p className="mb-2 text-xs uppercase text-slate-300">Primary Color</p>
@@ -1369,6 +1432,17 @@ export function SquadHomeClient({
             <label className="premium-surface p-3">
               <p className="mb-2 text-xs uppercase text-slate-300">Secondary Color</p>
               <input type="color" value={colorDraft.secondaryColor} onChange={(event) => setColorDraft((prev) => ({ ...prev, secondaryColor: event.target.value }))} className="premium-control h-10 w-full cursor-pointer rounded" />
+            </label>
+          </div>
+
+          <div className="grid gap-3 sm:grid-cols-2">
+            <label className="premium-surface p-3">
+              <p className="mb-2 text-xs uppercase text-slate-300">Text Color</p>
+              <input type="color" value={state.clubIdentityTheme.textColor} onChange={(event) => updateState((prev) => ({ ...prev, clubIdentityTheme: { ...prev.clubIdentityTheme, textColor: event.target.value } }))} className="premium-control h-10 w-full cursor-pointer rounded" />
+            </label>
+            <label className="premium-surface p-3">
+              <p className="mb-2 text-xs uppercase text-slate-300">Border/Glow Accent</p>
+              <input type="color" value={state.clubIdentityTheme.glowColor} onChange={(event) => updateState((prev) => ({ ...prev, clubIdentityTheme: { ...prev.clubIdentityTheme, glowColor: event.target.value, borderColor: `${event.target.value}66` } }))} className="premium-control h-10 w-full cursor-pointer rounded" />
             </label>
           </div>
 
@@ -1404,15 +1478,17 @@ export function SquadHomeClient({
             </label>
           </div>
 
-          <div
-            className="rounded-2xl border border-white/20 p-4"
-            style={{
-              backgroundImage: `linear-gradient(135deg, ${colorDraft.primaryColor}cc, #0f172acc), radial-gradient(circle at 20% 30%, ${colorDraft.secondaryColor}66 0%, transparent 35%)`,
-            }}
-          >
-            <p className="text-xs uppercase tracking-widest text-slate-100">ClubThemePreviewCard</p>
-            <p className="text-lg font-black" style={{ color: clubVisualService.ensureReadableAccent(colorDraft.secondaryColor) }}>{payload.team.name}</p>
-            <p className="text-xs text-slate-200">Manager: {payload.save.managerName}</p>
+          <div className="rounded-2xl border p-4" style={{ borderColor: identityTheme.borderColor, backgroundImage: `linear-gradient(135deg, ${colorDraft.primaryColor}dd, #0f172acc)` }}>
+            <p className="text-xs uppercase tracking-widest text-slate-100">Club Identity Preview</p>
+            <p className="text-lg font-black" style={{ color: clubVisualService.ensureReadableAccent(colorDraft.secondaryColor) }}>Sample Title • {payload.team.name}</p>
+            <div className="mt-2 rounded-xl border p-3" style={{ borderColor: identityTheme.borderColor, backgroundColor: "rgba(15,23,42,0.72)" }}>
+              <p className="text-xs text-slate-200">Sample Card Surface + Border</p>
+              <button className="mt-2 rounded-lg border px-3 py-1 text-xs font-bold" style={{ borderColor: identityTheme.borderColor, color: identityTheme.textColor, boxShadow: `0 0 20px ${identityTheme.glowColor}55` }}>Sample Button</button>
+            </div>
+            <div className="mt-2 rounded-xl border p-3" style={{ borderColor: identityTheme.borderColor, backgroundColor: "rgba(2,6,23,0.88)" }}>
+              <p className="text-xs text-slate-300">Sample Modal/Internal Surface</p>
+              <div className="mt-2 border-t pt-2 text-xs text-slate-300" style={{ borderColor: identityTheme.borderColor }}>Sample table/list row accent line</div>
+            </div>
           </div>
 
           <div className="flex flex-wrap gap-2">
