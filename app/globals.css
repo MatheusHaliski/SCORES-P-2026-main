@@ -27,7 +27,7 @@ body {
   background-image:
     linear-gradient(rgba(44, 34, 18, 0.34), rgba(44, 34, 18, 0.34)),
     repeating-linear-gradient(90deg, var(--scores-gold) 0 12.5%, var(--scores-brown) 12.5% 25%),
-    url('/scores_bg.png');
+    url('/scores_bg_2.png');
   background-size: cover;
   background-position: center;
   background-repeat: no-repeat;
