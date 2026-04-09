@@ -101,6 +101,14 @@ export function BackgroundStudioModal({ open, onClose, config, onChange, onSave,
   const imageInputRef = useRef<HTMLInputElement | null>(null);
   const shellInputRef = useRef<HTMLInputElement | null>(null);
   const nextMatchInputRef = useRef<HTMLInputElement | null>(null);
+  const imageInputRef = useRef<HTMLInputElement | null>(null);
+  const fileInputRef = useRef<HTMLInputElement | null>(null);
+  const [trackDraft, setTrackDraft] = useState<{ name: string; category: SoundtrackCategory; fileName: string; fileUrl: string }>({
+    name: "",
+    category: "Hype",
+    fileName: "",
+    fileUrl: "",
+  });
   const handleShellUploadClick = () => shellInputRef.current?.click();
   const handleNextMatchUploadClick = () => nextMatchInputRef.current?.click();
   const activeTrack = config.soundtrack.tracks.find((track) => track.id === config.soundtrack.activeTrackId) ?? null;
@@ -218,6 +226,61 @@ export function BackgroundStudioModal({ open, onClose, config, onChange, onSave,
     };
     reader.readAsDataURL(file);
   };
+
+  const applyDerivedClubTheme = () => {
+    onChange({
+      ...config,
+      palette: {
+        ...config.palette,
+        useClubColors: true,
+        primary: clubPrimary,
+        secondary: clubSecondary,
+      },
+    });
+  };
+
+  const updatePageBackgroundMode = (mode: PageBackgroundMode) => {
+    onChange({ ...config, pageBackground: { ...config.pageBackground, mode } });
+  };
+
+  const addTrack = () => {
+    if (!trackDraft.name.trim()) return;
+    const id = `track-${Date.now()}`;
+    const nextTrack = { id, name: trackDraft.name.trim(), category: trackDraft.category, fileName: trackDraft.fileName || undefined, fileUrl: trackDraft.fileUrl || undefined };
+    onChange({
+      ...config,
+      soundtrack: {
+        ...config.soundtrack,
+        tracks: [...config.soundtrack.tracks, nextTrack],
+        activeTrackId: config.soundtrack.activeTrackId ?? id,
+      },
+    });
+    setTrackDraft({ name: "", category: "Hype", fileName: "", fileUrl: "" });
+  };
+
+  const removeTrack = (trackId: string) => {
+    const tracks = config.soundtrack.tracks.filter((track) => track.id !== trackId);
+    onChange({
+      ...config,
+      soundtrack: {
+        ...config.soundtrack,
+        tracks,
+        activeTrackId: config.soundtrack.activeTrackId === trackId ? (tracks[0]?.id ?? null) : config.soundtrack.activeTrackId,
+      },
+    });
+  };
+
+  const updateTrack = (trackId: string, patch: Partial<{ name: string; category: SoundtrackCategory }>) => {
+    onChange({
+      ...config,
+      soundtrack: {
+        ...config.soundtrack,
+        tracks: config.soundtrack.tracks.map((track) => (track.id === trackId ? { ...track, ...patch } : track)),
+      },
+    });
+  };
+
+  const getPresetById = (presetId: BackgroundStudioConfig["preset"]) => getBackgroundStudioPreset(presetId);
 
   return (
     <div className="fixed inset-0 z-[70] flex items-center justify-center bg-slate-950/85 p-3">
