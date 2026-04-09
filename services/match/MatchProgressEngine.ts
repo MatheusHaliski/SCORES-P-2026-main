@@ -81,8 +81,8 @@ export class MatchProgressEngine {
 
       const shootingLineupSkill = scoringTeamIsUser ? userSkill : oppSkill;
       const defendingLineupSkill = scoringTeamIsUser ? oppSkill : userSkill;
-      const shot3Chance = (scoringTactic === "three_point_focus" ? 0.48 : 0.3) + (shootingLineupSkill.contestShooting - 0.5) * 0.18;
-      const paint2Chance = (scoringTactic === "paint_attack" ? 0.74 : 0.56) + (shootingLineupSkill.offenseCreation - defendingLineupSkill.defensivePressure) * 0.2;
+      const shot3Chance = (scoringTactic === "wing_play" ? 0.48 : 0.3) + (shootingLineupSkill.contestShooting - 0.5) * 0.18;
+      const paint2Chance = (scoringTactic === "counter_attack" ? 0.74 : 0.56) + (shootingLineupSkill.offenseCreation - defendingLineupSkill.defensivePressure) * 0.2;
 
       let points: 2 | 3 = random() < shot3Chance ? 3 : 2;
       if (points === 2 && random() > paint2Chance) points = 3;
