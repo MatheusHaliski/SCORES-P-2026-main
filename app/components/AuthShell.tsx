@@ -116,7 +116,7 @@ export default function AuthShell({
                 <div className="w-full">
                   <div className="overflow-hidden rounded-2xl border-8 border-orange-500 shadow-[0_18px_60px_rgba(0,0,0,0.25)]">
                     <img
-                      src="/31FA6088-A26D-4BEF-A3D8-F9BC6DAF3565.png"
+                      src="/Firefly_Gemini Flash_Consegue melhorar a quadra e os jogadores para deixar com brilho gradiente metalico i 18815.png"
                       alt="SCORES featured visual"
                       className="h-full w-full object-cover"
                     />
