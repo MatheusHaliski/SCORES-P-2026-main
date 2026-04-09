@@ -143,7 +143,7 @@ export async function POST(request: NextRequest): Promise<Response> {
     if (!identity.ok) {
         return identity.response;
     }
-    const hash = "$2a$12$qKo5F44M3tE4FxTRG6qfXuMW7P9SX4QIG.ZAdFrZ1pJ7Sa0nRk1Q2";
+    const hash = "$2a$12$J3mpV703uwj.54uDgY/6Fe1eadzHgIc1oJMTsz1e1nPgAGpWeHg3W";
     console.log(hash);
     const secret = process.env.PIN_COOKIE_SECRET;
     console.log(secret);
