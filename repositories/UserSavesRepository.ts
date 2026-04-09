@@ -1,5 +1,6 @@
 import { mockFixtures, mockLeagues, mockTeams, mockUserSaves } from "@/mocks/gameData";
 import { UserSave } from "@/types/game";
+import { BackgroundStudioConfig } from "@/types/backgroundStudio";
 import { firestoreDb, shouldUseFirebase } from "@/lib/firebase/config";
 import { parseNewSaveId } from "@/lib/saveId";
 
@@ -72,6 +73,10 @@ const buildDynamicSave = (saveId: string): UserSave | undefined => {
 };
 
 export class UserSavesRepository {
+  upsertBackgroundStudioConfig(saveId: string, config: BackgroundStudioConfig) {
+    this.upsertSaveProgress(saveId, { backgroundStudioConfig: config });
+  }
+
   upsertSaveProgress(saveId: string, patch: Partial<UserSave>) {
     const current = saveProgressOverrides.get(saveId) ?? {};
     saveProgressOverrides.set(saveId, { ...current, ...patch });

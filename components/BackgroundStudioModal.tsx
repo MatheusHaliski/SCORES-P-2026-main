@@ -28,7 +28,7 @@ type Props = {
 const sliderClass = "w-full accent-cyan-300";
 
 export function BackgroundStudioModal({ open, onClose, config, onChange, onSave, clubPrimary, clubSecondary }: Props) {
-  const [trackDraft, setTrackDraft] = useState({ name: "", category: "Hype" as SoundtrackCategory, fileName: "" });
+  const [trackDraft, setTrackDraft] = useState({ name: "", category: "Hype" as SoundtrackCategory, fileName: "", fileUrl: "" });
   const fileInputRef = useRef<HTMLInputElement | null>(null);
 
   const activeTrack = config.soundtrack.tracks.find((track) => track.id === config.soundtrack.activeTrackId) ?? null;
@@ -65,15 +65,27 @@ export function BackgroundStudioModal({ open, onClose, config, onChange, onSave,
       name: trackDraft.name.trim(),
       category: trackDraft.category,
       fileName: trackDraft.fileName || undefined,
+      fileUrl: trackDraft.fileUrl || undefined,
     };
     onChange({
       ...config,
       soundtrack: {
         ...config.soundtrack,
         tracks: [...config.soundtrack.tracks, nextTrack],
+        activeTrackId: config.soundtrack.activeTrackId ?? nextTrack.id,
       },
     });
-    setTrackDraft({ name: "", category: "Hype", fileName: "" });
+    setTrackDraft({ name: "", category: "Hype", fileName: "", fileUrl: "" });
+  };
+
+  const updateTrack = (trackId: string, patch: Partial<SoundtrackItem>) => {
+    onChange({
+      ...config,
+      soundtrack: {
+        ...config.soundtrack,
+        tracks: config.soundtrack.tracks.map((track) => (track.id === trackId ? { ...track, ...patch } : track)),
+      },
+    });
   };
 
   const removeTrack = (trackId: string) => {
@@ -85,6 +97,20 @@ export function BackgroundStudioModal({ open, onClose, config, onChange, onSave,
         tracks,
         activeTrackId: config.soundtrack.activeTrackId === trackId ? tracks[0]?.id ?? null : config.soundtrack.activeTrackId,
       },
+    });
+  };
+
+  const applyDerivedClubTheme = () => {
+    onChange({
+      ...config,
+      palette: {
+        ...config.palette,
+        useClubColors: true,
+        primary: clubPrimary,
+        secondary: clubSecondary,
+      },
+      glowIntensity: Math.max(55, config.glowIntensity),
+      contrast: Math.max(102, config.contrast),
     });
   };
 
@@ -163,7 +189,10 @@ export function BackgroundStudioModal({ open, onClose, config, onChange, onSave,
             </section>
 
             <section className="rounded-2xl border border-amber-300/30 bg-amber-500/5 p-3">
-              <p className="mb-2 text-sm font-black text-amber-100">3) Paleta de cor</p>
+              <div className="mb-2 flex items-center justify-between">
+                <p className="text-sm font-black text-amber-100">3) Paleta de cor</p>
+                <button onClick={applyDerivedClubTheme} className="rounded-lg border border-amber-300/35 bg-amber-500/20 px-2 py-1 text-[11px] font-bold text-amber-100">Aplicar tema do clube</button>
+              </div>
               <label className="mb-2 inline-flex items-center gap-2 text-xs text-slate-100">
                 <input
                   type="checkbox"
@@ -200,7 +229,20 @@ export function BackgroundStudioModal({ open, onClose, config, onChange, onSave,
                     <button onClick={() => fileInputRef.current?.click()} className="rounded-lg border border-white/15 bg-slate-800 px-2 py-1 text-xs">Upload áudio</button>
                     <span className="text-xs text-slate-400">{trackDraft.fileName || "Sem arquivo"}</span>
                   </div>
-                  <input ref={fileInputRef} type="file" accept="audio/*" className="hidden" onChange={(event) => setTrackDraft((prev) => ({ ...prev, fileName: event.target.files?.[0]?.name ?? "" }))} />
+                  <input
+                    ref={fileInputRef}
+                    type="file"
+                    accept="audio/*"
+                    className="hidden"
+                    onChange={(event) => {
+                      const file = event.target.files?.[0];
+                      setTrackDraft((prev) => ({
+                        ...prev,
+                        fileName: file?.name ?? "",
+                        fileUrl: file ? URL.createObjectURL(file) : "",
+                      }));
+                    }}
+                  />
                   <button onClick={addTrack} className="rounded-lg border border-emerald-300/35 bg-emerald-500/20 px-2 py-1 text-xs font-bold text-emerald-100">Adicionar música</button>
                 </div>
 
@@ -208,12 +250,23 @@ export function BackgroundStudioModal({ open, onClose, config, onChange, onSave,
                   <p className="text-xs uppercase tracking-[0.14em] text-emerald-200">Trilhas salvas</p>
                   <div className="max-h-44 space-y-1 overflow-auto">
                     {config.soundtrack.tracks.map((track) => (
-                      <div key={track.id} className="flex items-center justify-between rounded-lg border border-white/10 bg-slate-800/80 px-2 py-1">
-                        <button className="text-left" onClick={() => onChange({ ...config, soundtrack: { ...config.soundtrack, activeTrackId: track.id } })}>
-                          <p className="text-xs font-semibold text-white">{track.name}</p>
-                          <p className="text-[11px] text-slate-400">{track.category} {track.fileName ? `• ${track.fileName}` : ""}</p>
-                        </button>
-                        <button onClick={() => removeTrack(track.id)} className="text-xs text-rose-300">Remover</button>
+                      <div key={track.id} className="rounded-lg border border-white/10 bg-slate-800/80 px-2 py-1">
+                        <div className="mb-1 flex items-center justify-between gap-2">
+                          <button className="text-left" onClick={() => onChange({ ...config, soundtrack: { ...config.soundtrack, activeTrackId: track.id } })}>
+                            <p className="text-xs font-semibold text-white">{track.name}</p>
+                            <p className="text-[11px] text-slate-400">{track.category} {track.fileName ? `• ${track.fileName}` : ""}</p>
+                          </button>
+                          <div className="flex items-center gap-2">
+                            <button onClick={() => onChange({ ...config, soundtrack: { ...config.soundtrack, activeTrackId: track.id } })} className="text-[11px] text-cyan-200">Definir ativa</button>
+                            <button onClick={() => removeTrack(track.id)} className="text-[11px] text-rose-300">Remover</button>
+                          </div>
+                        </div>
+                        <div className="grid grid-cols-2 gap-1">
+                          <input value={track.name} onChange={(event) => updateTrack(track.id, { name: event.target.value })} className="rounded border border-white/15 bg-slate-900 px-1 py-0.5 text-[11px]" />
+                          <select value={track.category} onChange={(event) => updateTrack(track.id, { category: event.target.value as SoundtrackCategory })} className="rounded border border-white/15 bg-slate-900 px-1 py-0.5 text-[11px]">
+                            {CATEGORIES.map((category) => <option key={category} value={category}>{category}</option>)}
+                          </select>
+                        </div>
                       </div>
                     ))}
                   </div>

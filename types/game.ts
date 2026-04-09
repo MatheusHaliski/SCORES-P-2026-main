@@ -1,3 +1,4 @@
+import { BackgroundStudioConfig } from "@/types/backgroundStudio";
 import { MacroRatings, PlayerAttributes } from "@/lib/playerRatings";
 
 export type PlayerPosition = "PG" | "SG" | "SF" | "PF" | "C";
@@ -95,6 +96,7 @@ export interface UserSave {
   dismissalCount: number;
   lastDismissedClubId?: string | null;
   lastDismissedAt?: string | null;
+  backgroundStudioConfig?: BackgroundStudioConfig;
 }
 
 export interface Uniform {

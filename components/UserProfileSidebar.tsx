@@ -13,6 +13,7 @@ type UserProfileSidebarProps = {
   saveId?: string;
   clubPrimaryColor?: string;
   clubSecondaryColor?: string;
+  initialStudioConfig?: BackgroundStudioConfig;
 };
 
 const studioStorageKey = (saveId: string) => `scores:background-studio:${saveId}`;
@@ -23,11 +24,12 @@ export function UserProfileSidebar({
   saveId = "save-001",
   clubPrimaryColor = "#1d4ed8",
   clubSecondaryColor = "#22d3ee",
+  initialStudioConfig,
 }: UserProfileSidebarProps) {
   const router = useRouter();
   const [openStudio, setOpenStudio] = useState(false);
   const [config, setConfig] = useState<BackgroundStudioConfig>(() => {
-    const fallback = createDefaultStudioConfig(clubPrimaryColor, clubSecondaryColor);
+    const fallback = initialStudioConfig ?? createDefaultStudioConfig(clubPrimaryColor, clubSecondaryColor);
     if (typeof window === "undefined") return fallback;
     const raw = window.localStorage.getItem(studioStorageKey(saveId));
     if (!raw) return fallback;
@@ -59,8 +61,17 @@ export function UserProfileSidebar({
     root.style.setProperty("--scores-bg-highlight", resolvedConfig.palette.highlight);
   }, [resolvedConfig]);
 
-  const handleSaveStudio = () => {
+  const handleSaveStudio = async () => {
     window.localStorage.setItem(studioStorageKey(saveId), JSON.stringify(config));
+    try {
+      await fetch("/api/save/background-studio", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ saveId, config }),
+      });
+    } catch {
+      // fallback no local storage já aplicado.
+    }
     setOpenStudio(false);
   };
 
