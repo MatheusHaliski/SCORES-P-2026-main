@@ -27,7 +27,7 @@ export function MatchRoundsPanel({
           const home = teamsById[game.homeTeamId];
           const away = teamsById[game.awayTeamId];
           const stadium = stadiumsByTeamId[game.homeTeamId]?.name ?? "Arena não informada";
-          const relevant = topGame?.id === game.id;
+          const relevant = topGame?.fixtureId === game.fixtureId;
           return (
             <div key={game.fixtureId} className={`rounded-xl border p-2 ${relevant ? "border-cyan-300/50 bg-cyan-500/10" : "border-white/10 bg-slate-800/80"}`}>
               <div className="flex items-center justify-between">

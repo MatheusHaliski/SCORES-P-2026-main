@@ -57,7 +57,7 @@ export function TeamRow({
       <p className="text-center font-semibold text-cyan-200">{(row.winPct * 100).toFixed(1)}%</p>
 
       <div className="flex justify-center gap-1">
-        {(row.form.length ? row.form : ["L", "L", "L", "L", "L"]).map((result, index) => (
+        {(row.form.length ? row.form : (["L", "L", "L", "L", "L"] as Array<"W" | "L">)).map((result, index) => (
           <span key={`${row.teamId}-${index}`} className={`inline-flex h-5 w-5 items-center justify-center rounded-md border text-[10px] font-bold ${formTone[result]}`}>
             {result}
           </span>

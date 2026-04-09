@@ -18,11 +18,13 @@ export type EnhancedStandingRow = StandingRow & {
 };
 
 function projectedStats(player: Player) {
-  const points = Number((((player.attributes.close_shot + player.attributes.three_point_shot + player.attributes.mid_range_shot) / 3) * 0.34).toFixed(1));
-  const assists = Number((((player.attributes.passing_accuracy + player.attributes.court_vision + player.attributes.playmaking_iq) / 3) * 0.12).toFixed(1));
-  const rebounds = Number((((player.attributes.vertical + player.attributes.strength + player.attributes.balance) / 3) * 0.1).toFixed(1));
+  const { shooting, passing, physical } = player.attributes;
+  const points = Number((((shooting.close_shot + shooting.three_point_shot + shooting.mid_range_shot) / 3) * 0.34).toFixed(1));
+  const assists = Number((((passing.passing_accuracy + passing.court_vision + passing.playmaking_iq) / 3) * 0.12).toFixed(1));
+  const rebounds = Number((((physical.vertical + physical.strength + physical.balance) / 3) * 0.1).toFixed(1));
   return { points, assists, rebounds };
 }
+
 
 function buildFormMap(seasonEntries: SeasonCalendarEntry[]): TeamFormMap {
   const finished = seasonEntries
@@ -65,9 +67,9 @@ function calculateInsights(rows: EnhancedStandingRow[]) {
   const worstDefense = [...rows].sort((a, b) => b.pointsAgainst - a.pointsAgainst)[0];
 
   return [
-    { icon: "🔥", key: "streak", message: `Sequência quente: ${bestStreak.teamId} venceu ${bestStreak.count} seguidas.` },
-    { icon: "🚀", key: "attack", message: `Melhor ataque: ${bestAttack.teamId} (${bestAttack.pointsFor} PF).` },
-    { icon: "🧱", key: "defense", message: `Defesa mais vazada: ${worstDefense.teamId} (${worstDefense.pointsAgainst} PA).` },
+    { icon: "🔥", key: "streak", teamId: bestStreak.teamId, message: `Sequência quente: ${bestStreak.teamId} venceu ${bestStreak.count} seguidas.` },
+    { icon: "🚀", key: "attack", teamId: bestAttack.teamId, message: `Melhor ataque: ${bestAttack.teamId} (${bestAttack.pointsFor} PF).` },
+    { icon: "🧱", key: "defense", teamId: worstDefense.teamId, message: `Defesa mais vazada: ${worstDefense.teamId} (${worstDefense.pointsAgainst} PA).` },
   ];
 }
 
@@ -137,13 +139,12 @@ export function StandingsTable({
     return finished.filter((entry) => entry.round === latestRound);
   }, [seasonEntries]);
 
-  const insights = useMemo(() => {
-    const teamAware = calculateInsights(enrichedRows).map((item) => ({
-      ...item,
-      message: item.message.replace(/([a-z]{2,}-\d{3})/gi, (teamId) => teamsById[teamId]?.name ?? teamId),
-    }));
-    return teamAware;
-  }, [enrichedRows, teamsById]);
+  const insights = useMemo(() => calculateInsights(enrichedRows).map((item) => {
+    if (item.teamId && teamsById[item.teamId]) {
+      return { ...item, message: item.message.replace(item.teamId, teamsById[item.teamId].name) };
+    }
+    return item;
+  }), [enrichedRows, teamsById]);
 
   const selectedTeam = selectedTeamId ? teamsById[selectedTeamId] : null;
 
