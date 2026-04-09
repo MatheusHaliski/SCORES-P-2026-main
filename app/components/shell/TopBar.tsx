@@ -47,13 +47,13 @@ export default function TopBar({ pageTitle, onToggleNav, navOpen }: TopBarProps)
             type="button"
             onClick={onToggleNav}
             aria-label={navOpen ? 'Close navigation' : 'Open navigation'}
-            className="inline-flex h-10 w-10 items-center justify-center rounded-xl border border-white/30 bg-white/10 text-white transition hover:bg-white/20"
+            className="sa-premium-gradient-surface-soft inline-flex h-10 w-10 items-center justify-center rounded-xl border border-white/30 text-white transition hover:border-white/50"
           >
             <svg viewBox="0 0 24 24" className="h-5 w-5" fill="none" stroke="currentColor" strokeWidth="1.8">
               <path d="M4 7h16M4 12h16M4 17h16" />
             </svg>
           </button>
-          <button className="inline-flex h-10 w-10 items-center justify-center rounded-xl border border-white/20 bg-white/10 text-sm font-semibold text-white transition hover:bg-white/20">
+          <button className="sa-premium-gradient-surface-soft inline-flex h-10 w-10 items-center justify-center rounded-xl border border-white/20 text-sm font-semibold text-white transition hover:border-white/50">
             <UserIcon />
           </button>
         </div>

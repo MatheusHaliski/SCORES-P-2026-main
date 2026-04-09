@@ -15,7 +15,7 @@ export default async function HTManagerBoardView({ searchParams }: { searchParam
     <main className="mx-auto min-h-screen max-w-7xl p-6">
       <h1 className="text-3xl font-black text-white">HTManagerBoardView</h1>
       <p className="text-slate-300">Intervalo do quarter: substituições reais + troca tática com impacto no placar.</p>
-      <div className="mt-4">
+      <div className="sa-premium-gradient-surface mt-4 rounded-3xl p-4">
         <HTManagerClient saveId={saveId} />
       </div>
     </main>
