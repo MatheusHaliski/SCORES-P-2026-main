@@ -5,7 +5,8 @@ import { clearAuthSessionProfile, clearAuthSessionToken } from "@/app/lib/authSe
 import { clearServerSession } from "@/app/lib/clientSession";
 import { useRouter } from "next/navigation";
 import { BackgroundStudioModal } from "@/components/BackgroundStudioModal";
-import { BackgroundStudioConfig, buildBackgroundImage, createDefaultStudioConfig } from "@/types/backgroundStudio";
+import { BackgroundStudioConfig, buildBackgroundImage, buildPageBackgroundStyle, createDefaultStudioConfig, normalizeBackgroundStudioConfig } from "@/types/backgroundStudio";
+import { SHELL_BACKGROUND_CUSTOM_OPTION_ID, SHELL_BACKGROUND_CUSTOM_STYLE_KEY, SHELL_BACKGROUND_KEY } from "@/app/lib/shellBackground";
 
 type UserProfileSidebarProps = {
   userIdentifier?: string;
@@ -32,12 +33,12 @@ export function UserProfileSidebar({
     const fallback = initialStudioConfig ?? createDefaultStudioConfig(clubPrimaryColor, clubSecondaryColor);
     if (typeof window === "undefined") return fallback;
     const raw = window.localStorage.getItem(studioStorageKey(saveId));
-    if (!raw) return fallback;
+    if (!raw) return normalizeBackgroundStudioConfig(fallback, clubPrimaryColor, clubSecondaryColor);
     try {
-      return JSON.parse(raw) as BackgroundStudioConfig;
+      return normalizeBackgroundStudioConfig(JSON.parse(raw) as Partial<BackgroundStudioConfig>, clubPrimaryColor, clubSecondaryColor);
     } catch {
       window.localStorage.removeItem(studioStorageKey(saveId));
-      return fallback;
+      return normalizeBackgroundStudioConfig(fallback, clubPrimaryColor, clubSecondaryColor);
     }
   });
 
@@ -59,6 +60,11 @@ export function UserProfileSidebar({
     root.style.setProperty("--scores-bg-contrast", `${resolvedConfig.contrast}%`);
     root.style.setProperty("--scores-bg-blur", `${resolvedConfig.blurStrength}px`);
     root.style.setProperty("--scores-bg-highlight", resolvedConfig.palette.highlight);
+
+    const shellStyle = buildPageBackgroundStyle(resolvedConfig);
+    window.localStorage.setItem(SHELL_BACKGROUND_CUSTOM_STYLE_KEY, JSON.stringify(shellStyle));
+    window.localStorage.setItem(SHELL_BACKGROUND_KEY, SHELL_BACKGROUND_CUSTOM_OPTION_ID);
+    window.dispatchEvent(new Event("scores-shell-background-change"));
   }, [resolvedConfig]);
 
   const handleSaveStudio = async () => {

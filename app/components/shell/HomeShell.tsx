@@ -9,13 +9,13 @@ import { ensureSharedAccessToken } from '@/app/lib/accessTokenShare';
 import { useRouter } from 'next/navigation';
 import Image from 'next/image';
 import { getAuthSessionToken } from '@/app/lib/authSession';
-import { getShellBackgroundOption, SHELL_BACKGROUND_KEY } from '@/app/lib/shellBackground';
+import { getShellBackgroundOption, SHELL_BACKGROUND_CUSTOM_STYLE_KEY, SHELL_BACKGROUND_KEY } from '@/app/lib/shellBackground';
 import { getLS } from '@/app/lib/SafeStorage';
 
 export default function HomeShell() {
   const [activeRoute, setActiveRoute] = useState<AppRoute>('home');
   const [mobileOpen, setMobileOpen] = useState(false);
-  const [shellBackground, setShellBackground] = useState(() => getShellBackgroundOption(getLS(SHELL_BACKGROUND_KEY)));
+  const [shellBackground, setShellBackground] = useState(() => getShellBackgroundOption(getLS(SHELL_BACKGROUND_KEY), getLS(SHELL_BACKGROUND_CUSTOM_STYLE_KEY)));
   const router = useRouter();
   const hasAccess = Boolean(ensureSharedAccessToken());
 
@@ -30,7 +30,7 @@ export default function HomeShell() {
 
   useEffect(() => {
     const applyBackgroundFromStorage = () => {
-      setShellBackground(getShellBackgroundOption(getLS(SHELL_BACKGROUND_KEY)));
+      setShellBackground(getShellBackgroundOption(getLS(SHELL_BACKGROUND_KEY), getLS(SHELL_BACKGROUND_CUSTOM_STYLE_KEY)));
     };
 
     applyBackgroundFromStorage();
