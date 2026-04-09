@@ -1,9 +1,16 @@
 "use client";
 
-import { ReactNode, useRef } from "react";
+import { ReactNode, useMemo, useRef, useState } from "react";
 import {
+  AUTHVIEW_DEFAULT_BACKGROUND_CSS,
   BACKGROUND_STUDIO_PRESETS,
   BackgroundStudioConfig,
+  PageBackgroundMode,
+  ShapeLanguage,
+  PatternStyle,
+  MotionDirection,
+  SoundtrackCategory,
+  buildBackgroundImage,
   buildBackgroundPreviewStyle,
   getBackgroundStudioPreset,
 } from "@/types/backgroundStudio";
@@ -81,8 +88,45 @@ function SlotCard(params: {
 export function BackgroundStudioModal({ open, onClose, config, onChange, onSave }: Props) {
   const shellInputRef = useRef<HTMLInputElement | null>(null);
   const nextMatchInputRef = useRef<HTMLInputElement | null>(null);
+  const imageInputRef = useRef<HTMLInputElement | null>(null);
+  const fileInputRef = useRef<HTMLInputElement | null>(null);
+  const [trackDraft, setTrackDraft] = useState<{ name: string; category: SoundtrackCategory; fileName: string; fileUrl: string }>({
+    name: "",
+    category: "Hype",
+    fileName: "",
+    fileUrl: "",
+  });
   const handleShellUploadClick = () => shellInputRef.current?.click();
   const handleNextMatchUploadClick = () => nextMatchInputRef.current?.click();
+  const clubPrimary = config.palette.primary;
+  const clubSecondary = config.palette.secondary;
+  const SHAPES: ShapeLanguage[] = ["none", "orb", "diamond", "mesh", "shards", "court-lines", "hex-grid"];
+  const PATTERNS: PatternStyle[] = ["smooth", "broadcast", "gradient-wave", "high-contrast"];
+  const MOTIONS: MotionDirection[] = ["none", "left-to-right", "right-to-left", "top-down", "center-pulse"];
+  const CATEGORIES: SoundtrackCategory[] = ["Hype", "Arena", "Calm Focus", "Playoffs", "Premium Lounge", "Retro Sports", "Urban Energy"];
+  const PAGE_BACKGROUND_GRADIENTS: Array<{ id: BackgroundStudioConfig["pageBackground"]["gradientId"]; name: string; css: string }> = [
+    { id: "deep-night", name: "Deep Night", css: "linear-gradient(135deg, #020617, #0f172a)" },
+    { id: "arena-purple", name: "Arena Purple", css: "linear-gradient(135deg, #312e81, #0f172a)" },
+    { id: "emerald-glow", name: "Emerald Glow", css: "linear-gradient(135deg, #052e16, #0f172a)" },
+    { id: "sunset-lights", name: "Sunset Lights", css: "linear-gradient(135deg, #7c2d12, #1e293b)" },
+  ];
+
+  const activeTrack = useMemo(
+    () => config.soundtrack.tracks.find((track) => track.id === config.soundtrack.activeTrackId) ?? null,
+    [config.soundtrack.activeTrackId, config.soundtrack.tracks],
+  );
+  const previewBackground = useMemo(() => buildBackgroundImage(config), [config]);
+  const shellPreviewStyle = useMemo(() => {
+    if (config.pageBackground.mode === "solid-color") return { backgroundColor: config.pageBackground.solidColor };
+    if (config.pageBackground.mode === "upload-image" && config.pageBackground.imageDataUrl) {
+      return { backgroundImage: `url('${config.pageBackground.imageDataUrl}')`, backgroundSize: "cover", backgroundPosition: "center" };
+    }
+    if (config.pageBackground.mode === "preset-gradient") {
+      const gradient = PAGE_BACKGROUND_GRADIENTS.find((item) => item.id === config.pageBackground.gradientId);
+      return { backgroundImage: gradient?.css ?? PAGE_BACKGROUND_GRADIENTS[0].css };
+    }
+    return { backgroundImage: AUTHVIEW_DEFAULT_BACKGROUND_CSS, backgroundSize: "cover", backgroundPosition: "center" };
+  }, [config.pageBackground, PAGE_BACKGROUND_GRADIENTS]);
 
   if (!open) return null;
 
@@ -120,6 +164,61 @@ export function BackgroundStudioModal({ open, onClose, config, onChange, onSave 
     reader.readAsDataURL(file);
   };
 
+  const applyDerivedClubTheme = () => {
+    onChange({
+      ...config,
+      palette: {
+        ...config.palette,
+        useClubColors: true,
+        primary: clubPrimary,
+        secondary: clubSecondary,
+      },
+    });
+  };
+
+  const updatePageBackgroundMode = (mode: PageBackgroundMode) => {
+    onChange({ ...config, pageBackground: { ...config.pageBackground, mode } });
+  };
+
+  const addTrack = () => {
+    if (!trackDraft.name.trim()) return;
+    const id = `track-${Date.now()}`;
+    const nextTrack = { id, name: trackDraft.name.trim(), category: trackDraft.category, fileName: trackDraft.fileName || undefined, fileUrl: trackDraft.fileUrl || undefined };
+    onChange({
+      ...config,
+      soundtrack: {
+        ...config.soundtrack,
+        tracks: [...config.soundtrack.tracks, nextTrack],
+        activeTrackId: config.soundtrack.activeTrackId ?? id,
+      },
+    });
+    setTrackDraft({ name: "", category: "Hype", fileName: "", fileUrl: "" });
+  };
+
+  const removeTrack = (trackId: string) => {
+    const tracks = config.soundtrack.tracks.filter((track) => track.id !== trackId);
+    onChange({
+      ...config,
+      soundtrack: {
+        ...config.soundtrack,
+        tracks,
+        activeTrackId: config.soundtrack.activeTrackId === trackId ? (tracks[0]?.id ?? null) : config.soundtrack.activeTrackId,
+      },
+    });
+  };
+
+  const updateTrack = (trackId: string, patch: Partial<{ name: string; category: SoundtrackCategory }>) => {
+    onChange({
+      ...config,
+      soundtrack: {
+        ...config.soundtrack,
+        tracks: config.soundtrack.tracks.map((track) => (track.id === trackId ? { ...track, ...patch } : track)),
+      },
+    });
+  };
+
+  const getPresetById = (presetId: BackgroundStudioConfig["preset"]) => getBackgroundStudioPreset(presetId);
+
   return (
     <div className="fixed inset-0 z-[70] flex items-center justify-center bg-slate-950/85 p-3">
       <div className="max-h-[94vh] w-full max-w-6xl overflow-auto rounded-3xl border border-cyan-300/30 bg-gradient-to-b from-slate-950 via-slate-900 to-slate-950 p-4 shadow-[0_0_60px_rgba(34,211,238,0.2)]">
@@ -140,7 +239,7 @@ export function BackgroundStudioModal({ open, onClose, config, onChange, onSave 
             <section className="rounded-2xl border border-violet-300/30 bg-violet-500/5 p-3">
               <p className="mb-2 text-sm font-black text-violet-200">1) Presets visuais</p>
               <div className="grid gap-2 md:grid-cols-2">
-                {STUDIO_PRESETS.map((preset) => (
+                {BACKGROUND_STUDIO_PRESETS.map((preset) => (
                   <button
                     key={preset.id}
                     onClick={() => applyPreset(preset.id)}
