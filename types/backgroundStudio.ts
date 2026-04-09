@@ -62,82 +62,93 @@ export interface BackgroundStudioConfig {
   };
 }
 
-export interface PageBackgroundGradientOption {
-  id: PageBackgroundGradientId;
+export interface BackgroundStudioPreset {
+  id: BackgroundStudioPresetId;
   name: string;
-  css: string;
-  backgroundColor: string;
+  description: string;
+  shellBackgroundUrl: string | null;
+  nextMatchBackgroundUrl: string | null;
+  shellOverlay: number;
+  nextMatchOverlay: number;
+  shellBlur: number;
+  shellGlow: number;
+  nextMatchBlur: number;
+  nextMatchGlow: number;
 }
 
 export const AUTHVIEW_DEFAULT_BACKGROUND_CSS = "url('/ChatGPT Image 9 de abr. de 2026, 13_10_17.png')";
 
-export const PAGE_BACKGROUND_GRADIENTS: PageBackgroundGradientOption[] = [
+export const BACKGROUND_STUDIO_PRESETS: BackgroundStudioPreset[] = [
   {
-    id: "deep-night",
-    name: "Deep Night",
-    backgroundColor: "#020617",
-    css: "radial-gradient(circle at 22% 18%, rgba(56, 189, 248, 0.2) 0%, transparent 40%), linear-gradient(145deg, #0f172a 0%, #020617 100%)",
+    id: "arena-night",
+    name: "Arena Night",
+    description: "Visual escuro de arena para shell e cartão de jogo.",
+    shellBackgroundUrl: "/9C7464B5-579E-4D0D-947F-B24A4D449097.png",
+    nextMatchBackgroundUrl: "/F7B8D2E0-9994-4BFC-8D62-0206D32198DA.png",
+    shellOverlay: 42,
+    nextMatchOverlay: 32,
+    shellBlur: 0,
+    shellGlow: 30,
+    nextMatchBlur: 0,
+    nextMatchGlow: 48,
   },
   {
-    id: "arena-purple",
-    name: "Arena Purple",
-    backgroundColor: "#1e1b4b",
-    css: "radial-gradient(circle at 14% 22%, rgba(236, 72, 153, 0.3) 0%, transparent 36%), radial-gradient(circle at 84% 78%, rgba(34, 211, 238, 0.2) 0%, transparent 34%), linear-gradient(150deg, #1e1b4b 0%, #312e81 100%)",
+    id: "champions-gold",
+    name: "Champions Gold",
+    description: "Arte premium em tons dourados para fases decisivas.",
+    shellBackgroundUrl: "/1968F4FE-A4FF-44BB-944E-08BE533C975E.png",
+    nextMatchBackgroundUrl: "/8F897497-4F06-4D51-8537-1FEF8E0386E1.png",
+    shellOverlay: 36,
+    nextMatchOverlay: 28,
+    shellBlur: 0,
+    shellGlow: 36,
+    nextMatchBlur: 0,
+    nextMatchGlow: 54,
   },
   {
-    id: "emerald-glow",
-    name: "Emerald Glow",
-    backgroundColor: "#052e2b",
-    css: "radial-gradient(circle at 18% 20%, rgba(16, 185, 129, 0.35) 0%, transparent 40%), radial-gradient(circle at 85% 30%, rgba(34, 211, 238, 0.22) 0%, transparent 36%), linear-gradient(150deg, #052e2b 0%, #0f172a 100%)",
+    id: "deep-ocean",
+    name: "Deep Ocean",
+    description: "Profundidade azul com contraste de palco esportivo.",
+    shellBackgroundUrl: "/3EBDF5AB-F316-409D-9580-2361B8552B33.png",
+    nextMatchBackgroundUrl: "/7E8229A2-91F0-4EE7-A227-8B9CF14A4F2B.png",
+    shellOverlay: 48,
+    nextMatchOverlay: 35,
+    shellBlur: 0,
+    shellGlow: 26,
+    nextMatchBlur: 0,
+    nextMatchGlow: 45,
   },
   {
-    id: "sunset-lights",
-    name: "Sunset Lights",
-    backgroundColor: "#1f2937",
-    css: "radial-gradient(circle at 18% 22%, rgba(251, 146, 60, 0.35) 0%, transparent 36%), radial-gradient(circle at 82% 20%, rgba(236, 72, 153, 0.28) 0%, transparent 32%), linear-gradient(150deg, #111827 0%, #1d4ed8 45%, #0f766e 100%)",
+    id: "auth-default",
+    name: "Auth Default",
+    description: "Usa o wallpaper principal padrão do produto.",
+    shellBackgroundUrl: null,
+    nextMatchBackgroundUrl: "/4EF8DF9F-0088-4132-8F71-282EED3B7506.png",
+    shellOverlay: 40,
+    nextMatchOverlay: 30,
+    shellBlur: 0,
+    shellGlow: 20,
+    nextMatchBlur: 0,
+    nextMatchGlow: 42,
   },
 ];
 
-export function buildPageBackgroundStyle(config: BackgroundStudioConfig) {
-  const gradient = PAGE_BACKGROUND_GRADIENTS.find((option) => option.id === config.pageBackground.gradientId) ?? PAGE_BACKGROUND_GRADIENTS[0];
-  if (config.pageBackground.mode === "solid-color") {
-    return {
-      backgroundColor: config.pageBackground.solidColor,
-      backgroundImage: "none",
-      backgroundSize: "cover",
-      backgroundPosition: "center",
-      backgroundRepeat: "no-repeat",
-      backgroundAttachment: "fixed",
-    };
-  }
-  if (config.pageBackground.mode === "upload-image" && config.pageBackground.imageDataUrl) {
-    return {
-      backgroundColor: "#020617",
-      backgroundImage: `linear-gradient(rgba(2,6,23,0.45), rgba(2,6,23,0.45)), url('${config.pageBackground.imageDataUrl}')`,
-      backgroundSize: "cover",
-      backgroundPosition: "center",
-      backgroundRepeat: "no-repeat",
-      backgroundAttachment: "fixed",
-      backgroundBlendMode: "multiply, normal",
-    };
-  }
-  if (config.pageBackground.mode === "auth-default-image") {
-    return {
-      backgroundColor: "#0f172a",
-      backgroundImage: AUTHVIEW_DEFAULT_BACKGROUND_CSS,
-      backgroundSize: "cover",
-      backgroundPosition: "center",
-      backgroundRepeat: "no-repeat",
-      backgroundAttachment: "fixed",
-    };
-  }
+export function getBackgroundStudioPreset(presetId: BackgroundStudioPresetId): BackgroundStudioPreset {
+  return BACKGROUND_STUDIO_PRESETS.find((preset) => preset.id === presetId) ?? BACKGROUND_STUDIO_PRESETS[0];
+}
+
+export function createDefaultStudioConfig(): BackgroundStudioConfig {
+  const preset = BACKGROUND_STUDIO_PRESETS[0];
   return {
-    backgroundColor: gradient.backgroundColor,
-    backgroundImage: gradient.css,
-    backgroundSize: "cover",
-    backgroundPosition: "center",
-    backgroundRepeat: "no-repeat",
-    backgroundAttachment: "fixed",
+    preset: preset.id,
+    shellBackgroundUrl: preset.shellBackgroundUrl,
+    nextMatchBackgroundUrl: preset.nextMatchBackgroundUrl,
+    shellOverlay: preset.shellOverlay,
+    nextMatchOverlay: preset.nextMatchOverlay,
+    shellBlur: preset.shellBlur,
+    shellGlow: preset.shellGlow,
+    nextMatchBlur: preset.nextMatchBlur,
+    nextMatchGlow: preset.nextMatchGlow,
   };
 }
 
@@ -188,12 +199,12 @@ export function buildBackgroundImage(config: BackgroundStudioConfig) {
   return `radial-gradient(circle at 16% 18%, ${highlight}${Math.round(overlayOpacity * 255).toString(16).padStart(2, "0")} 0%, transparent ${28 + density * 22}%), radial-gradient(circle at 82% 78%, ${secondary}${Math.round((overlayOpacity + 0.1) * 255).toString(16).padStart(2, "0")} 0%, transparent ${34 + density * 20}%), linear-gradient(135deg, ${primary}cc, #020617f2)`;
 }
 
-export function getPresetById(presetId: StudioPresetId) {
-  return STUDIO_PRESETS.find((preset) => preset.id === presetId) ?? STUDIO_PRESETS[0];
-}
+export function buildShellBackgroundStyle(config: BackgroundStudioConfig) {
+  const overlayOpacity = clampPercent(config.shellOverlay) / 100;
+  const shellImage = config.shellBackgroundUrl
+    ? `url('${config.shellBackgroundUrl}')`
+    : AUTHVIEW_DEFAULT_BACKGROUND_CSS;
 
-export function createDefaultStudioConfig(clubPrimary: string, clubSecondary: string): BackgroundStudioConfig {
-  const preset = STUDIO_PRESETS[0];
   return {
     preset: preset.id,
     skinMode: preset.skinMode,
@@ -230,28 +241,24 @@ export function createDefaultStudioConfig(clubPrimary: string, clubSecondary: st
   };
 }
 
-export function normalizeBackgroundStudioConfig(
-  candidate: Partial<BackgroundStudioConfig> | null | undefined,
-  clubPrimary: string,
-  clubSecondary: string,
-): BackgroundStudioConfig {
-  const base = createDefaultStudioConfig(clubPrimary, clubSecondary);
-  if (!candidate) return base;
+export function buildBackgroundPreviewStyle(params: {
+  imageUrl: string | null;
+  overlay: number;
+  blur: number;
+  glow: number;
+  fallbackGradient: string;
+}) {
+  const overlayOpacity = clampPercent(params.overlay) / 100;
+  const imageLayer = params.imageUrl
+    ? `url('${params.imageUrl}')`
+    : params.fallbackGradient;
+
   return {
-    ...base,
-    ...candidate,
-    palette: {
-      ...base.palette,
-      ...(candidate.palette ?? {}),
-    },
-    soundtrack: {
-      ...base.soundtrack,
-      ...(candidate.soundtrack ?? {}),
-      tracks: candidate.soundtrack?.tracks ?? base.soundtrack.tracks,
-    },
-    pageBackground: {
-      ...base.pageBackground,
-      ...(candidate.pageBackground ?? {}),
-    },
+    backgroundImage: `linear-gradient(rgba(2, 6, 23, ${overlayOpacity}), rgba(2, 6, 23, ${overlayOpacity})), ${imageLayer}`,
+    backgroundSize: "cover",
+    backgroundPosition: "center",
+    backgroundRepeat: "no-repeat",
+    filter: `blur(${Math.max(0, params.blur)}px)`,
+    boxShadow: `0 0 ${Math.max(0, params.glow)}px rgba(34, 211, 238, 0.45)`,
   };
 }

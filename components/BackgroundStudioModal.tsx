@@ -1,23 +1,12 @@
 "use client";
 
-import { useMemo, useRef, useState } from "react";
+import { ReactNode, useRef } from "react";
 import {
-  AUTHVIEW_DEFAULT_BACKGROUND_CSS,
+  BACKGROUND_STUDIO_PRESETS,
   BackgroundStudioConfig,
-  PAGE_BACKGROUND_GRADIENTS,
-  PageBackgroundMode,
-  SoundtrackCategory,
-  SoundtrackItem,
-  STUDIO_PRESETS,
-  buildBackgroundImage,
-  buildPageBackgroundStyle,
-  getPresetById,
+  buildBackgroundPreviewStyle,
+  getBackgroundStudioPreset,
 } from "@/types/backgroundStudio";
-
-const SHAPES = ["none", "orb", "diamond", "mesh", "shards", "court-lines", "hex-grid"] as const;
-const PATTERNS = ["smooth", "broadcast", "gradient-wave", "high-contrast"] as const;
-const MOTIONS = ["none", "left-to-right", "right-to-left", "top-down", "center-pulse"] as const;
-const CATEGORIES: SoundtrackCategory[] = ["Hype", "Arena", "Calm Focus", "Playoffs", "Premium Lounge", "Retro Sports", "Urban Energy"];
 
 type Props = {
   open: boolean;
@@ -25,25 +14,80 @@ type Props = {
   config: BackgroundStudioConfig;
   onChange: (next: BackgroundStudioConfig) => void;
   onSave: () => void;
-  clubPrimary: string;
-  clubSecondary: string;
 };
 
 const sliderClass = "w-full accent-cyan-300";
 
-export function BackgroundStudioModal({ open, onClose, config, onChange, onSave, clubPrimary, clubSecondary }: Props) {
-  const [trackDraft, setTrackDraft] = useState({ name: "", category: "Hype" as SoundtrackCategory, fileName: "", fileUrl: "" });
-  const fileInputRef = useRef<HTMLInputElement | null>(null);
-  const imageInputRef = useRef<HTMLInputElement | null>(null);
+function SlotCard(params: {
+  title: string;
+  subtitle: string;
+  imageUrl: string | null;
+  overlay: number;
+  blur: number;
+  glow: number;
+  onUpload: () => void;
+  onOverlayChange: (value: number) => void;
+  onBlurChange: (value: number) => void;
+  onGlowChange: (value: number) => void;
+  children?: ReactNode;
+}) {
+  return (
+    <section className="rounded-2xl border border-cyan-300/25 bg-cyan-500/5 p-3">
+      <p className="text-sm font-black text-cyan-100">{params.title}</p>
+      <p className="mb-3 text-xs text-cyan-100/80">{params.subtitle}</p>
 
-  const activeTrack = config.soundtrack.tracks.find((track) => track.id === config.soundtrack.activeTrackId) ?? null;
-  const previewBackground = useMemo(() => buildBackgroundImage(config), [config]);
-  const shellPreviewStyle = useMemo(() => buildPageBackgroundStyle(config), [config]);
+      <button
+        type="button"
+        onClick={params.onUpload}
+        className="rounded-lg border border-white/15 bg-slate-800 px-3 py-2 text-xs text-white"
+      >
+        Upload image
+      </button>
+
+      <div className="mt-3 grid gap-2 md:grid-cols-3">
+        <label className="rounded-lg border border-white/10 bg-slate-900/70 p-2 text-xs text-slate-200">
+          Overlay {params.overlay}%
+          <input type="range" min={0} max={90} value={params.overlay} className={sliderClass} onChange={(event) => params.onOverlayChange(Number(event.target.value))} />
+        </label>
+        <label className="rounded-lg border border-white/10 bg-slate-900/70 p-2 text-xs text-slate-200">
+          Blur {params.blur}px
+          <input type="range" min={0} max={12} value={params.blur} className={sliderClass} onChange={(event) => params.onBlurChange(Number(event.target.value))} />
+        </label>
+        <label className="rounded-lg border border-white/10 bg-slate-900/70 p-2 text-xs text-slate-200">
+          Glow {params.glow}px
+          <input type="range" min={0} max={100} value={params.glow} className={sliderClass} onChange={(event) => params.onGlowChange(Number(event.target.value))} />
+        </label>
+      </div>
+
+      {params.children}
+
+      <div
+        className="mt-3 rounded-xl border border-white/15 p-3"
+        style={buildBackgroundPreviewStyle({
+          imageUrl: params.imageUrl,
+          overlay: params.overlay,
+          blur: params.blur,
+          glow: params.glow,
+          fallbackGradient: "linear-gradient(135deg, #0f172a, #1e293b)",
+        })}
+      >
+        <p className="text-[11px] uppercase tracking-[0.16em] text-slate-100">Live Preview</p>
+        <p className="text-sm font-semibold text-white">{params.title}</p>
+      </div>
+    </section>
+  );
+}
+
+export function BackgroundStudioModal({ open, onClose, config, onChange, onSave }: Props) {
+  const shellInputRef = useRef<HTMLInputElement | null>(null);
+  const nextMatchInputRef = useRef<HTMLInputElement | null>(null);
+  const handleShellUploadClick = () => shellInputRef.current?.click();
+  const handleNextMatchUploadClick = () => nextMatchInputRef.current?.click();
 
   if (!open) return null;
 
   const applyPreset = (presetId: BackgroundStudioConfig["preset"]) => {
-    const preset = getPresetById(presetId);
+    const preset = getBackgroundStudioPreset(presetId);
     onChange({
       ...config,
       preset: preset.id,
@@ -68,83 +112,26 @@ export function BackgroundStudioModal({ open, onClose, config, onChange, onSave,
     });
   };
 
-  const addTrack = () => {
-    if (!trackDraft.name.trim()) return;
-    const nextTrack: SoundtrackItem = {
-      id: `custom-${Date.now()}`,
-      name: trackDraft.name.trim(),
-      category: trackDraft.category,
-      fileName: trackDraft.fileName || undefined,
-      fileUrl: trackDraft.fileUrl || undefined,
+  const readImage = (file: File, onLoad: (imageData: string) => void) => {
+    const reader = new FileReader();
+    reader.onload = () => {
+      if (typeof reader.result === "string") onLoad(reader.result);
     };
-    onChange({
-      ...config,
-      soundtrack: {
-        ...config.soundtrack,
-        tracks: [...config.soundtrack.tracks, nextTrack],
-        activeTrackId: config.soundtrack.activeTrackId ?? nextTrack.id,
-      },
-    });
-    setTrackDraft({ name: "", category: "Hype", fileName: "", fileUrl: "" });
-  };
-
-  const updateTrack = (trackId: string, patch: Partial<SoundtrackItem>) => {
-    onChange({
-      ...config,
-      soundtrack: {
-        ...config.soundtrack,
-        tracks: config.soundtrack.tracks.map((track) => (track.id === trackId ? { ...track, ...patch } : track)),
-      },
-    });
-  };
-
-  const removeTrack = (trackId: string) => {
-    const tracks = config.soundtrack.tracks.filter((track) => track.id !== trackId);
-    onChange({
-      ...config,
-      soundtrack: {
-        ...config.soundtrack,
-        tracks,
-        activeTrackId: config.soundtrack.activeTrackId === trackId ? tracks[0]?.id ?? null : config.soundtrack.activeTrackId,
-      },
-    });
-  };
-
-  const applyDerivedClubTheme = () => {
-    onChange({
-      ...config,
-      palette: {
-        ...config.palette,
-        useClubColors: true,
-        primary: clubPrimary,
-        secondary: clubSecondary,
-      },
-      glowIntensity: Math.max(55, config.glowIntensity),
-      contrast: Math.max(102, config.contrast),
-    });
-  };
-
-  const updatePageBackgroundMode = (mode: PageBackgroundMode) => {
-    onChange({
-      ...config,
-      pageBackground: {
-        ...config.pageBackground,
-        mode,
-      },
-    });
+    reader.readAsDataURL(file);
   };
 
   return (
     <div className="fixed inset-0 z-[70] flex items-center justify-center bg-slate-950/85 p-3">
-      <div className="max-h-[94vh] w-full max-w-7xl overflow-auto rounded-3xl border border-cyan-300/30 bg-gradient-to-b from-slate-950 via-slate-900 to-slate-950 p-4 shadow-[0_0_60px_rgba(34,211,238,0.2)]">
+      <div className="max-h-[94vh] w-full max-w-6xl overflow-auto rounded-3xl border border-cyan-300/30 bg-gradient-to-b from-slate-950 via-slate-900 to-slate-950 p-4 shadow-[0_0_60px_rgba(34,211,238,0.2)]">
         <div className="mb-3 flex items-center justify-between border-b border-cyan-300/20 pb-3">
           <div>
             <p className="text-[11px] uppercase tracking-[0.24em] text-cyan-200">Background Studio</p>
-            <h2 className="text-2xl font-black text-white">Ambient Editor Premium</h2>
+            <h2 className="text-2xl font-black text-white">Edita apenas as camadas de imagem/art</h2>
+            <p className="text-xs text-cyan-100/85">Aqui você controla somente os backgrounds visuais da View e do card Next Match.</p>
           </div>
           <div className="flex gap-2">
             <button onClick={onClose} className="rounded-xl border border-white/15 bg-slate-800/80 px-3 py-2 text-xs font-bold text-white">Fechar</button>
-            <button onClick={onSave} className="rounded-xl border border-cyan-300/40 bg-cyan-500/20 px-3 py-2 text-xs font-bold text-cyan-100 shadow-[0_0_20px_rgba(34,211,238,0.25)]">Salvar Studio</button>
+            <button onClick={onSave} className="rounded-xl border border-cyan-300/40 bg-cyan-500/20 px-3 py-2 text-xs font-bold text-cyan-100 shadow-[0_0_20px_rgba(34,211,238,0.25)]">Salvar Background Studio</button>
           </div>
         </div>
 
@@ -421,6 +408,29 @@ export function BackgroundStudioModal({ open, onClose, config, onChange, onSave,
             </div>
           </section>
         </div>
+
+        <input
+          ref={shellInputRef}
+          type="file"
+          accept="image/*"
+          className="hidden"
+          onChange={(event) => {
+            const file = event.target.files?.[0];
+            if (!file) return;
+            readImage(file, (imageData) => onChange({ ...config, shellBackgroundUrl: imageData }));
+          }}
+        />
+        <input
+          ref={nextMatchInputRef}
+          type="file"
+          accept="image/*"
+          className="hidden"
+          onChange={(event) => {
+            const file = event.target.files?.[0];
+            if (!file) return;
+            readImage(file, (imageData) => onChange({ ...config, nextMatchBackgroundUrl: imageData }));
+          }}
+        />
       </div>
     </div>
   );

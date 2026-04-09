@@ -5,15 +5,13 @@ import { clearAuthSessionProfile, clearAuthSessionToken } from "@/app/lib/authSe
 import { clearServerSession } from "@/app/lib/clientSession";
 import { useRouter } from "next/navigation";
 import { BackgroundStudioModal } from "@/components/BackgroundStudioModal";
-import { BackgroundStudioConfig, buildBackgroundImage, buildPageBackgroundStyle, createDefaultStudioConfig, normalizeBackgroundStudioConfig } from "@/types/backgroundStudio";
+import { BackgroundStudioConfig, buildShellBackgroundStyle, createDefaultStudioConfig, normalizeBackgroundStudioConfig } from "@/types/backgroundStudio";
 import { SHELL_BACKGROUND_CUSTOM_OPTION_ID, SHELL_BACKGROUND_CUSTOM_STYLE_KEY, SHELL_BACKGROUND_KEY } from "@/app/lib/shellBackground";
 
 type UserProfileSidebarProps = {
   userIdentifier?: string;
   activeSaveName?: string;
   saveId?: string;
-  clubPrimaryColor?: string;
-  clubSecondaryColor?: string;
   initialStudioConfig?: BackgroundStudioConfig;
 };
 
@@ -23,36 +21,24 @@ export function UserProfileSidebar({
   userIdentifier,
   activeSaveName,
   saveId = "save-001",
-  clubPrimaryColor = "#1d4ed8",
-  clubSecondaryColor = "#22d3ee",
   initialStudioConfig,
 }: UserProfileSidebarProps) {
   const router = useRouter();
   const [openStudio, setOpenStudio] = useState(false);
   const [config, setConfig] = useState<BackgroundStudioConfig>(() => {
-    const fallback = initialStudioConfig ?? createDefaultStudioConfig(clubPrimaryColor, clubSecondaryColor);
+    const fallback = initialStudioConfig ?? createDefaultStudioConfig();
     if (typeof window === "undefined") return fallback;
     const raw = window.localStorage.getItem(studioStorageKey(saveId));
-    if (!raw) return normalizeBackgroundStudioConfig(fallback, clubPrimaryColor, clubSecondaryColor);
+    if (!raw) return normalizeBackgroundStudioConfig(fallback);
     try {
-      return normalizeBackgroundStudioConfig(JSON.parse(raw) as Partial<BackgroundStudioConfig>, clubPrimaryColor, clubSecondaryColor);
+      return normalizeBackgroundStudioConfig(JSON.parse(raw) as Partial<BackgroundStudioConfig>);
     } catch {
       window.localStorage.removeItem(studioStorageKey(saveId));
-      return normalizeBackgroundStudioConfig(fallback, clubPrimaryColor, clubSecondaryColor);
+      return normalizeBackgroundStudioConfig(fallback);
     }
   });
 
-  const resolvedConfig = useMemo(() => {
-    if (!config.palette.useClubColors) return config;
-    return {
-      ...config,
-      palette: {
-        ...config.palette,
-        primary: clubPrimaryColor,
-        secondary: clubSecondaryColor,
-      },
-    };
-  }, [clubPrimaryColor, clubSecondaryColor, config]);
+  const resolvedConfig = useMemo(() => normalizeBackgroundStudioConfig(config), [config]);
 
   useEffect(() => {
     const root = document.documentElement;
@@ -65,7 +51,7 @@ export function UserProfileSidebar({
     root.style.setProperty("--scores-metallic-gloss", `${Math.max(0.1, resolvedConfig.glossIntensity / 100)}`);
     root.style.setProperty("--scores-metallic-polish", `${Math.max(0.1, resolvedConfig.borderPolishIntensity / 100)}`);
 
-    const shellStyle = buildPageBackgroundStyle(resolvedConfig);
+    const shellStyle = buildShellBackgroundStyle(resolvedConfig);
     window.localStorage.setItem(SHELL_BACKGROUND_CUSTOM_STYLE_KEY, JSON.stringify(shellStyle));
     window.localStorage.setItem(SHELL_BACKGROUND_KEY, SHELL_BACKGROUND_CUSTOM_OPTION_ID);
     window.dispatchEvent(new Event("scores-shell-background-change"));
@@ -133,8 +119,6 @@ export function UserProfileSidebar({
         config={resolvedConfig}
         onChange={setConfig}
         onSave={handleSaveStudio}
-        clubPrimary={clubPrimaryColor}
-        clubSecondary={clubSecondaryColor}
       />
     </>
   );
