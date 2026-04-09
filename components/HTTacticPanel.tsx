@@ -1,12 +1,13 @@
 import { TeamTactic } from "@/types/matchSession";
 
 const tactics: Array<{ id: TeamTactic; label: string }> = [
-  { id: "balanced", label: "balanced" },
-  { id: "fast_pace", label: "fast pace" },
-  { id: "defensive", label: "defensive" },
-  { id: "three_point_focus", label: "three point focus" },
-  { id: "paint_attack", label: "paint attack" },
-  { id: "aggressive_press", label: "aggressive press" },
+  { id: "balanced", label: "Balanced" },
+  { id: "offensive_press", label: "Offensive Press" },
+  { id: "defensive_block", label: "Defensive Block" },
+  { id: "counter_attack", label: "Counter Attack" },
+  { id: "possession_control", label: "Possession Control" },
+  { id: "fast_transition", label: "Fast Transition" },
+  { id: "wing_play", label: "Wing Play" },
 ];
 
 export function HTTacticPanel({ selected, onSelect }: { selected: TeamTactic; onSelect: (tactic: TeamTactic) => void }) {

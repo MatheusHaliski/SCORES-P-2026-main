@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { useRouter } from "next/navigation";
 import { SectionCard } from "@/components/SectionCard";
 import { useLiveRoundSimulation } from "@/hooks/useLiveRoundSimulation";
 import { Fixture, Player, StandingRow, Team } from "@/types/game";
@@ -34,6 +35,7 @@ export function MatchBoardLiveClient({
   standings: StandingRow[];
   employmentStatus: "employed" | "unemployed" | "spectator";
 }) {
+  const router = useRouter();
   const [simulationSpeedId] = useState(() => {
     const storedSpeed = getLS(SIMULATION_SPEED_KEY);
     return getSimulationSpeedOption(storedSpeed).id;
@@ -74,7 +76,12 @@ export function MatchBoardLiveClient({
 
       <div className="mt-4">
         <SectionCard title="Rodada completa - placares ao vivo">
-          <LiveRoundFixtureList fixtures={session.fixtures} events={session.eventFeed} userTeamId={userTeamId} />
+          <LiveRoundFixtureList
+            fixtures={session.fixtures}
+            events={session.eventFeed}
+            userTeamId={userTeamId}
+            onOpenTacticalBoard={() => router.push(`/ht-manager?saveId=${saveId}`)}
+          />
         </SectionCard>
       </div>
 

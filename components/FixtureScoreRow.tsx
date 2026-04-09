@@ -14,16 +14,22 @@ export function FixtureScoreRow({
   fixture,
   latestScoreEvent,
   userTeamId,
+  onOpenTacticalBoard,
 }: {
   fixture: LiveFixtureState;
   latestScoreEvent?: MatchEvent;
   userTeamId: string;
+  onOpenTacticalBoard?: (fixtureId: string) => void;
 }) {
   const scoredByUserClub = latestScoreEvent?.teamId === userTeamId;
   const hasScoreInfo = !!latestScoreEvent && SCORING_TYPES.has(latestScoreEvent.type);
 
   return (
-    <div className={`rounded-xl border p-3 ${fixture.isUserMatch ? "border-yellow-300 bg-yellow-500/10" : "border-white/10 bg-slate-900/70"}`}>
+    <button
+      type="button"
+      onClick={() => onOpenTacticalBoard?.(fixture.id)}
+      className={`w-full rounded-xl border p-3 text-left transition hover:-translate-y-0.5 hover:shadow-[0_0_28px_rgba(34,211,238,0.32)] ${fixture.isUserMatch ? "border-yellow-300 bg-yellow-500/10 hover:border-cyan-300" : "border-white/10 bg-slate-900/70 hover:border-cyan-300/60"}`}
+    >
       <div className="grid grid-cols-[minmax(0,1fr)_auto_minmax(0,1fr)] items-center gap-3">
         <TeamColorBadge name={fixture.homeTeamName} color={fixture.homeColor} logo={fixture.homeLogo} side="home" />
         <p className="whitespace-nowrap text-lg font-black text-white sm:text-xl">{fixture.homeScore} x {fixture.awayScore}</p>
@@ -49,6 +55,6 @@ export function FixtureScoreRow({
       </div>
 
       <p className="mt-2 text-center text-[11px] uppercase tracking-wider text-slate-300">{formatStatusLabel(fixture.status)} • {fixture.venueName}</p>
-    </div>
+    </button>
   );
 }
