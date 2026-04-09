@@ -19,6 +19,8 @@ type Props = {
   config: BackgroundStudioConfig;
   onChange: (next: BackgroundStudioConfig) => void;
   onSave: () => void;
+  clubPrimary: string;
+  clubSecondary: string;
 };
 
 const sliderClass = "w-full accent-cyan-300";
@@ -93,9 +95,7 @@ function SlotCard(params: {
   );
 }
 
-export function BackgroundStudioModal({ open, onClose, config, onChange, onSave }: Props) {
-  const clubPrimary = config.palette.primary;
-  const clubSecondary = config.palette.secondary;
+export function BackgroundStudioModal({ open, onClose, config, onChange, onSave, clubPrimary, clubSecondary }: Props) {
   const [trackDraft, setTrackDraft] = useState({ name: "", category: "Hype" as SoundtrackCategory, fileName: "", fileUrl: "" });
   const fileInputRef = useRef<HTMLInputElement | null>(null);
   const imageInputRef = useRef<HTMLInputElement | null>(null);
