@@ -825,7 +825,8 @@ export function SquadHomeClient({
     <main
       className="min-h-screen p-6"
       style={{
-        backgroundImage: `radial-gradient(circle at 15% 15%, ${secondaryColor}40 0%, transparent 30%), radial-gradient(circle at 85% 75%, ${primaryColor}55 0%, transparent 35%), linear-gradient(135deg, ${primaryColor}f2, #020617)`,
+        backgroundImage: `var(--scores-bg-image, radial-gradient(circle at 15% 15%, ${secondaryColor}40 0%, transparent 30%), radial-gradient(circle at 85% 75%, ${primaryColor}55 0%, transparent 35%), linear-gradient(135deg, ${primaryColor}f2, #020617))`,
+        filter: "contrast(var(--scores-bg-contrast, 100%))",
       }}
     >
       <div className="mx-auto max-w-7xl space-y-4">
@@ -1355,6 +1356,9 @@ export function SquadHomeClient({
           highlightTeamId={payload.team.id}
           leagueName={currentLeague?.name}
           leagueLogo={currentLeague?.logoUrl}
+          players={allPlayers}
+          seasonEntries={payload.seasonCalendar?.entries ?? []}
+          stadiumsByTeamId={stadiumsByTeamId}
         />
       ))}
 
