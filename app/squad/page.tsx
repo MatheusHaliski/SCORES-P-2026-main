@@ -43,8 +43,6 @@ export default async function SquadHomeView({ searchParams }: { searchParams: Pr
         userIdentifier={session?.email ?? payload.save.managerName}
         activeSaveName={payload.save.saveName ?? payload.save.id}
         saveId={payload.save.id}
-        clubPrimaryColor={payload.team.primaryColor}
-        clubSecondaryColor={payload.team.secondaryColor}
         initialStudioConfig={payload.save.backgroundStudioConfig}
       />
       <SquadHomeClient
