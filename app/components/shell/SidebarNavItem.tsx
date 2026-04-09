@@ -56,7 +56,7 @@ export default function SidebarNavItem({ route, label, helperText, active, compa
       onClick={() => onSelect(route)}
       className={`group flex w-full items-center gap-3 rounded-xl border px-3 py-3 text-left transition ${
         active
-          ? 'border-white/40 bg-white text-black shadow'
+          ? 'sa-premium-metallic-panel border-white/60 text-amber-50 shadow'
           : 'sa-premium-gradient-surface-soft border-transparent text-white/85 hover:border-white/30 hover:text-white'
       }`}
     >
@@ -66,7 +66,7 @@ export default function SidebarNavItem({ route, label, helperText, active, compa
       {!compact ? (
         <span className="min-w-0">
           <span className="block truncate text-sm font-semibold">{label}</span>
-          <span className={`block truncate text-xs ${active ? 'text-black/70' : 'text-white/55'}`}>{helperText}</span>
+          <span className={`block truncate text-xs ${active ? 'text-amber-100/80' : 'text-white/55'}`}>{helperText}</span>
         </span>
       ) : null}
     </button>

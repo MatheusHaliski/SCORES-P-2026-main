@@ -42,13 +42,22 @@ export function UserProfileSidebar({
 
   useEffect(() => {
     const root = document.documentElement;
-    root.style.setProperty("--scores-shell-background-url", resolvedConfig.shellBackgroundUrl ?? "");
-    root.style.setProperty("--scores-next-match-background-url", resolvedConfig.nextMatchBackgroundUrl ?? "");
+    root.dataset.scoresSkin = resolvedConfig.skinMode;
+    root.style.setProperty("--scores-bg-image", buildBackgroundImage(resolvedConfig));
+    root.style.setProperty("--scores-bg-contrast", `${resolvedConfig.contrast}%`);
+    root.style.setProperty("--scores-bg-blur", `${resolvedConfig.blurStrength}px`);
+    root.style.setProperty("--scores-bg-highlight", resolvedConfig.palette.highlight);
+    root.style.setProperty("--scores-metallic-texture", `${Math.max(0.1, resolvedConfig.textureIntensity / 100)}`);
+    root.style.setProperty("--scores-metallic-gloss", `${Math.max(0.1, resolvedConfig.glossIntensity / 100)}`);
+    root.style.setProperty("--scores-metallic-polish", `${Math.max(0.1, resolvedConfig.borderPolishIntensity / 100)}`);
 
     const shellStyle = buildShellBackgroundStyle(resolvedConfig);
     window.localStorage.setItem(SHELL_BACKGROUND_CUSTOM_STYLE_KEY, JSON.stringify(shellStyle));
     window.localStorage.setItem(SHELL_BACKGROUND_KEY, SHELL_BACKGROUND_CUSTOM_OPTION_ID);
     window.dispatchEvent(new Event("scores-shell-background-change"));
+    return () => {
+      delete root.dataset.scoresSkin;
+    };
   }, [resolvedConfig]);
 
   const handleSaveStudio = async () => {

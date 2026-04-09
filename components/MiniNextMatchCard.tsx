@@ -34,7 +34,7 @@ export function MiniNextMatchCard({
 
   return (
     <div
-      className="relative overflow-hidden rounded-2xl border p-4 text-sm"
+      className="sa-premium-metallic-panel relative overflow-hidden rounded-2xl border border-white/30 p-4 text-sm"
       style={{
         borderColor: identityTheme.borderColor,
         color: identityTheme.textColor,
