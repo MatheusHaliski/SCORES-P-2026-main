@@ -1,6 +1,7 @@
 import { Fixture, Player } from "@/types/game";
 import { MacroRatings, PlayerAttributes } from "@/lib/playerRatings";
 import { MatchEvent } from "@/types/liveMatch";
+import { ClubUniformAssets, TacticalPreset, TacticalStyle } from "@/types/tactical";
 
 export type MatchPhase =
   | "Q1"
@@ -12,17 +13,12 @@ export type MatchPhase =
   | "Q4"
   | "POST_MATCH";
 
-export type TeamTactic =
-  | "balanced"
-  | "fast_pace"
-  | "defensive"
-  | "three_point_focus"
-  | "paint_attack"
-  | "aggressive_press";
+export type TeamTactic = TacticalStyle;
 
 export type LineupPlayer = {
   playerId: string;
   playerName: string;
+  photoUrl?: string;
   position: string;
   overall: number;
   stamina: number;
@@ -73,6 +69,9 @@ export type MatchSession = {
   opponentTeamId: string;
   userTeamTactic: TeamTactic;
   opponentTeamTactic: TeamTactic;
+  userTacticalPreset: TacticalPreset;
+  opponentTacticalPreset: TacticalPreset;
+  clubUniformAssets: ClubUniformAssets;
   userLineup: LineupPlayer[];
   userBench: LineupPlayer[];
   opponentLineup: LineupPlayer[];

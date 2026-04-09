@@ -17,6 +17,8 @@ import { GlobalSearchService } from "@/services/GlobalSearchService";
 import { FinanceService } from "@/services/FinanceService";
 import { StadiumRevenueService } from "@/services/StadiumRevenueService";
 import { ClubVisualService } from "@/services/ClubVisualService";
+import { ClubUniformAssets, defaultTacticalPreset, defaultUniformAssets, resolveUniformUrl, TacticalPreset, UniformSlot } from "@/types/tactical";
+import { writeClubUniforms, writePreMatchTactic } from "@/lib/tacticalState";
 
 type InboxMessage = {
   id: string;
@@ -51,6 +53,8 @@ type CareerState = {
     primaryColor: string;
     secondaryColor: string;
   };
+  uniformAssets: ClubUniformAssets;
+  preMatchTactic: TacticalPreset;
 };
 
 const STORAGE_PREFIX = "scores:career-state:";
@@ -370,7 +374,7 @@ export function SquadHomeClient({
   stadium: Stadium | null;
   stadiumsByTeamId: Record<string, Stadium | null>;
 }) {
-  const [openModal, setOpenModal] = useState<(typeof topActions)[number] | null>(null);
+  const [openModal, setOpenModal] = useState<string | null>(null);
   const [selectedPlayerId, setSelectedPlayerId] = useState<string | null>(null);
   const [playstyleTargetPlayerId, setPlaystyleTargetPlayerId] = useState<string | null>(null);
   const [searchTab, setSearchTab] = useState<"Ligas" | "Clubes" | "Jogadores">("Ligas");
@@ -418,6 +422,8 @@ export function SquadHomeClient({
         primaryColor: payload.team.primaryColor,
         secondaryColor: payload.team.secondaryColor,
       },
+      uniformAssets: defaultUniformAssets,
+      preMatchTactic: defaultTacticalPreset,
       financeLog: [{ id: "init", type: "setup", amount: payload.save.budgetSnapshot, note: "Saldo inicial", round: payload.save.currentRound }],
     };
 
@@ -444,6 +450,8 @@ export function SquadHomeClient({
             secondaryColor: parsed.teamColors.secondaryColor ?? initial.teamColors.secondaryColor,
           }
           : initial.teamColors,
+        uniformAssets: parsed.uniformAssets && typeof parsed.uniformAssets === "object" ? { ...initial.uniformAssets, ...parsed.uniformAssets } : initial.uniformAssets,
+        preMatchTactic: parsed.preMatchTactic && typeof parsed.preMatchTactic === "object" ? { ...initial.preMatchTactic, ...parsed.preMatchTactic } : initial.preMatchTactic,
       };
     } catch {
       return initial;
@@ -718,6 +726,27 @@ export function SquadHomeClient({
     setOpenModal(null);
   };
 
+  const setUniformSlot = (slot: UniformSlot) => {
+    updateState((prev) => {
+      const next = { ...prev, uniformAssets: { ...prev.uniformAssets, active_uniform_slot: slot } };
+      writeClubUniforms(payload.save.id, next.uniformAssets);
+      return next;
+    });
+  };
+
+  const setUniformAsset = (slot: UniformSlot, url: string) => {
+    updateState((prev) => {
+      const nextUniforms: ClubUniformAssets = {
+        ...prev.uniformAssets,
+        home_uniform_2d_url: slot === "home" ? url : prev.uniformAssets.home_uniform_2d_url,
+        away_uniform_2d_url: slot === "away" ? url : prev.uniformAssets.away_uniform_2d_url,
+        alternate_uniform_2d_url: slot === "alternate" ? url : prev.uniformAssets.alternate_uniform_2d_url,
+      };
+      writeClubUniforms(payload.save.id, nextUniforms);
+      return { ...prev, uniformAssets: nextUniforms };
+    });
+  };
+
   const addCustomTeam = () => {
     if (!newTeamDraft.name.trim() || !newTeamDraft.shortName.trim()) return;
     const teamId = createId("team");
@@ -798,6 +827,7 @@ export function SquadHomeClient({
   const availablePlaystyles = playstyleInventoryService.availableItems(state.inventory);
   const primaryColor = state.teamColors?.primaryColor ?? payload.team.primaryColor;
   const secondaryColor = clubVisualService.ensureReadableAccent(state.teamColors?.secondaryColor ?? payload.team.secondaryColor);
+  const activeUniformUrl = resolveUniformUrl(state.uniformAssets ?? defaultUniformAssets);
   const boardMoraleLabel = clubVisualService.reputationToLabel(payload.save.boardReputation);
   const fansMoraleLabel = clubVisualService.reputationToLabel(payload.save.fansReputation);
   const boardExpectation = clubVisualService.boardExpectation({
@@ -874,10 +904,28 @@ export function SquadHomeClient({
               <p>Folha salarial: ${payroll.toLocaleString()}/rodada</p>
               <p>Atletas listados: {listedPlayers.length}</p>
             </div>
-            {payload.nextFixture && <Link href={`/match-board?saveId=${payload.save.id}`} className="block rounded-xl bg-cyan-500 px-4 py-3 text-center font-bold text-slate-950">{payload.save.employmentStatus === "employed" ? "Iniciar Jogo" : "Acompanhar Rodada"}</Link>}
+            {payload.nextFixture && (
+              <button onClick={() => setOpenModal("Next Match Setup")} className="block w-full rounded-xl border border-cyan-300/60 bg-cyan-500/20 px-4 py-3 text-center text-sm font-bold text-cyan-100 transition hover:-translate-y-0.5 hover:shadow-[0_0_22px_rgba(34,211,238,.42)]">
+                {payload.save.employmentStatus === "employed" ? "Configurar tática e iniciar jogo" : "Configurar e acompanhar rodada"}
+              </button>
+            )}
           </div>
 
           <SectionCard title="Elenco Principal" subtitle="Hub de gestão do save" className="lg:col-span-3">
+            <div className="premium-surface mb-3 grid gap-3 p-3 md:grid-cols-[120px,1fr]">
+              <div className="relative h-24 overflow-hidden rounded-2xl border border-cyan-300/45 bg-slate-900/70">
+                {activeUniformUrl ? <Image src={activeUniformUrl} alt="Uniforme ativo" fill className="object-cover" /> : <div className="flex h-full items-center justify-center text-[11px] font-bold uppercase tracking-[0.18em] text-slate-300">No Uniform</div>}
+              </div>
+              <div>
+                <p className="text-xs uppercase tracking-[0.18em] text-cyan-200">Club Squad Identity</p>
+                <p className="text-sm text-slate-300">Uniforme ativo: <span className="font-bold text-white">{state.uniformAssets.active_uniform_slot.toUpperCase()}</span></p>
+                <div className="mt-2 flex gap-2">
+                  {(["home", "away", "alternate"] as UniformSlot[]).map((slot) => (
+                    <button key={slot} onClick={() => setUniformSlot(slot)} className={`rounded-lg border px-2 py-1 text-[11px] font-bold uppercase ${state.uniformAssets.active_uniform_slot === slot ? "border-cyan-300 bg-cyan-500/30 text-cyan-100" : "border-white/20 bg-slate-900/70 text-slate-300"}`}>{slot}</button>
+                  ))}
+                </div>
+              </div>
+            </div>
             <div className="space-y-2">
               {mergedPlayers.map((player) => (
                 <button key={player.id} onClick={() => setSelectedPlayerId(player.id)} className="premium-surface grid w-full grid-cols-[auto,2fr,repeat(6,minmax(0,1fr))] gap-2 p-2 text-left text-xs text-slate-100 hover:border-cyan-300/60">
@@ -1312,7 +1360,7 @@ export function SquadHomeClient({
 
       {openModal === "Identidade do Clube" && modalShell("ClubColorEditorModal", () => setOpenModal(null), (
         <div className="space-y-4 text-sm text-slate-100">
-          <p>Editor visual de identidade do clube com preview em tempo real.</p>
+          <p>Editor premium de identidade: cores + uniformes 2D ativos para elenco, banco e board tático.</p>
           <div className="grid gap-3 sm:grid-cols-2">
             <label className="premium-surface p-3">
               <p className="mb-2 text-xs uppercase text-slate-300">Primary Color</p>
@@ -1321,6 +1369,38 @@ export function SquadHomeClient({
             <label className="premium-surface p-3">
               <p className="mb-2 text-xs uppercase text-slate-300">Secondary Color</p>
               <input type="color" value={colorDraft.secondaryColor} onChange={(event) => setColorDraft((prev) => ({ ...prev, secondaryColor: event.target.value }))} className="premium-control h-10 w-full cursor-pointer rounded" />
+            </label>
+          </div>
+
+          <div className="premium-surface space-y-3 p-3">
+            <p className="text-xs uppercase tracking-[0.18em] text-cyan-200">Uniform manager 2D</p>
+            <div className="grid gap-2 sm:grid-cols-3">
+              {(["home", "away", "alternate"] as UniformSlot[]).map((slot) => {
+                const slotUrl = slot === "home" ? state.uniformAssets.home_uniform_2d_url : slot === "away" ? state.uniformAssets.away_uniform_2d_url : state.uniformAssets.alternate_uniform_2d_url;
+                return (
+                  <button key={slot} onClick={() => setUniformSlot(slot)} className={`rounded-2xl border p-2 text-left transition ${state.uniformAssets.active_uniform_slot === slot ? "border-cyan-300 bg-cyan-500/20 shadow-[0_0_26px_rgba(34,211,238,.28)]" : "border-white/15 bg-slate-900/60"}`}>
+                    <p className="text-[11px] font-black uppercase tracking-[0.15em] text-cyan-100">{slot}</p>
+                    <div className="relative mt-2 h-24 overflow-hidden rounded-xl border border-white/10 bg-slate-900/70">
+                      {slotUrl ? <Image src={slotUrl} alt={`${slot} uniform`} fill className="object-cover" /> : <div className="flex h-full items-center justify-center text-[10px] uppercase text-slate-400">fallback kit</div>}
+                    </div>
+                  </button>
+                );
+              })}
+            </div>
+            <label className="block">
+              <span className="premium-label">Upload para slot ativo</span>
+              <input
+                type="file"
+                accept="image/*"
+                className="mt-1 w-full rounded-xl border border-cyan-300/35 bg-slate-900/70 p-2 text-xs"
+                onChange={(event) => {
+                  const file = event.target.files?.[0];
+                  if (!file) return;
+                  const reader = new FileReader();
+                  reader.onload = () => setUniformAsset(state.uniformAssets.active_uniform_slot, String(reader.result ?? ""));
+                  reader.readAsDataURL(file);
+                }}
+              />
             </label>
           </div>
 
@@ -1339,6 +1419,60 @@ export function SquadHomeClient({
             <button onClick={() => setColorDraft({ primaryColor: payload.team.primaryColor, secondaryColor: payload.team.secondaryColor })} className="rounded bg-slate-700 px-3 py-1 text-xs font-semibold">Restaurar padrão</button>
             <button onClick={() => setOpenModal(null)} className="rounded bg-slate-700 px-3 py-1 text-xs font-semibold">Cancelar</button>
             <button onClick={saveTeamColors} className="rounded bg-emerald-500 px-3 py-1 text-xs font-bold text-slate-950">Salvar cores</button>
+          </div>
+        </div>
+      ))}
+
+      {openModal === "Next Match Setup" && payload.nextFixture && modalShell("Next Match Tactical Setup", () => setOpenModal(null), (
+        <div className="space-y-4 text-sm text-slate-100">
+          <p className="text-slate-300">Defina o plano tático antes do início do jogo. Este preset guiará o posicionamento no mini-campo.</p>
+          <div className="grid gap-3 md:grid-cols-2">
+            <label className="space-y-1">
+              <span className="premium-label">Formação</span>
+              <select value={state.preMatchTactic.formation} onChange={(event) => updateState((prev) => ({ ...prev, preMatchTactic: { ...prev.preMatchTactic, formation: event.target.value as TacticalPreset["formation"] } }))} className="w-full rounded-xl border border-cyan-300/30 bg-slate-900/70 px-3 py-2">
+                {(["4-4-2", "4-3-3", "3-5-2", "5-3-2", "4-2-3-1", "4-1-4-1"] as const).map((formation) => <option key={formation} value={formation}>{formation}</option>)}
+              </select>
+            </label>
+            <label className="space-y-1">
+              <span className="premium-label">Estilo tático</span>
+              <select value={state.preMatchTactic.style} onChange={(event) => updateState((prev) => ({ ...prev, preMatchTactic: { ...prev.preMatchTactic, style: event.target.value as TacticalPreset["style"] } }))} className="w-full rounded-xl border border-cyan-300/30 bg-slate-900/70 px-3 py-2">
+                {(["balanced", "offensive_press", "defensive_block", "counter_attack", "possession_control", "fast_transition", "wing_play"] as const).map((style) => <option key={style} value={style}>{style.replaceAll("_", " ")}</option>)}
+              </select>
+            </label>
+          </div>
+          <div className="grid gap-2 md:grid-cols-3">
+            {[
+              { key: "pressure", values: ["low", "medium", "high"] },
+              { key: "buildUp", values: ["direct", "mixed", "possession"] },
+              { key: "defensiveLine", values: ["deep", "standard", "high"] },
+              { key: "transitionSpeed", values: ["slow", "balanced", "quick"] },
+              { key: "width", values: ["narrow", "balanced", "wide"] },
+              { key: "tempo", values: ["calm", "normal", "high"] },
+            ].map((entry) => (
+              <label key={entry.key} className="space-y-1">
+                <span className="premium-label">{entry.key}</span>
+                <select
+                  value={state.preMatchTactic[entry.key as keyof TacticalPreset] as string}
+                  onChange={(event) => updateState((prev) => ({ ...prev, preMatchTactic: { ...prev.preMatchTactic, [entry.key]: event.target.value } as TacticalPreset }))}
+                  className="w-full rounded-xl border border-cyan-300/30 bg-slate-900/70 px-3 py-2"
+                >
+                  {entry.values.map((value) => <option key={value} value={value}>{value}</option>)}
+                </select>
+              </label>
+            ))}
+          </div>
+          <div className="flex gap-2">
+            <button
+              className="rounded-xl border border-cyan-300/50 bg-cyan-500/25 px-4 py-2 text-xs font-bold text-cyan-100"
+              onClick={() => {
+                writePreMatchTactic(payload.save.id, state.preMatchTactic);
+                writeClubUniforms(payload.save.id, state.uniformAssets);
+                window.location.href = `/match-board?saveId=${payload.save.id}`;
+              }}
+            >
+              Salvar plano e iniciar partida
+            </button>
+            <button onClick={() => setOpenModal(null)} className="rounded-xl border border-white/20 bg-slate-800 px-4 py-2 text-xs">Cancelar</button>
           </div>
         </div>
       ))}

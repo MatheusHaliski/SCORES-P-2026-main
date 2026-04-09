@@ -8,10 +8,12 @@ export function LiveRoundFixtureList({
   fixtures,
   events,
   userTeamId,
+  onOpenTacticalBoard,
 }: {
   fixtures: LiveFixtureState[];
   events: MatchEvent[];
   userTeamId: string;
+  onOpenTacticalBoard?: (fixtureId: string) => void;
 }) {
   return (
     <div className="space-y-2">
@@ -26,6 +28,7 @@ export function LiveRoundFixtureList({
             fixture={fixture}
             latestScoreEvent={latestScoreEvent}
             userTeamId={userTeamId}
+            onOpenTacticalBoard={onOpenTacticalBoard}
           />
         );
       })}

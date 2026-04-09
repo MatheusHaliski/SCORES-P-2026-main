@@ -4,6 +4,8 @@ import { QuarterFlowEngine } from "@/services/match/QuarterFlowEngine";
 import { MatchEvent } from "@/types/liveMatch";
 import { CreateMatchSessionPayload, LineupPlayer, MatchSession, TeamTactic } from "@/types/matchSession";
 import { StadiumRevenueService } from "@/services/StadiumRevenueService";
+import { defaultTacticalPreset, defaultUniformAssets, TacticalPreset } from "@/types/tactical";
+import { readClubUniforms, readPreMatchTactic } from "@/lib/tacticalState";
 
 const toLineupPlayer = (player: {
   id: string;
@@ -20,6 +22,7 @@ const toLineupPlayer = (player: {
 }): LineupPlayer => ({
   playerId: player.id,
   playerName: player.name,
+  photoUrl: (player as { photoUrl?: string }).photoUrl,
   position: player.position,
   overall: player.overall,
   stamina: player.physicalCondition,
@@ -78,6 +81,9 @@ export class MatchSessionService {
       opponentTeamId,
       userTeamTactic: "balanced",
       opponentTeamTactic: "balanced",
+      userTacticalPreset: typeof window !== "undefined" ? readPreMatchTactic(payload.saveId) : defaultTacticalPreset,
+      opponentTacticalPreset: defaultTacticalPreset,
+      clubUniformAssets: typeof window !== "undefined" ? readClubUniforms(payload.saveId) : defaultUniformAssets,
       userLineup,
       userBench,
       opponentLineup,
@@ -146,8 +152,14 @@ export class MatchSessionService {
     return next;
   }
 
-  async applyTactic(session: MatchSession, tactic: TeamTactic): Promise<MatchSession> {
-    const next = { ...session, userTeamTactic: tactic, updatedAt: new Date().toISOString() };
+  async applyTactic(session: MatchSession, tactic: TeamTactic, preset?: TacticalPreset): Promise<MatchSession> {
+    const next = {
+      ...session,
+      userTeamTactic: tactic,
+      userTacticalPreset: preset ? { ...session.userTacticalPreset, ...preset, style: tactic } : { ...session.userTacticalPreset, style: tactic },
+      clubUniformAssets: typeof window !== "undefined" ? readClubUniforms(session.saveId) : session.clubUniformAssets,
+      updatedAt: new Date().toISOString(),
+    };
     await this.repository.upsert(next);
     return next;
   }

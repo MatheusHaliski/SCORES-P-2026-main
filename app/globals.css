@@ -179,3 +179,27 @@ body {
     inset 0 1px 0 rgba(255, 255, 255, 0.2),
     0 8px 18px rgba(0, 0, 0, 0.22);
 }
+
+.tactical-court {
+  background:
+    radial-gradient(circle at 50% 50%, rgba(34, 197, 94, 0.18), transparent 46%),
+    linear-gradient(180deg, rgba(8, 47, 73, 0.42), rgba(2, 6, 23, 0.92));
+}
+
+.animate-overlay-flow {
+  animation: overlayFlow 4.4s ease-in-out infinite alternate;
+}
+
+.animate-lane-blink {
+  animation: laneBlink 2.2s ease-in-out infinite;
+}
+
+@keyframes overlayFlow {
+  0% { transform: translateY(4%) scale(0.98); opacity: 0.35; }
+  100% { transform: translateY(-2%) scale(1.03); opacity: 0.7; }
+}
+
+@keyframes laneBlink {
+  0%, 100% { opacity: 0.22; transform: scaleX(0.96); }
+  50% { opacity: 0.82; transform: scaleX(1.03); }
+}
