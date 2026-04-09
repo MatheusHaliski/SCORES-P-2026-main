@@ -1,5 +1,77 @@
-import Image from "next/image";
-import { StandingRow, Team } from "@/types/game";
+"use client";
+
+import { useMemo, useState } from "react";
+import type { Player, Stadium, StandingRow, Team } from "@/types/game";
+import type { SeasonCalendarEntry } from "@/types/season";
+import { LeagueInsightsPanel } from "@/components/standings/LeagueInsightsPanel";
+import { LeagueStandingsTable } from "@/components/standings/LeagueStandingsTable";
+import { MVPPanel } from "@/components/standings/MVPPanel";
+import { MatchRoundsPanel } from "@/components/standings/MatchRoundsPanel";
+import { TopPlayersPanel } from "@/components/standings/TopPlayersPanel";
+
+export type TeamFormMap = Record<string, Array<"W" | "L">>;
+
+export type EnhancedStandingRow = StandingRow & {
+  winPct: number;
+  form: Array<"W" | "L">;
+  streak: string;
+};
+
+function projectedStats(player: Player) {
+  const { shooting, passing, physical } = player.attributes;
+  const points = Number((((shooting.close_shot + shooting.three_point_shot + shooting.mid_range_shot) / 3) * 0.34).toFixed(1));
+  const assists = Number((((passing.passing_accuracy + passing.court_vision + passing.playmaking_iq) / 3) * 0.12).toFixed(1));
+  const rebounds = Number((((physical.vertical + physical.strength + physical.balance) / 3) * 0.1).toFixed(1));
+  return { points, assists, rebounds };
+}
+
+
+function buildFormMap(seasonEntries: SeasonCalendarEntry[]): TeamFormMap {
+  const finished = seasonEntries
+    .filter((entry) => entry.status === "finished")
+    .sort((a, b) => (a.round === b.round ? b.date.localeCompare(a.date) : b.round - a.round));
+
+  const formMap: TeamFormMap = {};
+  for (const match of finished) {
+    if (!formMap[match.homeTeamId]) formMap[match.homeTeamId] = [];
+    if (!formMap[match.awayTeamId]) formMap[match.awayTeamId] = [];
+
+    formMap[match.homeTeamId].push(match.homeScore > match.awayScore ? "W" : "L");
+    formMap[match.awayTeamId].push(match.awayScore > match.homeScore ? "W" : "L");
+  }
+
+  return Object.fromEntries(Object.entries(formMap).map(([teamId, form]) => [teamId, form.slice(0, 5)]));
+}
+
+function buildStreak(form: Array<"W" | "L">): string {
+  if (!form.length) return "-";
+  const head = form[0];
+  let count = 0;
+  for (const result of form) {
+    if (result !== head) break;
+    count += 1;
+  }
+  return `${head}${count}`;
+}
+
+function calculateInsights(rows: EnhancedStandingRow[]) {
+  if (!rows.length) return [];
+
+  const bestStreak = rows.reduce((acc, row) => {
+    const count = Number(row.streak.slice(1) || 0);
+    if (row.streak.startsWith("W") && count > acc.count) return { teamId: row.teamId, count };
+    return acc;
+  }, { teamId: rows[0].teamId, count: 0 });
+
+  const bestAttack = [...rows].sort((a, b) => b.pointsFor - a.pointsFor)[0];
+  const worstDefense = [...rows].sort((a, b) => b.pointsAgainst - a.pointsAgainst)[0];
+
+  return [
+    { icon: "🔥", key: "streak", teamId: bestStreak.teamId, message: `Sequência quente: ${bestStreak.teamId} venceu ${bestStreak.count} seguidas.` },
+    { icon: "🚀", key: "attack", teamId: bestAttack.teamId, message: `Melhor ataque: ${bestAttack.teamId} (${bestAttack.pointsFor} PF).` },
+    { icon: "🧱", key: "defense", teamId: worstDefense.teamId, message: `Defesa mais vazada: ${worstDefense.teamId} (${worstDefense.pointsAgainst} PA).` },
+  ];
+}
 
 export function StandingsTable({
   rows,
@@ -9,6 +81,9 @@ export function StandingsTable({
   highlightTeamId,
   leagueName,
   leagueLogo,
+  players = [],
+  seasonEntries = [],
+  stadiumsByTeamId = {},
 }: {
   rows: StandingRow[];
   teamsById: Record<string, Team>;
@@ -17,67 +92,94 @@ export function StandingsTable({
   highlightTeamId?: string;
   leagueName?: string;
   leagueLogo?: string;
+  players?: Player[];
+  seasonEntries?: SeasonCalendarEntry[];
+  stadiumsByTeamId?: Record<string, Stadium | null>;
 }) {
-  const total = rows.length;
-  const renderLogo = (logo: string, label: string, size = 26) => {
-    const isImage = logo.startsWith("/") || logo.startsWith("http") || logo.startsWith("data:");
-    if (isImage) return <Image src={logo} alt={label} width={size} height={size} className="rounded-md" />;
-    return <span className="inline-flex h-7 w-7 items-center justify-center rounded-md bg-slate-800 text-base">{logo}</span>;
-  };
+  const [selectedTeamId, setSelectedTeamId] = useState<string | null>(highlightTeamId ?? rows[0]?.teamId ?? null);
+
+  const formMap = useMemo(() => buildFormMap(seasonEntries), [seasonEntries]);
+
+  const enrichedRows = useMemo<EnhancedStandingRow[]>(() => rows.map((row) => {
+    const form = formMap[row.teamId] ?? [];
+    return {
+      ...row,
+      winPct: row.played ? row.wins / row.played : 0,
+      form,
+      streak: buildStreak(form),
+    };
+  }), [formMap, rows]);
+
+  const projectedPlayers = useMemo(() => players.map((player) => ({
+    ...player,
+    projected: projectedStats(player),
+  })), [players]);
+
+  const mvp = useMemo(() => {
+    if (!projectedPlayers.length) return null;
+    return projectedPlayers.reduce((best, candidate) => {
+      const bestScore = best.overall * 2 + best.projected.points * 1.4 + best.projected.assists + best.projected.rebounds;
+      const candidateScore = candidate.overall * 2 + candidate.projected.points * 1.4 + candidate.projected.assists + candidate.projected.rebounds;
+      return candidateScore > bestScore ? candidate : best;
+    });
+  }, [projectedPlayers]);
+
+  const leaders = useMemo(() => {
+    const byPoints = [...projectedPlayers].sort((a, b) => b.projected.points - a.projected.points)[0] ?? null;
+    const byAssists = [...projectedPlayers].sort((a, b) => b.projected.assists - a.projected.assists)[0] ?? null;
+    const byRebounds = [...projectedPlayers].sort((a, b) => b.projected.rebounds - a.projected.rebounds)[0] ?? null;
+    return { byPoints, byAssists, byRebounds };
+  }, [projectedPlayers]);
+
+  const topPlayers = useMemo(() => [...projectedPlayers].sort((a, b) => b.overall - a.overall).slice(0, 5), [projectedPlayers]);
+
+  const latestRoundGames = useMemo(() => {
+    const finished = seasonEntries.filter((entry) => entry.status === "finished");
+    const latestRound = finished.reduce((maxRound, entry) => Math.max(maxRound, entry.round), 0);
+    return finished.filter((entry) => entry.round === latestRound);
+  }, [seasonEntries]);
+
+  const insights = useMemo(() => calculateInsights(enrichedRows).map((item) => {
+    if (item.teamId && teamsById[item.teamId]) {
+      return { ...item, message: item.message.replace(item.teamId, teamsById[item.teamId].name) };
+    }
+    return item;
+  }), [enrichedRows, teamsById]);
+
+  const selectedTeam = selectedTeamId ? teamsById[selectedTeamId] : null;
 
   return (
-    <div className="space-y-3">
-      {(leagueName || leagueLogo) && (
-        <div className="flex items-center gap-3 rounded-xl border border-emerald-300/25 bg-gradient-to-r from-emerald-600/20 to-cyan-500/5 p-3">
-          {leagueLogo ? renderLogo(leagueLogo, leagueName ?? "Liga", 34) : null}
-          <div>
-            <p className="text-[11px] uppercase tracking-[0.18em] text-emerald-200">Classificação</p>
-            <p className="text-base font-black text-white">{leagueName ?? "Liga atual"}</p>
-          </div>
+    <div className="space-y-4">
+      <div className="grid gap-4 xl:grid-cols-[1.8fr,1fr]">
+        <LeagueStandingsTable
+          rows={enrichedRows}
+          teamsById={teamsById}
+          playoffSpots={playoffSpots}
+          dangerSpots={dangerSpots}
+          highlightTeamId={highlightTeamId}
+          leagueName={leagueName}
+          leagueLogo={leagueLogo}
+          onSelectTeam={setSelectedTeamId}
+          selectedTeamId={selectedTeamId}
+        />
+        <div className="space-y-4">
+          <MVPPanel mvp={mvp} leaders={leaders} teamsById={teamsById} />
+          <LeagueInsightsPanel insights={insights} />
+        </div>
+      </div>
+
+      <div className="grid gap-4 xl:grid-cols-[1.2fr,1fr]">
+        <TopPlayersPanel players={topPlayers} teamsById={teamsById} selectedTeamId={selectedTeamId} />
+        <MatchRoundsPanel games={latestRoundGames} teamsById={teamsById} stadiumsByTeamId={stadiumsByTeamId} />
+      </div>
+
+      {selectedTeam && (
+        <div className="rounded-2xl border border-cyan-300/30 bg-slate-900/70 p-3 text-sm shadow-[0_0_35px_rgba(34,211,238,0.2)]">
+          <p className="text-[11px] uppercase tracking-[0.24em] text-cyan-200">Time Selecionado</p>
+          <p className="text-lg font-black text-white">{selectedTeam.name}</p>
+          <p className="text-slate-300">Overall {selectedTeam.overall} • Ataque {selectedTeam.attackOverall} • Defesa {selectedTeam.defenseOverall}</p>
         </div>
       )}
-      <div className="grid gap-2">
-        {rows.map((row) => {
-          const team = teamsById[row.teamId];
-          const isPlayoff = row.position <= playoffSpots;
-          const isDanger = row.position > total - dangerSpots;
-          const isCutoffRow = row.position === playoffSpots || row.position === total - dangerSpots;
-          const isHighlightedTeam = row.teamId === highlightTeamId;
-          const zoneClass = isDanger
-            ? "border-rose-400/45 bg-rose-500/20"
-            : isPlayoff
-              ? "border-emerald-400/45 bg-emerald-500/20"
-              : "border-white/15 bg-slate-900/70";
-          const cutoffClass = isCutoffRow ? "ring-1 ring-amber-300/70" : "";
-
-          return (
-            <div key={row.teamId} className={`grid grid-cols-[56px,1.6fr,repeat(6,minmax(38px,1fr))] items-center gap-2 rounded-xl border p-2 text-xs text-slate-100 ${zoneClass} ${cutoffClass} ${isHighlightedTeam ? "ring-2 ring-yellow-300/80" : ""}`}>
-              <div className="text-center">
-                <p className="text-[10px] uppercase tracking-wide text-slate-300">Pos</p>
-                <p className="text-xl font-black text-white">#{row.position}</p>
-              </div>
-              <div className="flex items-center gap-2">
-                {renderLogo(team?.logoUrl ?? "🏀", team?.name ?? row.teamId)}
-                <div className="min-w-0">
-                  <p className="truncate font-bold text-white">{team?.name ?? row.teamId}</p>
-                  <p className="text-[11px] text-slate-300">{team?.shortName ?? row.teamId}</p>
-                </div>
-              </div>
-              <p className="text-center"><span className="block text-[10px] text-slate-400">J</span>{row.played}</p>
-              <p className="text-center"><span className="block text-[10px] text-slate-400">W</span>{row.wins}</p>
-              <p className="text-center"><span className="block text-[10px] text-slate-400">L</span>{row.losses}</p>
-              <p className="text-center"><span className="block text-[10px] text-slate-400">PF</span>{row.pointsFor}</p>
-              <p className="text-center"><span className="block text-[10px] text-slate-400">PA</span>{row.pointsAgainst}</p>
-              <p className="text-center font-black text-cyan-200"><span className="block text-[10px] text-slate-400">Pts</span>{row.leaguePoints}</p>
-            </div>
-          );
-        })}
-      </div>
-      <div className="grid gap-2 text-[11px] text-slate-200 sm:grid-cols-3">
-        <div className="rounded-lg border border-emerald-400/40 bg-emerald-500/20 px-2 py-1">Playoffs (Top {playoffSpots})</div>
-        <div className="rounded-lg border border-amber-300/50 bg-amber-400/15 px-2 py-1">Linha de corte</div>
-        <div className="rounded-lg border border-rose-400/40 bg-rose-500/20 px-2 py-1">Zona de risco (Bottom {dangerSpots})</div>
-      </div>
     </div>
   );
 }
