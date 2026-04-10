@@ -5,7 +5,7 @@ import { clearAuthSessionProfile, clearAuthSessionToken } from "@/app/lib/authSe
 import { clearServerSession } from "@/app/lib/clientSession";
 import { useRouter } from "next/navigation";
 import { BackgroundStudioModal } from "@/components/BackgroundStudioModal";
-import { BackgroundStudioConfig, buildShellBackgroundStyle, createDefaultStudioConfig, normalizeBackgroundStudioConfig } from "@/types/backgroundStudio";
+import { BackgroundStudioConfig, buildBackgroundImage, buildShellBackgroundStyle, createDefaultStudioConfig, normalizeBackgroundStudioConfig } from "@/types/backgroundStudio";
 import { SHELL_BACKGROUND_CUSTOM_OPTION_ID, SHELL_BACKGROUND_CUSTOM_STYLE_KEY, SHELL_BACKGROUND_KEY } from "@/app/lib/shellBackground";
 
 type UserProfileSidebarProps = {
