@@ -345,18 +345,25 @@ function resolvePageBackgroundLayer(config: BackgroundStudioConfig) {
 }
 
 export function buildShellBackgroundStyle(config: BackgroundStudioConfig) {
-  const overlayOpacity = clampPercent(config.pageBackground.overlayOpacity) / 100;
-  const bgLayer = resolvePageBackgroundLayer(config);
+  const pageOverlayOpacity = clampPercent(config.pageBackground.overlayOpacity) / 100;
+  const shellOverlayOpacity = clampPercent(config.matchVisual.shellOverlay) / 100;
+  const pageLayer = resolvePageBackgroundLayer(config);
+  const shellLayer = config.matchVisual.shellBackgroundUrl
+    ? `url('${config.matchVisual.shellBackgroundUrl}')`
+    : AUTHVIEW_DEFAULT_BACKGROUND_CSS;
+  const fallbackLayer = buildBackgroundImage(config);
+  const totalBlur = Math.max(0, config.pageBackground.blur + config.matchVisual.shellBlur);
 
   return {
-    backgroundColor: "#020617",
-    backgroundImage: `linear-gradient(rgba(2, 6, 23, ${overlayOpacity}), rgba(2, 6, 23, ${overlayOpacity})), ${bgLayer}`,
+    backgroundColor: config.uiPalette.primary,
+    backgroundImage: `linear-gradient(rgba(2, 6, 23, ${pageOverlayOpacity}), rgba(2, 6, 23, ${pageOverlayOpacity})), linear-gradient(rgba(2, 6, 23, ${shellOverlayOpacity}), rgba(2, 6, 23, ${shellOverlayOpacity})), ${shellLayer}, ${fallbackLayer}, ${pageLayer}`,
     backgroundSize: "cover",
     backgroundPosition: "center",
     backgroundRepeat: "no-repeat",
     backgroundAttachment: "fixed",
-    filter: `blur(${Math.max(0, config.pageBackground.blur)}px)`,
+    filter: `blur(${totalBlur}px) contrast(${config.matchVisual.contrast}%)`,
     backgroundBlendMode: "normal",
+    boxShadow: `inset 0 0 ${Math.max(0, config.matchVisual.shellGlow)}px ${config.uiPalette.highlight}33`,
   };
 }
 
