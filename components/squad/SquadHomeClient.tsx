@@ -910,7 +910,7 @@ export function SquadHomeClient({
     <main
       className="min-h-screen p-6"
       style={{
-        ...shellBackgroundStyle,
+        ...buildShellBackgroundStyle(backgroundStudio),
         color: identityTheme.textColor,
       }}
     >
@@ -949,10 +949,10 @@ export function SquadHomeClient({
                 venue={nextVenue}
                 identityTheme={identityTheme}
                 nextMatchBackground={{
-                  nextMatchBackgroundUrl: backgroundStudio.nextMatchBackgroundUrl,
-                  nextMatchOverlay: backgroundStudio.nextMatchOverlay,
-                  nextMatchBlur: backgroundStudio.nextMatchBlur,
-                  nextMatchGlow: backgroundStudio.nextMatchGlow,
+                  nextMatchBackgroundUrl: backgroundStudio.matchVisual.nextMatchBackgroundUrl,
+                  nextMatchOverlay: backgroundStudio.matchVisual.nextMatchOverlay,
+                  nextMatchBlur: backgroundStudio.matchVisual.nextMatchBlur,
+                  nextMatchGlow: backgroundStudio.matchVisual.nextMatchGlow,
                 }}
               />
             ) : null}
