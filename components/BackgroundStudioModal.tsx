@@ -96,7 +96,7 @@ function SlotCard(params: {
 }
 
 export function BackgroundStudioModal({ open, onClose, config, onChange, onSave, clubPrimary, clubSecondary }: Props) {
-  const [trackDraft, setTrackDraft] = useState({ name: "", category: "Hype" as SoundtrackCategory, fileName: "", fileUrl: "" });
+  const [trackDraft, setTrackDraft] = useState({ name: "", category: "Hype" as SoundtrackCategory, fileName: "", fileDataUrl: "" });
   const fileInputRef = useRef<HTMLInputElement | null>(null);
   const imageInputRef = useRef<HTMLInputElement | null>(null);
   const shellInputRef = useRef<HTMLInputElement | null>(null);
@@ -152,7 +152,7 @@ export function BackgroundStudioModal({ open, onClose, config, onChange, onSave,
       name: trackDraft.name.trim(),
       category: trackDraft.category,
       fileName: trackDraft.fileName || undefined,
-      fileUrl: trackDraft.fileUrl || undefined,
+      fileDataUrl: trackDraft.fileDataUrl || undefined,
     };
     onChange({
       ...config,
@@ -162,7 +162,7 @@ export function BackgroundStudioModal({ open, onClose, config, onChange, onSave,
         activeTrackId: config.soundtrack.activeTrackId ?? nextTrack.id,
       },
     });
-    setTrackDraft({ name: "", category: "Hype", fileName: "", fileUrl: "" });
+    setTrackDraft({ name: "", category: "Hype", fileName: "", fileDataUrl: "" });
   };
 
   const updateTrack = (trackId: string, patch: Partial<SoundtrackItem>) => {
@@ -433,11 +433,21 @@ export function BackgroundStudioModal({ open, onClose, config, onChange, onSave,
                     className="hidden"
                     onChange={(event) => {
                       const file = event.target.files?.[0];
-                      setTrackDraft((prev) => ({
-                        ...prev,
-                        fileName: file?.name ?? "",
-                        fileUrl: file ? URL.createObjectURL(file) : "",
-                      }));
+                      if (!file) {
+                        setTrackDraft((prev) => ({ ...prev, fileName: "", fileDataUrl: "" }));
+                        return;
+                      }
+                      const reader = new FileReader();
+                      reader.onload = () => {
+                        if (typeof reader.result === "string") {
+                          setTrackDraft((prev) => ({
+                            ...prev,
+                            fileName: file.name,
+                            fileDataUrl: reader.result,
+                          }));
+                        }
+                      };
+                      reader.readAsDataURL(file);
                     }}
                   />
                   <button onClick={addTrack} className="rounded-lg border border-emerald-300/35 bg-emerald-500/20 px-2 py-1 text-xs font-bold text-emerald-100">Adicionar música</button>
@@ -473,7 +483,7 @@ export function BackgroundStudioModal({ open, onClose, config, onChange, onSave,
                     <label className="inline-flex items-center gap-1"><input type="checkbox" checked={config.soundtrack.loop} onChange={(event) => onChange({ ...config, soundtrack: { ...config.soundtrack, loop: event.target.checked } })} />Loop</label>
                   </div>
                   <p className="text-xs text-cyan-100">Trilha ativa: <b>{activeTrack?.name ?? "Nenhuma"}</b></p>
-                  {activeTrack?.fileUrl && <audio controls src={activeTrack.fileUrl} className="w-full" />}
+                  {(activeTrack?.fileDataUrl || activeTrack?.fileUrl) && <audio controls src={activeTrack.fileDataUrl ?? activeTrack.fileUrl} className="w-full" />}
                 </div>
               </div>
             </section>
