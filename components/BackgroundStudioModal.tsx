@@ -6,8 +6,10 @@ import {
   BACKGROUND_STUDIO_PRESETS,
   BackgroundStudioConfig,
   PageBackgroundMode,
+  ShapeLanguage,
+  PatternStyle,
+  MotionDirection,
   SoundtrackCategory,
-  SoundtrackItem,
   buildBackgroundImage,
   buildBackgroundPreviewStyle,
   getBackgroundStudioPreset,
@@ -111,7 +113,23 @@ export function BackgroundStudioModal({ open, onClose, config, onChange, onSave,
   });
   const handleShellUploadClick = () => shellInputRef.current?.click();
   const handleNextMatchUploadClick = () => nextMatchInputRef.current?.click();
-  const activeTrack = config.soundtrack.tracks.find((track) => track.id === config.soundtrack.activeTrackId) ?? null;
+  const clubPrimary = config.palette.primary;
+  const clubSecondary = config.palette.secondary;
+  const SHAPES: ShapeLanguage[] = ["none", "orb", "diamond", "mesh", "shards", "court-lines", "hex-grid"];
+  const PATTERNS: PatternStyle[] = ["smooth", "broadcast", "gradient-wave", "high-contrast"];
+  const MOTIONS: MotionDirection[] = ["none", "left-to-right", "right-to-left", "top-down", "center-pulse"];
+  const CATEGORIES: SoundtrackCategory[] = ["Hype", "Arena", "Calm Focus", "Playoffs", "Premium Lounge", "Retro Sports", "Urban Energy"];
+  const PAGE_BACKGROUND_GRADIENTS: Array<{ id: BackgroundStudioConfig["pageBackground"]["gradientId"]; name: string; css: string }> = [
+    { id: "deep-night", name: "Deep Night", css: "linear-gradient(135deg, #020617, #0f172a)" },
+    { id: "arena-purple", name: "Arena Purple", css: "linear-gradient(135deg, #312e81, #0f172a)" },
+    { id: "emerald-glow", name: "Emerald Glow", css: "linear-gradient(135deg, #052e16, #0f172a)" },
+    { id: "sunset-lights", name: "Sunset Lights", css: "linear-gradient(135deg, #7c2d12, #1e293b)" },
+  ];
+
+  const activeTrack = useMemo(
+    () => config.soundtrack.tracks.find((track) => track.id === config.soundtrack.activeTrackId) ?? null,
+    [config.soundtrack.activeTrackId, config.soundtrack.tracks],
+  );
   const previewBackground = useMemo(() => buildBackgroundImage(config), [config]);
   const shellPreviewStyle = useMemo(() => {
     if (config.pageBackground.mode === "solid-color") return { backgroundColor: config.pageBackground.solidColor };
@@ -123,7 +141,7 @@ export function BackgroundStudioModal({ open, onClose, config, onChange, onSave,
       return { backgroundImage: gradient?.css ?? PAGE_BACKGROUND_GRADIENTS[0].css };
     }
     return { backgroundImage: AUTHVIEW_DEFAULT_BACKGROUND_CSS, backgroundSize: "cover", backgroundPosition: "center" };
-  }, [config]);
+  }, [config.pageBackground, PAGE_BACKGROUND_GRADIENTS]);
 
   if (!open) return null;
 

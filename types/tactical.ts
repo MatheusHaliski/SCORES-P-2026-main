@@ -11,6 +11,11 @@ export type FormationId = "4-4-2" | "4-3-3" | "3-5-2" | "5-3-2" | "4-2-3-1" | "4
 
 export type TacticalStyle =
   | "balanced"
+  | "fast_pace"
+  | "defensive"
+  | "three_point_focus"
+  | "paint_attack"
+  | "aggressive_press"
   | "offensive_press"
   | "defensive_block"
   | "counter_attack"

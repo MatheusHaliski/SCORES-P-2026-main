@@ -18,7 +18,7 @@ export function PlayerPhotoNode({
 }) {
   const stamina = Math.max(0, Math.min(100, Math.round(player.stamina)));
   const alertTone = player.injuryStatus === "Lesionado" ? "border-rose-400" : stamina < 35 ? "border-amber-400" : "border-cyan-300";
-  const photoUrl = (player as unknown as { photoUrl?: string }).photoUrl;
+  const photoUrl = (player as { photoUrl?: string }).photoUrl;
 
   return (
     <div
