@@ -904,6 +904,7 @@ export function SquadHomeClient({
     rivalry: payload.nextFixture ? 1.05 : 0.98,
     matchImportance: payload.nextFixture ? 1.08 : 0.95,
   });
+  const shellBackgroundStyle = buildShellBackgroundStyle(backgroundStudio);
 
   return (
     <main

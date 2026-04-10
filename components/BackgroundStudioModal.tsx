@@ -6,6 +6,7 @@ import {
   BACKGROUND_STUDIO_PRESETS,
   BackgroundStudioConfig,
   PageBackgroundMode,
+  PAGE_BACKGROUND_GRADIENTS,
   SoundtrackCategory,
   SoundtrackItem,
   buildBackgroundImage,

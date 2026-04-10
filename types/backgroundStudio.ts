@@ -106,6 +106,12 @@ export interface BackgroundStudioPreset {
 }
 
 export const AUTHVIEW_DEFAULT_BACKGROUND_CSS = "url('/ChatGPT Image 9 de abr. de 2026, 13_10_17.png')";
+export const PAGE_BACKGROUND_GRADIENTS: Array<{ id: PageBackgroundGradientId; name: string; css: string }> = [
+  { id: "deep-night", name: "Deep Night", css: "linear-gradient(135deg,#020617,#0f172a,#1e293b)" },
+  { id: "arena-purple", name: "Arena Purple", css: "linear-gradient(135deg,#1e1b4b,#312e81,#4f46e5)" },
+  { id: "emerald-glow", name: "Emerald Glow", css: "linear-gradient(135deg,#022c22,#065f46,#10b981)" },
+  { id: "sunset-lights", name: "Sunset Lights", css: "linear-gradient(135deg,#7c2d12,#c2410c,#fb7185)" },
+];
 
 export const BACKGROUND_STUDIO_PRESETS: BackgroundStudioPreset[] = [
   {
