@@ -43,19 +43,19 @@ export function UserProfileSidebar({
   });
 
   const resolvedConfig = useMemo(() => normalizeBackgroundStudioConfig(config), [config]);
-  const clubPrimary = clubPrimaryColor ?? initialStudioConfig?.palette.primary ?? createDefaultStudioConfig().palette.primary;
-  const clubSecondary = clubSecondaryColor ?? initialStudioConfig?.palette.secondary ?? createDefaultStudioConfig().palette.secondary;
+  const clubPrimary = clubPrimaryColor ?? initialStudioConfig?.uiPalette.primary ?? createDefaultStudioConfig().uiPalette.primary;
+  const clubSecondary = clubSecondaryColor ?? initialStudioConfig?.uiPalette.secondary ?? createDefaultStudioConfig().uiPalette.secondary;
 
   useEffect(() => {
     const root = document.documentElement;
-    root.dataset.scoresSkin = resolvedConfig.skinMode;
+    root.dataset.scoresSkin = resolvedConfig.matchVisual.skinMode;
     root.style.setProperty("--scores-bg-image", buildBackgroundImage(resolvedConfig));
-    root.style.setProperty("--scores-bg-contrast", `${resolvedConfig.contrast}%`);
-    root.style.setProperty("--scores-bg-blur", `${resolvedConfig.blurStrength}px`);
-    root.style.setProperty("--scores-bg-highlight", resolvedConfig.palette.highlight);
-    root.style.setProperty("--scores-metallic-texture", `${Math.max(0.1, resolvedConfig.textureIntensity / 100)}`);
-    root.style.setProperty("--scores-metallic-gloss", `${Math.max(0.1, resolvedConfig.glossIntensity / 100)}`);
-    root.style.setProperty("--scores-metallic-polish", `${Math.max(0.1, resolvedConfig.borderPolishIntensity / 100)}`);
+    root.style.setProperty("--scores-bg-contrast", `${resolvedConfig.matchVisual.contrast}%`);
+    root.style.setProperty("--scores-bg-blur", `${resolvedConfig.matchVisual.blurStrength}px`);
+    root.style.setProperty("--scores-bg-highlight", resolvedConfig.uiPalette.highlight);
+    root.style.setProperty("--scores-metallic-texture", `${Math.max(0.1, resolvedConfig.matchVisual.textureIntensity / 100)}`);
+    root.style.setProperty("--scores-metallic-gloss", `${Math.max(0.1, resolvedConfig.matchVisual.glossIntensity / 100)}`);
+    root.style.setProperty("--scores-metallic-polish", `${Math.max(0.1, resolvedConfig.matchVisual.borderPolishIntensity / 100)}`);
 
     const shellStyle = buildShellBackgroundStyle(resolvedConfig);
     window.localStorage.setItem(SHELL_BACKGROUND_CUSTOM_STYLE_KEY, JSON.stringify(shellStyle));

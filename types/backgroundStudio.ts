@@ -27,7 +27,7 @@ export interface SoundtrackItem {
   fileUrl?: string;
 }
 
-export interface BackgroundPalette {
+export interface UIPalette {
   useClubColors: boolean;
   primary: string;
   secondary: string;
@@ -35,28 +35,38 @@ export interface BackgroundPalette {
 }
 
 export interface BackgroundStudioConfig {
-  preset: BackgroundStudioPresetId;
-  shellBackgroundUrl: string | null;
-  nextMatchBackgroundUrl: string | null;
-  shellOverlay: number;
-  nextMatchOverlay: number;
-  shellBlur: number;
-  shellGlow: number;
-  nextMatchBlur: number;
-  nextMatchGlow: number;
-  skinMode: "default" | "scores-metallic-premium";
-  palette: BackgroundPalette;
-  glowIntensity: number;
-  blurStrength: number;
-  density: number;
-  depth: number;
-  textureIntensity: number;
-  glossIntensity: number;
-  borderPolishIntensity: number;
-  shapeLanguage: ShapeLanguage;
-  pattern: PatternStyle;
-  motionDirection: MotionDirection;
-  contrast: number;
+  pageBackground: {
+    mode: PageBackgroundMode;
+    gradientId: PageBackgroundGradientId;
+    solidColor: string;
+    imageDataUrl: string | null;
+    overlayOpacity: number;
+    blur: number;
+  };
+  matchVisual: {
+    presetId: BackgroundStudioPresetId;
+    shellBackgroundUrl: string | null;
+    nextMatchBackgroundUrl: string | null;
+    shellOverlay: number;
+    nextMatchOverlay: number;
+    shellBlur: number;
+    shellGlow: number;
+    nextMatchBlur: number;
+    nextMatchGlow: number;
+    glowIntensity: number;
+    blurStrength: number;
+    density: number;
+    depth: number;
+    textureIntensity: number;
+    glossIntensity: number;
+    borderPolishIntensity: number;
+    shapeLanguage: ShapeLanguage;
+    pattern: PatternStyle;
+    motionDirection: MotionDirection;
+    contrast: number;
+    skinMode: "default" | "scores-metallic-premium";
+  };
+  uiPalette: UIPalette;
   soundtrack: {
     tracks: SoundtrackItem[];
     activeTrackId: string | null;
@@ -64,19 +74,13 @@ export interface BackgroundStudioConfig {
     autoPlay: boolean;
     loop: boolean;
   };
-  pageBackground: {
-    mode: PageBackgroundMode;
-    gradientId: PageBackgroundGradientId;
-    solidColor: string;
-    imageDataUrl: string | null;
-  };
 }
 
 export interface BackgroundStudioPreset {
   id: BackgroundStudioPresetId;
   name: string;
   description: string;
-  skinMode: BackgroundStudioConfig["skinMode"];
+  skinMode: BackgroundStudioConfig["matchVisual"]["skinMode"];
   primary: string;
   secondary: string;
   highlight: string;
@@ -107,7 +111,7 @@ export const BACKGROUND_STUDIO_PRESETS: BackgroundStudioPreset[] = [
   {
     id: "arena-night",
     name: "Arena Night",
-    description: "Visual escuro de arena para shell e cartão de jogo.",
+    description: "Visual escuro esportivo para MatchView e Next Match.",
     skinMode: "default",
     primary: "#0f172a",
     secondary: "#2563eb",
@@ -135,7 +139,7 @@ export const BACKGROUND_STUDIO_PRESETS: BackgroundStudioPreset[] = [
   {
     id: "champions-gold",
     name: "Champions Gold",
-    description: "Arte premium em tons dourados para fases decisivas.",
+    description: "Ambientação premium dourada para MatchView.",
     skinMode: "default",
     primary: "#111827",
     secondary: "#b45309",
@@ -163,7 +167,7 @@ export const BACKGROUND_STUDIO_PRESETS: BackgroundStudioPreset[] = [
   {
     id: "deep-ocean",
     name: "Deep Ocean",
-    description: "Profundidade azul com contraste de palco esportivo.",
+    description: "Profundidade azul e linhas frias para partida.",
     skinMode: "default",
     primary: "#020617",
     secondary: "#1d4ed8",
@@ -191,7 +195,7 @@ export const BACKGROUND_STUDIO_PRESETS: BackgroundStudioPreset[] = [
   {
     id: "auth-default",
     name: "Auth Default",
-    description: "Usa o wallpaper principal padrão do produto.",
+    description: "Arte padrão do produto aplicada à MatchView.",
     skinMode: "default",
     primary: "#020617",
     secondary: "#0f172a",
@@ -222,49 +226,58 @@ export function getBackgroundStudioPreset(presetId: BackgroundStudioPresetId): B
   return BACKGROUND_STUDIO_PRESETS.find((preset) => preset.id === presetId) ?? BACKGROUND_STUDIO_PRESETS[0];
 }
 
+const DEFAULT_TRACKS: SoundtrackItem[] = [
+  { id: "trk-hype", name: "Hype Entrance", category: "Hype" },
+  { id: "trk-arena", name: "Arena Lights", category: "Arena" },
+  { id: "trk-playoffs", name: "Playoffs Pressure", category: "Playoffs" },
+];
+
 export function createDefaultStudioConfig(): BackgroundStudioConfig {
   const preset = BACKGROUND_STUDIO_PRESETS[0];
-  const visualPreset = STUDIO_PRESETS[0];
   return {
-    preset: preset.id,
-    shellBackgroundUrl: preset.shellBackgroundUrl,
-    nextMatchBackgroundUrl: preset.nextMatchBackgroundUrl,
-    shellOverlay: preset.shellOverlay,
-    nextMatchOverlay: preset.nextMatchOverlay,
-    shellBlur: preset.shellBlur,
-    shellGlow: preset.shellGlow,
-    nextMatchBlur: preset.nextMatchBlur,
-    nextMatchGlow: preset.nextMatchGlow,
-    skinMode: visualPreset.skinMode,
-    palette: {
-      useClubColors: true,
-      primary: visualPreset.primary,
-      secondary: visualPreset.secondary,
-      highlight: visualPreset.highlight,
+    pageBackground: {
+      mode: "auth-default-image",
+      gradientId: "deep-night",
+      solidColor: "#020617",
+      imageDataUrl: null,
+      overlayOpacity: 44,
+      blur: 0,
     },
-    glowIntensity: visualPreset.glowIntensity,
-    blurStrength: visualPreset.blurStrength,
-    density: visualPreset.density,
-    depth: visualPreset.depth,
-    textureIntensity: visualPreset.textureIntensity,
-    glossIntensity: visualPreset.glossIntensity,
-    borderPolishIntensity: visualPreset.borderPolishIntensity,
-    shapeLanguage: visualPreset.shapeLanguage,
-    pattern: visualPreset.pattern,
-    motionDirection: visualPreset.motionDirection,
-    contrast: visualPreset.contrast,
+    matchVisual: {
+      presetId: preset.id,
+      shellBackgroundUrl: preset.shellBackgroundUrl,
+      nextMatchBackgroundUrl: preset.nextMatchBackgroundUrl,
+      shellOverlay: preset.shellOverlay,
+      nextMatchOverlay: preset.nextMatchOverlay,
+      shellBlur: preset.shellBlur,
+      shellGlow: preset.shellGlow,
+      nextMatchBlur: preset.nextMatchBlur,
+      nextMatchGlow: preset.nextMatchGlow,
+      skinMode: preset.skinMode,
+      glowIntensity: preset.glowIntensity,
+      blurStrength: preset.blurStrength,
+      density: preset.density,
+      depth: preset.depth,
+      textureIntensity: preset.textureIntensity,
+      glossIntensity: preset.glossIntensity,
+      borderPolishIntensity: preset.borderPolishIntensity,
+      shapeLanguage: preset.shapeLanguage,
+      pattern: preset.pattern,
+      motionDirection: preset.motionDirection,
+      contrast: preset.contrast,
+    },
+    uiPalette: {
+      useClubColors: true,
+      primary: preset.primary,
+      secondary: preset.secondary,
+      highlight: preset.highlight,
+    },
     soundtrack: {
       tracks: DEFAULT_TRACKS,
       activeTrackId: DEFAULT_TRACKS[0]?.id ?? null,
       volume: 55,
       autoPlay: true,
       loop: true,
-    },
-    pageBackground: {
-      mode: "auth-default-image",
-      gradientId: "deep-night",
-      solidColor: "#020617",
-      imageDataUrl: null,
     },
   };
 }
@@ -273,7 +286,7 @@ export interface BackgroundPreset {
   id: StudioPresetId;
   name: string;
   description: string;
-  skinMode: BackgroundStudioConfig["skinMode"];
+  skinMode: BackgroundStudioConfig["matchVisual"]["skinMode"];
   primary: string;
   secondary: string;
   highlight: string;
@@ -302,33 +315,41 @@ export const STUDIO_PRESETS: BackgroundPreset[] = [
   { id: "scores-metallic-premium", name: "SCORES Metallic Premium", description: "Luxo esportivo com metal escovado dourado e esmalte verde.", skinMode: "scores-metallic-premium", primary: "#123930", secondary: "#8a6425", highlight: "#e8d086", glowIntensity: 62, blurStrength: 9, density: 58, depth: 86, textureIntensity: 84, glossIntensity: 74, borderPolishIntensity: 88, shapeLanguage: "mesh", pattern: "smooth", motionDirection: "center-pulse", contrast: 112 },
 ];
 
-const DEFAULT_TRACKS: SoundtrackItem[] = [
-  { id: "trk-hype", name: "Hype Entrance", category: "Hype" },
-  { id: "trk-arena", name: "Arena Lights", category: "Arena" },
-  { id: "trk-playoffs", name: "Playoffs Pressure", category: "Playoffs" },
-];
-
 export function buildBackgroundImage(config: BackgroundStudioConfig) {
-  const { primary, secondary, highlight } = config.palette;
-  const glow = config.glowIntensity / 100;
-  const density = config.density / 100;
+  const { primary, secondary, highlight } = config.uiPalette;
+  const glow = config.matchVisual.glowIntensity / 100;
+  const density = config.matchVisual.density / 100;
   const overlayOpacity = Math.max(0.12, Math.min(0.78, glow * 0.65));
   return `radial-gradient(circle at 16% 18%, ${highlight}${Math.round(overlayOpacity * 255).toString(16).padStart(2, "0")} 0%, transparent ${28 + density * 22}%), radial-gradient(circle at 82% 78%, ${secondary}${Math.round((overlayOpacity + 0.1) * 255).toString(16).padStart(2, "0")} 0%, transparent ${34 + density * 20}%), linear-gradient(135deg, ${primary}cc, #020617f2)`;
 }
 
+function resolvePageBackgroundLayer(config: BackgroundStudioConfig) {
+  if (config.pageBackground.mode === "solid-color") return config.pageBackground.solidColor;
+  if (config.pageBackground.mode === "upload-image" && config.pageBackground.imageDataUrl) return `url('${config.pageBackground.imageDataUrl}')`;
+  if (config.pageBackground.mode === "preset-gradient") {
+    const gradients: Record<PageBackgroundGradientId, string> = {
+      "deep-night": "linear-gradient(135deg,#020617,#0f172a,#1e293b)",
+      "arena-purple": "linear-gradient(135deg,#1e1b4b,#312e81,#4f46e5)",
+      "emerald-glow": "linear-gradient(135deg,#022c22,#065f46,#10b981)",
+      "sunset-lights": "linear-gradient(135deg,#7c2d12,#c2410c,#fb7185)",
+    };
+    return gradients[config.pageBackground.gradientId] ?? gradients["deep-night"];
+  }
+  return AUTHVIEW_DEFAULT_BACKGROUND_CSS;
+}
+
 export function buildShellBackgroundStyle(config: BackgroundStudioConfig) {
-  const overlayOpacity = clampPercent(config.shellOverlay) / 100;
-  const shellImage = config.shellBackgroundUrl
-    ? `url('${config.shellBackgroundUrl}')`
-    : AUTHVIEW_DEFAULT_BACKGROUND_CSS;
+  const overlayOpacity = clampPercent(config.pageBackground.overlayOpacity) / 100;
+  const bgLayer = resolvePageBackgroundLayer(config);
 
   return {
     backgroundColor: "#020617",
-    backgroundImage: `linear-gradient(rgba(2, 6, 23, ${overlayOpacity}), rgba(2, 6, 23, ${overlayOpacity})), ${shellImage}`,
+    backgroundImage: `linear-gradient(rgba(2, 6, 23, ${overlayOpacity}), rgba(2, 6, 23, ${overlayOpacity})), ${bgLayer}`,
     backgroundSize: "cover",
     backgroundPosition: "center",
     backgroundRepeat: "no-repeat",
     backgroundAttachment: "fixed",
+    filter: `blur(${Math.max(0, config.pageBackground.blur)}px)`,
     backgroundBlendMode: "normal",
   };
 }
@@ -344,50 +365,15 @@ function clampPercent(value: number, min = 0, max = 100) {
   return Math.min(max, Math.max(min, Math.round(value)));
 }
 
-export function normalizeBackgroundStudioConfig(
-  input?: Partial<BackgroundStudioConfig> | null,
-): BackgroundStudioConfig {
+export function normalizeBackgroundStudioConfig(input?: Partial<BackgroundStudioConfig> | null): BackgroundStudioConfig {
   const fallback = createDefaultStudioConfig();
-  const preset = input?.preset ? getBackgroundStudioPreset(input.preset) : getBackgroundStudioPreset(fallback.preset);
+
+  // backward compatibility with previous flat schema
+  const legacy = input as Record<string, unknown> | undefined;
+  const legacyPresetId = (legacy?.preset as BackgroundStudioPresetId | undefined) ?? input?.matchVisual?.presetId;
+  const preset = getBackgroundStudioPreset(legacyPresetId ?? fallback.matchVisual.presetId);
 
   return {
-    preset: input?.preset ?? fallback.preset,
-    shellBackgroundUrl: input?.shellBackgroundUrl ?? preset.shellBackgroundUrl ?? fallback.shellBackgroundUrl,
-    nextMatchBackgroundUrl: input?.nextMatchBackgroundUrl ?? preset.nextMatchBackgroundUrl ?? fallback.nextMatchBackgroundUrl,
-    shellOverlay: clampPercent(input?.shellOverlay ?? preset.shellOverlay ?? fallback.shellOverlay, 0, 90),
-    nextMatchOverlay: clampPercent(input?.nextMatchOverlay ?? preset.nextMatchOverlay ?? fallback.nextMatchOverlay, 0, 90),
-    shellBlur: clampPercent(input?.shellBlur ?? preset.shellBlur ?? fallback.shellBlur, 0, 20),
-    shellGlow: clampPercent(input?.shellGlow ?? preset.shellGlow ?? fallback.shellGlow, 0, 120),
-    nextMatchBlur: clampPercent(input?.nextMatchBlur ?? preset.nextMatchBlur ?? fallback.nextMatchBlur, 0, 20),
-    nextMatchGlow: clampPercent(input?.nextMatchGlow ?? preset.nextMatchGlow ?? fallback.nextMatchGlow, 0, 120),
-    skinMode: input?.skinMode === "scores-metallic-premium" ? "scores-metallic-premium" : "default",
-    palette: {
-      useClubColors: input?.palette?.useClubColors ?? fallback.palette.useClubColors,
-      primary: input?.palette?.primary ?? fallback.palette.primary,
-      secondary: input?.palette?.secondary ?? fallback.palette.secondary,
-      highlight: input?.palette?.highlight ?? fallback.palette.highlight,
-    },
-    glowIntensity: clampPercent(input?.glowIntensity ?? fallback.glowIntensity),
-    blurStrength: clampPercent(input?.blurStrength ?? fallback.blurStrength, 0, 40),
-    density: clampPercent(input?.density ?? fallback.density),
-    depth: clampPercent(input?.depth ?? fallback.depth),
-    textureIntensity: clampPercent(input?.textureIntensity ?? fallback.textureIntensity),
-    glossIntensity: clampPercent(input?.glossIntensity ?? fallback.glossIntensity),
-    borderPolishIntensity: clampPercent(input?.borderPolishIntensity ?? fallback.borderPolishIntensity),
-    shapeLanguage: SHAPES.includes(input?.shapeLanguage as ShapeLanguage) ? (input?.shapeLanguage as ShapeLanguage) : fallback.shapeLanguage,
-    pattern: PATTERNS.includes(input?.pattern as PatternStyle) ? (input?.pattern as PatternStyle) : fallback.pattern,
-    motionDirection: MOTIONS.includes(input?.motionDirection as MotionDirection) ? (input?.motionDirection as MotionDirection) : fallback.motionDirection,
-    contrast: clampPercent(input?.contrast ?? fallback.contrast, 80, 130),
-    soundtrack: {
-      tracks: (input?.soundtrack?.tracks ?? fallback.soundtrack.tracks).map((track) => ({
-        ...track,
-        fileUrl: track.fileUrl?.startsWith("blob:") ? undefined : track.fileUrl,
-      })),
-      activeTrackId: input?.soundtrack?.activeTrackId ?? fallback.soundtrack.activeTrackId,
-      volume: clampPercent(input?.soundtrack?.volume ?? fallback.soundtrack.volume),
-      autoPlay: input?.soundtrack?.autoPlay ?? fallback.soundtrack.autoPlay,
-      loop: input?.soundtrack?.loop ?? fallback.soundtrack.loop,
-    },
     pageBackground: {
       mode: PAGE_MODES.includes(input?.pageBackground?.mode as PageBackgroundMode)
         ? (input?.pageBackground?.mode as PageBackgroundMode)
@@ -397,6 +383,55 @@ export function normalizeBackgroundStudioConfig(
         : fallback.pageBackground.gradientId,
       solidColor: input?.pageBackground?.solidColor ?? fallback.pageBackground.solidColor,
       imageDataUrl: input?.pageBackground?.imageDataUrl ?? fallback.pageBackground.imageDataUrl,
+      overlayOpacity: clampPercent((input?.pageBackground?.overlayOpacity as number | undefined) ?? (legacy?.shellOverlay as number | undefined) ?? fallback.pageBackground.overlayOpacity, 0, 90),
+      blur: clampPercent((input?.pageBackground?.blur as number | undefined) ?? 0, 0, 20),
+    },
+    matchVisual: {
+      presetId: legacyPresetId ?? fallback.matchVisual.presetId,
+      shellBackgroundUrl: input?.matchVisual?.shellBackgroundUrl ?? (legacy?.shellBackgroundUrl as string | null | undefined) ?? preset.shellBackgroundUrl ?? fallback.matchVisual.shellBackgroundUrl,
+      nextMatchBackgroundUrl: input?.matchVisual?.nextMatchBackgroundUrl ?? (legacy?.nextMatchBackgroundUrl as string | null | undefined) ?? preset.nextMatchBackgroundUrl ?? fallback.matchVisual.nextMatchBackgroundUrl,
+      shellOverlay: clampPercent(input?.matchVisual?.shellOverlay ?? (legacy?.shellOverlay as number | undefined) ?? preset.shellOverlay, 0, 90),
+      nextMatchOverlay: clampPercent(input?.matchVisual?.nextMatchOverlay ?? (legacy?.nextMatchOverlay as number | undefined) ?? preset.nextMatchOverlay, 0, 90),
+      shellBlur: clampPercent(input?.matchVisual?.shellBlur ?? (legacy?.shellBlur as number | undefined) ?? preset.shellBlur, 0, 20),
+      shellGlow: clampPercent(input?.matchVisual?.shellGlow ?? (legacy?.shellGlow as number | undefined) ?? preset.shellGlow, 0, 120),
+      nextMatchBlur: clampPercent(input?.matchVisual?.nextMatchBlur ?? (legacy?.nextMatchBlur as number | undefined) ?? preset.nextMatchBlur, 0, 20),
+      nextMatchGlow: clampPercent(input?.matchVisual?.nextMatchGlow ?? (legacy?.nextMatchGlow as number | undefined) ?? preset.nextMatchGlow, 0, 120),
+      skinMode: (input?.matchVisual?.skinMode as BackgroundStudioConfig["matchVisual"]["skinMode"] | undefined) ?? ((legacy?.skinMode as BackgroundStudioConfig["matchVisual"]["skinMode"] | undefined) === "scores-metallic-premium" ? "scores-metallic-premium" : preset.skinMode),
+      glowIntensity: clampPercent(input?.matchVisual?.glowIntensity ?? (legacy?.glowIntensity as number | undefined) ?? preset.glowIntensity),
+      blurStrength: clampPercent(input?.matchVisual?.blurStrength ?? (legacy?.blurStrength as number | undefined) ?? preset.blurStrength, 0, 40),
+      density: clampPercent(input?.matchVisual?.density ?? (legacy?.density as number | undefined) ?? preset.density),
+      depth: clampPercent(input?.matchVisual?.depth ?? (legacy?.depth as number | undefined) ?? preset.depth),
+      textureIntensity: clampPercent(input?.matchVisual?.textureIntensity ?? (legacy?.textureIntensity as number | undefined) ?? preset.textureIntensity),
+      glossIntensity: clampPercent(input?.matchVisual?.glossIntensity ?? (legacy?.glossIntensity as number | undefined) ?? preset.glossIntensity),
+      borderPolishIntensity: clampPercent(input?.matchVisual?.borderPolishIntensity ?? (legacy?.borderPolishIntensity as number | undefined) ?? preset.borderPolishIntensity),
+      shapeLanguage: SHAPES.includes((input?.matchVisual?.shapeLanguage ?? legacy?.shapeLanguage) as ShapeLanguage)
+        ? ((input?.matchVisual?.shapeLanguage ?? legacy?.shapeLanguage) as ShapeLanguage)
+        : preset.shapeLanguage,
+      pattern: PATTERNS.includes((input?.matchVisual?.pattern ?? legacy?.pattern) as PatternStyle)
+        ? ((input?.matchVisual?.pattern ?? legacy?.pattern) as PatternStyle)
+        : preset.pattern,
+      motionDirection: MOTIONS.includes((input?.matchVisual?.motionDirection ?? legacy?.motionDirection) as MotionDirection)
+        ? ((input?.matchVisual?.motionDirection ?? legacy?.motionDirection) as MotionDirection)
+        : preset.motionDirection,
+      contrast: clampPercent(input?.matchVisual?.contrast ?? (legacy?.contrast as number | undefined) ?? preset.contrast, 80, 130),
+    },
+    uiPalette: {
+      useClubColors: input?.uiPalette?.useClubColors ?? (legacy?.palette && typeof legacy.palette === "object" && "useClubColors" in (legacy.palette as object)
+        ? Boolean((legacy.palette as Record<string, unknown>).useClubColors)
+        : fallback.uiPalette.useClubColors),
+      primary: input?.uiPalette?.primary ?? ((legacy?.palette as Record<string, string> | undefined)?.primary ?? preset.primary),
+      secondary: input?.uiPalette?.secondary ?? ((legacy?.palette as Record<string, string> | undefined)?.secondary ?? preset.secondary),
+      highlight: input?.uiPalette?.highlight ?? ((legacy?.palette as Record<string, string> | undefined)?.highlight ?? preset.highlight),
+    },
+    soundtrack: {
+      tracks: (input?.soundtrack?.tracks ?? fallback.soundtrack.tracks).map((track) => ({
+        ...track,
+        fileUrl: track.fileUrl?.startsWith("blob:") ? undefined : track.fileUrl,
+      })),
+      activeTrackId: input?.soundtrack?.activeTrackId ?? fallback.soundtrack.activeTrackId,
+      volume: clampPercent(input?.soundtrack?.volume ?? fallback.soundtrack.volume),
+      autoPlay: input?.soundtrack?.autoPlay ?? fallback.soundtrack.autoPlay,
+      loop: input?.soundtrack?.loop ?? fallback.soundtrack.loop,
     },
   };
 }
@@ -409,9 +444,7 @@ export function buildBackgroundPreviewStyle(params: {
   fallbackGradient: string;
 }) {
   const overlayOpacity = clampPercent(params.overlay) / 100;
-  const imageLayer = params.imageUrl
-    ? `url('${params.imageUrl}')`
-    : params.fallbackGradient;
+  const imageLayer = params.imageUrl ? `url('${params.imageUrl}')` : params.fallbackGradient;
 
   return {
     backgroundImage: `linear-gradient(rgba(2, 6, 23, ${overlayOpacity}), rgba(2, 6, 23, ${overlayOpacity})), ${imageLayer}`,

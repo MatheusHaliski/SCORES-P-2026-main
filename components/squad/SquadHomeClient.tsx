@@ -20,7 +20,7 @@ import { ClubVisualService } from "@/services/ClubVisualService";
 import { ClubUniformAssets, defaultTacticalPreset, defaultUniformAssets, resolveUniformUrl, TacticalPreset, UniformSlot } from "@/types/tactical";
 import { writeClubUniforms, writePreMatchTactic } from "@/lib/tacticalState";
 import { ClubIdentityTheme, createDefaultClubIdentityTheme, normalizeClubIdentityTheme } from "@/types/clubIdentityTheme";
-import { BackgroundStudioConfig, createDefaultStudioConfig, normalizeBackgroundStudioConfig } from "@/types/backgroundStudio";
+import { BackgroundStudioConfig, buildShellBackgroundStyle, createDefaultStudioConfig, normalizeBackgroundStudioConfig } from "@/types/backgroundStudio";
 
 type InboxMessage = {
   id: string;
@@ -909,9 +909,7 @@ export function SquadHomeClient({
     <main
       className="min-h-screen p-6"
       style={{
-        backgroundImage: `linear-gradient(rgba(2,6,23,${backgroundStudio.shellOverlay / 100}), rgba(2,6,23,${backgroundStudio.shellOverlay / 100})), ${backgroundStudio.shellBackgroundUrl ? `url('${backgroundStudio.shellBackgroundUrl}')` : "linear-gradient(135deg,#0f172a,#020617)"}`,
-        backgroundSize: "cover",
-        backgroundPosition: "center",
+        ...buildShellBackgroundStyle(backgroundStudio),
         color: identityTheme.textColor,
       }}
     >
@@ -950,10 +948,10 @@ export function SquadHomeClient({
                 venue={nextVenue}
                 identityTheme={identityTheme}
                 nextMatchBackground={{
-                  nextMatchBackgroundUrl: backgroundStudio.nextMatchBackgroundUrl,
-                  nextMatchOverlay: backgroundStudio.nextMatchOverlay,
-                  nextMatchBlur: backgroundStudio.nextMatchBlur,
-                  nextMatchGlow: backgroundStudio.nextMatchGlow,
+                  nextMatchBackgroundUrl: backgroundStudio.matchVisual.nextMatchBackgroundUrl,
+                  nextMatchOverlay: backgroundStudio.matchVisual.nextMatchOverlay,
+                  nextMatchBlur: backgroundStudio.matchVisual.nextMatchBlur,
+                  nextMatchGlow: backgroundStudio.matchVisual.nextMatchGlow,
                 }}
               />
             ) : null}
