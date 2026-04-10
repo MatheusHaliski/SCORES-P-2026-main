@@ -102,6 +102,12 @@ export interface BackgroundStudioPreset {
 }
 
 export const AUTHVIEW_DEFAULT_BACKGROUND_CSS = "url('/ChatGPT Image 9 de abr. de 2026, 13_10_17.png')";
+export const PAGE_BACKGROUND_GRADIENTS: Array<{ id: PageBackgroundGradientId; name: string; css: string }> = [
+  { id: "deep-night", name: "Deep Night", css: "linear-gradient(135deg,#020617,#0f172a,#1e293b)" },
+  { id: "arena-purple", name: "Arena Purple", css: "linear-gradient(135deg,#1e1b4b,#312e81,#4f46e5)" },
+  { id: "emerald-glow", name: "Emerald Glow", css: "linear-gradient(135deg,#022c22,#065f46,#10b981)" },
+  { id: "sunset-lights", name: "Sunset Lights", css: "linear-gradient(135deg,#7c2d12,#c2410c,#fb7185)" },
+];
 
 export const BACKGROUND_STUDIO_PRESETS: BackgroundStudioPreset[] = [
   {
@@ -318,13 +324,27 @@ export function buildBackgroundImage(config: BackgroundStudioConfig) {
 
 export function buildShellBackgroundStyle(config: BackgroundStudioConfig) {
   const overlayOpacity = clampPercent(config.shellOverlay) / 100;
-  const shellImage = config.shellBackgroundUrl
-    ? `url('${config.shellBackgroundUrl}')`
-    : AUTHVIEW_DEFAULT_BACKGROUND_CSS;
+  const solidColor = config.pageBackground.solidColor || "#020617";
+  let shellImage: string | null = null;
+
+  if (config.pageBackground.mode === "upload-image" && config.pageBackground.imageDataUrl) {
+    shellImage = `url('${config.pageBackground.imageDataUrl}')`;
+  } else if (config.pageBackground.mode === "preset-gradient") {
+    const gradient = PAGE_BACKGROUND_GRADIENTS.find((item) => item.id === config.pageBackground.gradientId);
+    shellImage = gradient?.css ?? PAGE_BACKGROUND_GRADIENTS[0].css;
+  } else if (config.pageBackground.mode === "auth-default-image") {
+    shellImage = AUTHVIEW_DEFAULT_BACKGROUND_CSS;
+  } else if (config.shellBackgroundUrl) {
+    shellImage = `url('${config.shellBackgroundUrl}')`;
+  } else {
+    shellImage = AUTHVIEW_DEFAULT_BACKGROUND_CSS;
+  }
 
   return {
-    backgroundColor: "#020617",
-    backgroundImage: `linear-gradient(rgba(2, 6, 23, ${overlayOpacity}), rgba(2, 6, 23, ${overlayOpacity})), ${shellImage}`,
+    backgroundColor: config.pageBackground.mode === "solid-color" ? solidColor : "#020617",
+    backgroundImage: shellImage
+      ? `linear-gradient(rgba(2, 6, 23, ${overlayOpacity}), rgba(2, 6, 23, ${overlayOpacity})), ${shellImage}`
+      : `linear-gradient(rgba(2, 6, 23, ${overlayOpacity}), rgba(2, 6, 23, ${overlayOpacity}))`,
     backgroundSize: "cover",
     backgroundPosition: "center",
     backgroundRepeat: "no-repeat",
