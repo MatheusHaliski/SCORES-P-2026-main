@@ -49,6 +49,22 @@ export function BackgroundStudioModal({ open, onClose, config, onChange, onSave,
     }
     return { backgroundImage: AUTHVIEW_DEFAULT_BACKGROUND_CSS, backgroundSize: "cover", backgroundPosition: "center" };
   }, [config]);
+  const modalChromeStyle = useMemo(
+    () => ({
+      borderColor: `${config.uiPalette.highlight}66`,
+      backgroundImage: `linear-gradient(160deg, ${config.uiPalette.primary}f0, ${config.uiPalette.secondary}c8)`,
+      boxShadow: `0 0 60px ${config.uiPalette.highlight}33`,
+    }),
+    [config.uiPalette.highlight, config.uiPalette.primary, config.uiPalette.secondary],
+  );
+  const primaryActionStyle = useMemo(
+    () => ({
+      borderColor: `${config.uiPalette.highlight}99`,
+      backgroundColor: `${config.uiPalette.highlight}33`,
+      color: "#ecfeff",
+    }),
+    [config.uiPalette.highlight],
+  );
 
   useEffect(() => {
     if (!activeTrack?.fileDataUrl) return;
@@ -181,7 +197,7 @@ export function BackgroundStudioModal({ open, onClose, config, onChange, onSave,
 
   return (
     <div className="fixed inset-0 z-[70] flex items-center justify-center bg-slate-950/85 p-3">
-      <div className="max-h-[94vh] w-full max-w-6xl overflow-auto rounded-3xl border border-cyan-300/30 bg-gradient-to-b from-slate-950 via-slate-900 to-slate-950 p-4 shadow-[0_0_60px_rgba(34,211,238,0.2)]">
+      <div className="max-h-[94vh] w-full max-w-6xl overflow-auto rounded-3xl border p-4" style={modalChromeStyle}>
         <div className="mb-3 flex items-center justify-between border-b border-cyan-300/20 pb-3">
           <div>
             <p className="text-[11px] uppercase tracking-[0.24em] text-cyan-200">Background Studio</p>
@@ -190,7 +206,7 @@ export function BackgroundStudioModal({ open, onClose, config, onChange, onSave,
           </div>
           <div className="flex gap-2">
             <button onClick={onClose} className="rounded-xl border border-white/15 bg-slate-800/80 px-3 py-2 text-xs font-bold text-white">Fechar</button>
-            <button onClick={onSave} className="rounded-xl border border-cyan-300/40 bg-cyan-500/20 px-3 py-2 text-xs font-bold text-cyan-100 shadow-[0_0_20px_rgba(34,211,238,0.25)]">Salvar Background Studio</button>
+            <button onClick={onSave} className="rounded-xl border px-3 py-2 text-xs font-bold shadow-[0_0_20px_rgba(34,211,238,0.25)]" style={primaryActionStyle}>Salvar Background Studio</button>
           </div>
         </div>
 

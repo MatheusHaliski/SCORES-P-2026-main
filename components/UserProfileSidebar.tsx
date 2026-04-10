@@ -45,6 +45,37 @@ export function UserProfileSidebar({
   const resolvedConfig = useMemo(() => normalizeBackgroundStudioConfig(config), [config]);
   const clubPrimary = clubPrimaryColor ?? initialStudioConfig?.uiPalette.primary ?? createDefaultStudioConfig().uiPalette.primary;
   const clubSecondary = clubSecondaryColor ?? initialStudioConfig?.uiPalette.secondary ?? createDefaultStudioConfig().uiPalette.secondary;
+  const sidebarStyle = useMemo(
+    () => ({
+      borderColor: `${resolvedConfig.uiPalette.highlight}66`,
+      backgroundImage: `linear-gradient(132deg, ${resolvedConfig.uiPalette.primary}dd, ${resolvedConfig.uiPalette.secondary}c2)`,
+      boxShadow: `0 18px 45px rgba(0,0,0,0.35), inset 0 0 0 1px ${resolvedConfig.uiPalette.highlight}33`,
+    }),
+    [resolvedConfig.uiPalette.highlight, resolvedConfig.uiPalette.primary, resolvedConfig.uiPalette.secondary],
+  );
+  const panelStyle = useMemo(
+    () => ({
+      borderColor: `${resolvedConfig.uiPalette.highlight}55`,
+      backgroundColor: `${resolvedConfig.uiPalette.primary}88`,
+    }),
+    [resolvedConfig.uiPalette.highlight, resolvedConfig.uiPalette.primary],
+  );
+  const primaryButtonStyle = useMemo(
+    () => ({
+      borderColor: `${resolvedConfig.uiPalette.highlight}88`,
+      backgroundImage: `linear-gradient(136deg, ${resolvedConfig.uiPalette.secondary}dd, ${resolvedConfig.uiPalette.primary}f0)`,
+      color: "#ecfeff",
+    }),
+    [resolvedConfig.uiPalette.highlight, resolvedConfig.uiPalette.primary, resolvedConfig.uiPalette.secondary],
+  );
+  const secondaryButtonStyle = useMemo(
+    () => ({
+      borderColor: `${resolvedConfig.uiPalette.highlight}55`,
+      backgroundColor: `${resolvedConfig.uiPalette.primary}b8`,
+      color: "#ffffff",
+    }),
+    [resolvedConfig.uiPalette.highlight, resolvedConfig.uiPalette.primary],
+  );
 
   useEffect(() => {
     const root = document.documentElement;
@@ -89,14 +120,14 @@ export function UserProfileSidebar({
 
   return (
     <>
-      <aside className="sa-premium-gradient-surface relative z-20 w-full max-w-xs rounded-3xl border border-white/20 p-5 shadow-2xl">
+      <aside className="sa-premium-gradient-surface relative z-20 w-full max-w-xs rounded-3xl border p-5 shadow-2xl" style={sidebarStyle}>
         <h2 className="text-xs font-bold uppercase tracking-[0.2em] text-cyan-300">Perfil</h2>
         <div className="mt-3 space-y-3 text-sm text-slate-200">
-          <div className="sa-premium-gradient-surface-soft rounded-xl border border-white/10 p-3">
+          <div className="sa-premium-gradient-surface-soft rounded-xl border p-3" style={panelStyle}>
             <p className="text-[11px] uppercase tracking-wide text-slate-400">Usuário</p>
             <p className="font-semibold text-white">{userIdentifier || "Usuário autenticado"}</p>
           </div>
-          <div className="sa-premium-gradient-surface-soft rounded-xl border border-white/10 p-3">
+          <div className="sa-premium-gradient-surface-soft rounded-xl border p-3" style={panelStyle}>
             <p className="text-[11px] uppercase tracking-wide text-slate-400">Save atual</p>
             <p className="font-semibold text-white">{activeSaveName || "Nenhum save ativo"}</p>
           </div>
@@ -105,7 +136,8 @@ export function UserProfileSidebar({
         <button
           type="button"
           onClick={() => setOpenStudio(true)}
-          className="sa-premium-gradient-surface-soft mt-5 w-full rounded-xl border border-cyan-300/40 px-4 py-2 text-sm font-black text-cyan-100 shadow-[0_0_20px_rgba(34,211,238,0.24)] transition hover:scale-[1.01]"
+          className="sa-premium-gradient-surface-soft mt-5 w-full rounded-xl border px-4 py-2 text-sm font-black shadow-[0_0_20px_rgba(34,211,238,0.24)] transition hover:scale-[1.01]"
+          style={primaryButtonStyle}
         >
           Abrir Background Studio
         </button>
@@ -113,7 +145,8 @@ export function UserProfileSidebar({
         <button
           type="button"
           onClick={handleLogout}
-          className="sa-premium-gradient-surface-soft mt-3 w-full rounded-xl border border-rose-300/40 px-4 py-2 text-sm font-bold text-white transition hover:border-rose-200/60"
+          className="sa-premium-gradient-surface-soft mt-3 w-full rounded-xl border px-4 py-2 text-sm font-bold transition hover:border-rose-200/60"
+          style={secondaryButtonStyle}
         >
           Logout
         </button>
