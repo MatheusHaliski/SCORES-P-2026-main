@@ -760,7 +760,6 @@ export function SquadHomeClient({
         primaryColor: nextColors.primaryColor,
         secondaryColor: nextColors.secondaryColor,
         accentColor: nextColors.secondaryColor,
-        glowColor: nextColors.secondaryColor,
       },
     }));
     try {
@@ -878,8 +877,14 @@ export function SquadHomeClient({
   const selectedGlobalPlayer = marketPool.find((player) => player.id === selectedGlobalPlayerId) ?? null;
   const currentLeague = editableLeagues.find((league) => league.id === payload.team.leagueId) ?? null;
   const availablePlaystyles = playstyleInventoryService.availableItems(state.inventory);
-  const primaryColor = state.teamColors?.primaryColor ?? payload.team.primaryColor;
-  const secondaryColor = clubVisualService.ensureReadableAccent(state.teamColors?.secondaryColor ?? payload.team.secondaryColor);
+  const activePrimaryColor = openModal === "Identidade do Clube"
+    ? colorDraft.primaryColor
+    : (state.teamColors?.primaryColor ?? payload.team.primaryColor);
+  const activeSecondaryColor = openModal === "Identidade do Clube"
+    ? colorDraft.secondaryColor
+    : (state.teamColors?.secondaryColor ?? payload.team.secondaryColor);
+  const primaryColor = activePrimaryColor;
+  const secondaryColor = clubVisualService.ensureReadableAccent(activeSecondaryColor);
   const identityTheme = normalizeClubIdentityTheme(state.clubIdentityTheme, primaryColor, secondaryColor);
   const activeUniformUrl = resolveUniformUrl(state.uniformAssets ?? defaultUniformAssets);
   const boardMoraleLabel = clubVisualService.reputationToLabel(payload.save.boardReputation);
@@ -904,8 +909,6 @@ export function SquadHomeClient({
     rivalry: payload.nextFixture ? 1.05 : 0.98,
     matchImportance: payload.nextFixture ? 1.08 : 0.95,
   });
-  const shellBackgroundStyle = buildShellBackgroundStyle(backgroundStudio);
-
   return (
     <main
       className="min-h-screen p-6"
@@ -917,7 +920,20 @@ export function SquadHomeClient({
       <div className="mx-auto max-w-7xl space-y-4">
         <header className="premium-surface flex flex-wrap gap-2 p-3" style={{ borderColor: identityTheme.borderColor, boxShadow: `0 0 30px ${identityTheme.glowColor}40` }}>
           {topActions.map((action) => (
-            <button key={action} onClick={() => setOpenModal(action)} className="premium-control px-3 py-1 text-xs font-semibold" style={{ borderColor: identityTheme.borderColor, color: identityTheme.textColor }}>
+            <button
+              key={action}
+              onClick={() => {
+                if (action === "Identidade do Clube") {
+                  setColorDraft({
+                    primaryColor: state.teamColors?.primaryColor ?? payload.team.primaryColor,
+                    secondaryColor: state.teamColors?.secondaryColor ?? payload.team.secondaryColor,
+                  });
+                }
+                setOpenModal(action);
+              }}
+              className="premium-control px-3 py-1 text-xs font-semibold"
+              style={{ borderColor: identityTheme.borderColor, color: identityTheme.textColor }}
+            >
               {action} {action === "Email" && unreadCount > 0 && <span className="ml-1 rounded-full bg-red-500 px-1.5 py-0.5 text-[10px]">{unreadCount}</span>}
             </button>
           ))}
