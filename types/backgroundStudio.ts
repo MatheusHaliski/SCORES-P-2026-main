@@ -23,6 +23,7 @@ export interface SoundtrackItem {
   name: string;
   category: SoundtrackCategory;
   fileName?: string;
+  fileDataUrl?: string;
   fileUrl?: string;
 }
 
@@ -378,7 +379,10 @@ export function normalizeBackgroundStudioConfig(
     motionDirection: MOTIONS.includes(input?.motionDirection as MotionDirection) ? (input?.motionDirection as MotionDirection) : fallback.motionDirection,
     contrast: clampPercent(input?.contrast ?? fallback.contrast, 80, 130),
     soundtrack: {
-      tracks: input?.soundtrack?.tracks ?? fallback.soundtrack.tracks,
+      tracks: (input?.soundtrack?.tracks ?? fallback.soundtrack.tracks).map((track) => ({
+        ...track,
+        fileUrl: track.fileUrl?.startsWith("blob:") ? undefined : track.fileUrl,
+      })),
       activeTrackId: input?.soundtrack?.activeTrackId ?? fallback.soundtrack.activeTrackId,
       volume: clampPercent(input?.soundtrack?.volume ?? fallback.soundtrack.volume),
       autoPlay: input?.soundtrack?.autoPlay ?? fallback.soundtrack.autoPlay,
