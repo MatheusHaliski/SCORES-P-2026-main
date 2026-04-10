@@ -1,6 +1,6 @@
 "use client";
 
-import { ReactNode, useMemo, useRef, useState } from "react";
+import { ReactNode, useEffect, useMemo, useRef, useState } from "react";
 import {
   AUTHVIEW_DEFAULT_BACKGROUND_CSS,
   BACKGROUND_STUDIO_PRESETS,
@@ -97,6 +97,7 @@ function SlotCard(params: {
 
 export function BackgroundStudioModal({ open, onClose, config, onChange, onSave, clubPrimary, clubSecondary }: Props) {
   const [trackDraft, setTrackDraft] = useState({ name: "", category: "Hype" as SoundtrackCategory, fileName: "", fileDataUrl: "" });
+  const [activeTrackPlaybackUrl, setActiveTrackPlaybackUrl] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement | null>(null);
   const imageInputRef = useRef<HTMLInputElement | null>(null);
   const shellInputRef = useRef<HTMLInputElement | null>(null);
@@ -104,6 +105,7 @@ export function BackgroundStudioModal({ open, onClose, config, onChange, onSave,
   const handleShellUploadClick = () => shellInputRef.current?.click();
   const handleNextMatchUploadClick = () => nextMatchInputRef.current?.click();
   const activeTrack = config.soundtrack.tracks.find((track) => track.id === config.soundtrack.activeTrackId) ?? null;
+  const activeTrackPlaybackSrc = activeTrack?.fileDataUrl ? activeTrackPlaybackUrl : (activeTrack?.fileUrl ?? null);
   const previewBackground = useMemo(() => buildBackgroundImage(config), [config]);
   const shellPreviewStyle = useMemo(() => {
     if (config.pageBackground.mode === "solid-color") return { backgroundColor: config.pageBackground.solidColor };
@@ -116,6 +118,27 @@ export function BackgroundStudioModal({ open, onClose, config, onChange, onSave,
     }
     return { backgroundImage: AUTHVIEW_DEFAULT_BACKGROUND_CSS, backgroundSize: "cover", backgroundPosition: "center" };
   }, [config]);
+
+  useEffect(() => {
+    if (!activeTrack?.fileDataUrl) return;
+
+    const response = fetch(activeTrack.fileDataUrl).then((result) => result.blob());
+    let cancelled = false;
+    let playbackUrl: string | null = null;
+    response.then((blob) => {
+      if (cancelled) return;
+      playbackUrl = URL.createObjectURL(blob);
+      setActiveTrackPlaybackUrl(playbackUrl);
+    }).catch(() => {
+      if (cancelled) return;
+      setActiveTrackPlaybackUrl(null);
+    });
+
+    return () => {
+      cancelled = true;
+      if (playbackUrl) URL.revokeObjectURL(playbackUrl);
+    };
+  }, [activeTrack?.fileDataUrl]);
 
   if (!open) return null;
 
@@ -483,7 +506,7 @@ export function BackgroundStudioModal({ open, onClose, config, onChange, onSave,
                     <label className="inline-flex items-center gap-1"><input type="checkbox" checked={config.soundtrack.loop} onChange={(event) => onChange({ ...config, soundtrack: { ...config.soundtrack, loop: event.target.checked } })} />Loop</label>
                   </div>
                   <p className="text-xs text-cyan-100">Trilha ativa: <b>{activeTrack?.name ?? "Nenhuma"}</b></p>
-                  {(activeTrack?.fileDataUrl || activeTrack?.fileUrl) && <audio controls src={activeTrack.fileDataUrl ?? activeTrack.fileUrl} className="w-full" />}
+                  {activeTrackPlaybackSrc && <audio controls src={activeTrackPlaybackSrc} className="w-full" />}
                 </div>
               </div>
             </section>
