@@ -103,11 +103,7 @@ export function BackgroundStudioModal({ open, onClose, config, onChange, onSave,
   const nextMatchInputRef = useRef<HTMLInputElement | null>(null);
   const handleShellUploadClick = () => shellInputRef.current?.click();
   const handleNextMatchUploadClick = () => nextMatchInputRef.current?.click();
-
-  const activeTrack = useMemo(
-    () => config.soundtrack.tracks.find((track) => track.id === config.soundtrack.activeTrackId) ?? null,
-    [config.soundtrack.activeTrackId, config.soundtrack.tracks],
-  );
+  const activeTrack = config.soundtrack.tracks.find((track) => track.id === config.soundtrack.activeTrackId) ?? null;
   const previewBackground = useMemo(() => buildBackgroundImage(config), [config]);
   const shellPreviewStyle = useMemo(() => {
     if (config.pageBackground.mode === "solid-color") return { backgroundColor: config.pageBackground.solidColor };
@@ -119,7 +115,7 @@ export function BackgroundStudioModal({ open, onClose, config, onChange, onSave,
       return { backgroundImage: gradient?.css ?? PAGE_BACKGROUND_GRADIENTS[0].css };
     }
     return { backgroundImage: AUTHVIEW_DEFAULT_BACKGROUND_CSS, backgroundSize: "cover", backgroundPosition: "center" };
-  }, [config.pageBackground, PAGE_BACKGROUND_GRADIENTS]);
+  }, [config]);
 
   if (!open) return null;
 
