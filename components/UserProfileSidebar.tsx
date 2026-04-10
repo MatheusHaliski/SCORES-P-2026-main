@@ -13,6 +13,8 @@ type UserProfileSidebarProps = {
   activeSaveName?: string;
   saveId?: string;
   initialStudioConfig?: BackgroundStudioConfig;
+  clubPrimaryColor?: string;
+  clubSecondaryColor?: string;
 };
 
 const studioStorageKey = (saveId: string) => `scores:background-studio:${saveId}`;
@@ -22,6 +24,8 @@ export function UserProfileSidebar({
   activeSaveName,
   saveId = "save-001",
   initialStudioConfig,
+  clubPrimaryColor,
+  clubSecondaryColor,
 }: UserProfileSidebarProps) {
   const router = useRouter();
   const [openStudio, setOpenStudio] = useState(false);
@@ -39,6 +43,8 @@ export function UserProfileSidebar({
   });
 
   const resolvedConfig = useMemo(() => normalizeBackgroundStudioConfig(config), [config]);
+  const clubPrimary = clubPrimaryColor ?? initialStudioConfig?.palette.primary ?? createDefaultStudioConfig().palette.primary;
+  const clubSecondary = clubSecondaryColor ?? initialStudioConfig?.palette.secondary ?? createDefaultStudioConfig().palette.secondary;
 
   useEffect(() => {
     const root = document.documentElement;
@@ -119,6 +125,8 @@ export function UserProfileSidebar({
         config={resolvedConfig}
         onChange={setConfig}
         onSave={handleSaveStudio}
+        clubPrimary={clubPrimary}
+        clubSecondary={clubSecondary}
       />
     </>
   );

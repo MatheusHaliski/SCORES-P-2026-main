@@ -21,9 +21,21 @@ type Props = {
   config: BackgroundStudioConfig;
   onChange: (next: BackgroundStudioConfig) => void;
   onSave: () => void;
+  clubPrimary: string;
+  clubSecondary: string;
 };
 
 const sliderClass = "w-full accent-cyan-300";
+const SHAPES = ["none", "orb", "diamond", "mesh", "shards", "court-lines", "hex-grid"] as const;
+const PATTERNS = ["smooth", "broadcast", "gradient-wave", "high-contrast"] as const;
+const MOTIONS = ["none", "left-to-right", "right-to-left", "top-down", "center-pulse"] as const;
+const CATEGORIES: SoundtrackCategory[] = ["Hype", "Arena", "Calm Focus", "Playoffs", "Premium Lounge", "Retro Sports", "Urban Energy"];
+const PAGE_BACKGROUND_GRADIENTS = [
+  { id: "deep-night", name: "Deep Night", css: "linear-gradient(135deg,#020617,#0f172a,#1e293b)" },
+  { id: "arena-purple", name: "Arena Purple", css: "linear-gradient(135deg,#1e1b4b,#312e81,#4f46e5)" },
+  { id: "emerald-glow", name: "Emerald Glow", css: "linear-gradient(135deg,#022c22,#065f46,#10b981)" },
+  { id: "sunset-lights", name: "Sunset Lights", css: "linear-gradient(135deg,#7c2d12,#c2410c,#fb7185)" },
+] as const;
 
 function SlotCard(params: {
   title: string;
@@ -85,7 +97,10 @@ function SlotCard(params: {
   );
 }
 
-export function BackgroundStudioModal({ open, onClose, config, onChange, onSave }: Props) {
+export function BackgroundStudioModal({ open, onClose, config, onChange, onSave, clubPrimary, clubSecondary }: Props) {
+  const [trackDraft, setTrackDraft] = useState({ name: "", category: "Hype" as SoundtrackCategory, fileName: "", fileUrl: "" });
+  const fileInputRef = useRef<HTMLInputElement | null>(null);
+  const imageInputRef = useRef<HTMLInputElement | null>(null);
   const shellInputRef = useRef<HTMLInputElement | null>(null);
   const nextMatchInputRef = useRef<HTMLInputElement | null>(null);
   const imageInputRef = useRef<HTMLInputElement | null>(null);
@@ -152,6 +167,72 @@ export function BackgroundStudioModal({ open, onClose, config, onChange, onSave 
         primary: config.palette.useClubColors ? clubPrimary : preset.primary,
         secondary: config.palette.useClubColors ? clubSecondary : preset.secondary,
         highlight: preset.highlight,
+      },
+    });
+  };
+
+  const addTrack = () => {
+    if (!trackDraft.name.trim()) return;
+    const nextTrack: SoundtrackItem = {
+      id: `custom-${Date.now()}`,
+      name: trackDraft.name.trim(),
+      category: trackDraft.category,
+      fileName: trackDraft.fileName || undefined,
+      fileUrl: trackDraft.fileUrl || undefined,
+    };
+    onChange({
+      ...config,
+      soundtrack: {
+        ...config.soundtrack,
+        tracks: [...config.soundtrack.tracks, nextTrack],
+        activeTrackId: config.soundtrack.activeTrackId ?? nextTrack.id,
+      },
+    });
+    setTrackDraft({ name: "", category: "Hype", fileName: "", fileUrl: "" });
+  };
+
+  const updateTrack = (trackId: string, patch: Partial<SoundtrackItem>) => {
+    onChange({
+      ...config,
+      soundtrack: {
+        ...config.soundtrack,
+        tracks: config.soundtrack.tracks.map((track) => (track.id === trackId ? { ...track, ...patch } : track)),
+      },
+    });
+  };
+
+  const removeTrack = (trackId: string) => {
+    const tracks = config.soundtrack.tracks.filter((track) => track.id !== trackId);
+    onChange({
+      ...config,
+      soundtrack: {
+        ...config.soundtrack,
+        tracks,
+        activeTrackId: config.soundtrack.activeTrackId === trackId ? tracks[0]?.id ?? null : config.soundtrack.activeTrackId,
+      },
+    });
+  };
+
+  const applyDerivedClubTheme = () => {
+    onChange({
+      ...config,
+      palette: {
+        ...config.palette,
+        useClubColors: true,
+        primary: clubPrimary,
+        secondary: clubSecondary,
+      },
+      glowIntensity: Math.max(55, config.glowIntensity),
+      contrast: Math.max(102, config.contrast),
+    });
+  };
+
+  const updatePageBackgroundMode = (mode: PageBackgroundMode) => {
+    onChange({
+      ...config,
+      pageBackground: {
+        ...config.pageBackground,
+        mode,
       },
     });
   };
@@ -486,7 +567,7 @@ export function BackgroundStudioModal({ open, onClose, config, onChange, onSave 
               <div className="rounded-xl border border-white/15 p-3" style={{ backgroundImage: previewBackground, filter: `contrast(${config.contrast}%) blur(${Math.max(0, config.blurStrength - 12)}px)` }}>
                 <p className="text-xs uppercase tracking-[0.18em] text-cyan-100">Painel principal</p>
                 <p className="text-lg font-black text-white">SCORES Squad HQ</p>
-                <p className="text-xs text-slate-200">Preset: {getPresetById(config.preset).name}</p>
+                <p className="text-xs text-slate-200">Preset: {getBackgroundStudioPreset(config.preset).name}</p>
               </div>
 
               <div className={`rounded-xl border border-white/15 p-3 ${config.skinMode === "scores-metallic-premium" ? "sa-premium-metallic-panel" : "bg-slate-900/65"}`} style={{ boxShadow: `0 0 ${Math.max(18, config.glowIntensity)}px ${config.palette.highlight}55` }}>
