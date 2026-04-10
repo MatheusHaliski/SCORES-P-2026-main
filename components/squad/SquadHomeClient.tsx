@@ -20,7 +20,7 @@ import { ClubVisualService } from "@/services/ClubVisualService";
 import { ClubUniformAssets, defaultTacticalPreset, defaultUniformAssets, resolveUniformUrl, TacticalPreset, UniformSlot } from "@/types/tactical";
 import { writeClubUniforms, writePreMatchTactic } from "@/lib/tacticalState";
 import { ClubIdentityTheme, createDefaultClubIdentityTheme, normalizeClubIdentityTheme } from "@/types/clubIdentityTheme";
-import { BackgroundStudioConfig, createDefaultStudioConfig, normalizeBackgroundStudioConfig } from "@/types/backgroundStudio";
+import { BackgroundStudioConfig, buildShellBackgroundStyle, createDefaultStudioConfig, normalizeBackgroundStudioConfig } from "@/types/backgroundStudio";
 
 type InboxMessage = {
   id: string;
@@ -904,14 +904,13 @@ export function SquadHomeClient({
     rivalry: payload.nextFixture ? 1.05 : 0.98,
     matchImportance: payload.nextFixture ? 1.08 : 0.95,
   });
+  const shellBackgroundStyle = buildShellBackgroundStyle(backgroundStudio);
 
   return (
     <main
       className="min-h-screen p-6"
       style={{
-        backgroundImage: `linear-gradient(rgba(2,6,23,${backgroundStudio.shellOverlay / 100}), rgba(2,6,23,${backgroundStudio.shellOverlay / 100})), ${backgroundStudio.shellBackgroundUrl ? `url('${backgroundStudio.shellBackgroundUrl}')` : "linear-gradient(135deg,#0f172a,#020617)"}`,
-        backgroundSize: "cover",
-        backgroundPosition: "center",
+        ...shellBackgroundStyle,
         color: identityTheme.textColor,
       }}
     >

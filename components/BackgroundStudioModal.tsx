@@ -6,6 +6,7 @@ import {
   BACKGROUND_STUDIO_PRESETS,
   BackgroundStudioConfig,
   PageBackgroundMode,
+  PAGE_BACKGROUND_GRADIENTS,
   SoundtrackCategory,
   SoundtrackItem,
   buildBackgroundImage,
@@ -28,13 +29,6 @@ const SHAPES = ["none", "orb", "diamond", "mesh", "shards", "court-lines", "hex-
 const PATTERNS = ["smooth", "broadcast", "gradient-wave", "high-contrast"] as const;
 const MOTIONS = ["none", "left-to-right", "right-to-left", "top-down", "center-pulse"] as const;
 const CATEGORIES: SoundtrackCategory[] = ["Hype", "Arena", "Calm Focus", "Playoffs", "Premium Lounge", "Retro Sports", "Urban Energy"];
-const PAGE_BACKGROUND_GRADIENTS = [
-  { id: "deep-night", name: "Deep Night", css: "linear-gradient(135deg,#020617,#0f172a,#1e293b)" },
-  { id: "arena-purple", name: "Arena Purple", css: "linear-gradient(135deg,#1e1b4b,#312e81,#4f46e5)" },
-  { id: "emerald-glow", name: "Emerald Glow", css: "linear-gradient(135deg,#022c22,#065f46,#10b981)" },
-  { id: "sunset-lights", name: "Sunset Lights", css: "linear-gradient(135deg,#7c2d12,#c2410c,#fb7185)" },
-] as const;
-
 function SlotCard(params: {
   title: string;
   subtitle: string;
