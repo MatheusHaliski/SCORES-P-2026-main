@@ -117,23 +117,6 @@ export function BackgroundStudioModal({ open, onClose, config, onChange, onSave,
     return { backgroundImage: AUTHVIEW_DEFAULT_BACKGROUND_CSS, backgroundSize: "cover", backgroundPosition: "center" };
   }, [config]);
 
-  const activeTrack = useMemo(
-    () => config.soundtrack.tracks.find((track) => track.id === config.soundtrack.activeTrackId) ?? null,
-    [config.soundtrack.activeTrackId, config.soundtrack.tracks],
-  );
-  const previewBackground = useMemo(() => buildBackgroundImage(config), [config]);
-  const shellPreviewStyle = useMemo(() => {
-    if (config.pageBackground.mode === "solid-color") return { backgroundColor: config.pageBackground.solidColor };
-    if (config.pageBackground.mode === "upload-image" && config.pageBackground.imageDataUrl) {
-      return { backgroundImage: `url('${config.pageBackground.imageDataUrl}')`, backgroundSize: "cover", backgroundPosition: "center" };
-    }
-    if (config.pageBackground.mode === "preset-gradient") {
-      const gradient = PAGE_BACKGROUND_GRADIENTS.find((item) => item.id === config.pageBackground.gradientId);
-      return { backgroundImage: gradient?.css ?? PAGE_BACKGROUND_GRADIENTS[0].css };
-    }
-    return { backgroundImage: AUTHVIEW_DEFAULT_BACKGROUND_CSS, backgroundSize: "cover", backgroundPosition: "center" };
-  }, [config.pageBackground, PAGE_BACKGROUND_GRADIENTS]);
-
   if (!open) return null;
 
   const applyPreset = (presetId: BackgroundStudioConfig["preset"]) => {
