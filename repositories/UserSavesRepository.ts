@@ -1,8 +1,9 @@
-import { mockFixtures, mockLeagues, mockTeams, mockUserSaves } from "@/mocks/gameData";
+import { mockFixtures, mockUserSaves } from "@/mocks/gameData";
 import { UserSave } from "@/types/game";
 import { BackgroundStudioConfig } from "@/types/backgroundStudio";
 import { firestoreDb, shouldUseFirebase } from "@/lib/firebase/config";
 import { parseNewSaveId } from "@/lib/saveId";
+import { readGlobalDb } from "@/lib/globalDb";
 
 const saveProgressOverrides = new Map<string, Partial<UserSave>>();
 const persistedSaveStateKey = (saveId: string) => `scores:save:${saveId}`;
@@ -36,8 +37,9 @@ const buildDynamicSave = (saveId: string): UserSave | undefined => {
   if (!parsedSave) return undefined;
   const { leagueId, teamId, managerName, saveName } = parsedSave;
 
-  const team = mockTeams.find((item) => item.id === teamId && item.leagueId === leagueId);
-  const league = mockLeagues.find((item) => item.id === leagueId);
+  const globalDb = readGlobalDb();
+  const team = globalDb.teams.find((item) => item.id === teamId && item.leagueId === leagueId);
+  const league = globalDb.leagues.find((item) => item.id === leagueId);
   if (!team || !league) return undefined;
 
   const nextFixture = mockFixtures.find((fixture) => fixture.leagueId === leagueId && fixture.status === "scheduled" && (fixture.homeTeamId === teamId || fixture.awayTeamId === teamId))
