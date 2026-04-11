@@ -10,15 +10,15 @@ import { TacticSelector } from "@/components/tactical/TacticSelector";
 import { BenchStrip } from "@/components/tactical/BenchStrip";
 import { defaultTacticalPreset, defaultUniformAssets, TacticalPreset } from "@/types/tactical";
 
-export function HTManagerClient({ saveId }: { saveId: string }) {
+export function HTManagerClient({ saveId, fixtureId }: { saveId: string; fixtureId: string }) {
   const router = useRouter();
   const service = useMemo(() => new MatchSessionService(), []);
   const [session, setSession] = useState<MatchSession | null>(null);
   const [selectedOutPlayerId, setSelectedOutPlayerId] = useState<string | null>(null);
 
   useEffect(() => {
-    service.getSession(saveId).then(setSession);
-  }, [saveId, service]);
+    service.getSession(saveId, fixtureId).then(setSession);
+  }, [fixtureId, saveId, service]);
 
   if (!session) return <p className="text-slate-300">Carregando sessão...</p>;
 
@@ -74,7 +74,7 @@ export function HTManagerClient({ saveId }: { saveId: string }) {
         onClick={async () => {
           const next = await service.continueFromBreak(session);
           setSession(next);
-          router.push(`/match-board?saveId=${saveId}`);
+          router.push(`/match-board?saveId=${saveId}&fixtureId=${fixtureId}`);
         }}
         className="premium-control w-full border border-cyan-300/50 bg-cyan-500/20 px-4 py-3 text-sm font-bold text-cyan-100"
       >

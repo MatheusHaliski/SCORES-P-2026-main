@@ -58,6 +58,7 @@ export type LiveFixtureState = {
 export type MatchSession = {
   id: string;
   saveId: string;
+  fixtureId: string;
   leagueId: string;
   round: number;
   quarter: 1 | 2 | 3 | 4;
@@ -78,6 +79,9 @@ export type MatchSession = {
   opponentBench: LineupPlayer[];
   substitutions: Array<{ outPlayerId: string; inPlayerId: string; quarter: number; at: string }>;
   injuredPlayerIds: string[];
+  injuryCooldownTicks: number;
+  recentEventTypes: string[];
+  runtimeSeed: number;
   pendingInjury: null | {
     outPlayerId: string;
     outPlayerName: string;
@@ -99,6 +103,7 @@ export type MatchSession = {
 
 export type CreateMatchSessionPayload = {
   saveId: string;
+  fixtureId: string;
   leagueId: string;
   round: number;
   userTeamId: string;

@@ -58,7 +58,8 @@ export class MatchProgressEngine {
     const userTacticImpact = TacticImpactEngine.for(session.userTeamTactic);
     const oppTacticImpact = TacticImpactEngine.for(session.opponentTeamTactic);
 
-    const basePossessions = 0.23 * ((userTacticImpact.possessions + oppTacticImpact.possessions) / 2);
+    const quarterPulse = 0.92 + (session.quarter * 0.04) + random() * 0.08;
+    const basePossessions = 0.2 * ((userTacticImpact.possessions + oppTacticImpact.possessions) / 2) * quarterPulse;
     const paceFactor = (userSkill.transitionPace + oppSkill.transitionPace) / 2;
     const possessionRoll = basePossessions * paceFactor;
 
@@ -71,7 +72,8 @@ export class MatchProgressEngine {
       const attackStrength = userLineupImpact.attack * userTacticImpact.attack * userLineupImpact.staminaPenalty * (0.45 + userSkill.offenseCreation * 0.3 + userSkill.passingControl * 0.25);
       const defenseResistance = oppLineupImpact.defense * oppTacticImpact.defense * oppLineupImpact.staminaPenalty * (0.55 + oppSkill.defensivePressure * 0.45);
       const clutchWindow = nextTimeRemaining < 180 ? (userSkill.clutchAndIq - oppSkill.clutchAndIq) * 0.08 : 0;
-      const userChanceToScore = clamp(0.38 + (attackStrength - defenseResistance) * 0.8 + clutchWindow, 0.2, 0.75);
+      const momentumNoise = (random() - 0.5) * 0.08;
+      const userChanceToScore = clamp(0.37 + (attackStrength - defenseResistance) * 0.78 + clutchWindow + momentumNoise, 0.2, 0.78);
 
       const scoringTeamIsUser = random() < userChanceToScore;
       const scoringTactic = scoringTeamIsUser ? session.userTeamTactic : session.opponentTeamTactic;
@@ -81,18 +83,45 @@ export class MatchProgressEngine {
 
       const shootingLineupSkill = scoringTeamIsUser ? userSkill : oppSkill;
       const defendingLineupSkill = scoringTeamIsUser ? oppSkill : userSkill;
-      const shot3Chance = (scoringTactic === "wing_play" ? 0.48 : 0.3) + (shootingLineupSkill.contestShooting - 0.5) * 0.18;
+      const shot3Chance = (scoringTactic === "wing_play" ? 0.5 : scoringTactic === "fast_transition" ? 0.34 : 0.29) + (shootingLineupSkill.contestShooting - 0.5) * 0.18;
       const paint2Chance = (scoringTactic === "counter_attack" ? 0.74 : 0.56) + (shootingLineupSkill.offenseCreation - defendingLineupSkill.defensivePressure) * 0.2;
 
-      let points: 2 | 3 = random() < shot3Chance ? 3 : 2;
-      if (points === 2 && random() > paint2Chance) points = 3;
-      if (random() < 0.05 * variance) points = 2;
+      const isThreeAttempt = random() < shot3Chance;
+      const isLateClock = nextTimeRemaining < 24 || random() < 0.12;
+      const madeChance = clamp((isThreeAttempt ? 0.34 : 0.49) + (shootingLineupSkill.contestShooting - 0.5) * 0.2 - (defendingLineupSkill.defensivePressure - 0.5) * 0.18 + (isLateClock ? -0.06 : 0), 0.2, 0.78);
+      const isMade = random() < madeChance;
+      let points: 0 | 2 | 3 = isThreeAttempt ? 3 : 2;
+      if (!isMade) points = 0;
+      if (!isThreeAttempt && random() > paint2Chance) points = 0;
+      if (random() < 0.05 * variance && points > 0) points = 2;
+      const previousEvent = session.recentEventTypes.at(-1);
+      if (previousEvent === "3PT_MADE" && points === 3 && random() < 0.45) points = 2;
 
-      if (scoringTeamIsUser) {
+      if (points > 0 && scoringTeamIsUser) {
         if (userIsHome) homeDelta += points;
         else awayDelta += points;
-      } else if (userIsHome) awayDelta += points;
-      else homeDelta += points;
+      } else if (points > 0 && userIsHome) awayDelta += points;
+      else if (points > 0) homeDelta += points;
+
+      const isShootingFoul = random() < (0.08 + Math.max(0, (1 - defendingLineupSkill.defensivePressure) * 0.06));
+      const andOne = points === 2 && isShootingFoul && random() < 0.22;
+      const freeThrowSkill = (scorer?.attributes?.shooting?.free_throw ?? 70) / 100;
+      const pressureMod = nextTimeRemaining < 120 && session.quarter === 4 ? -0.07 : 0;
+      const ftMakeChance = clamp(0.62 + freeThrowSkill * 0.28 + pressureMod, 0.45, 0.92);
+      let ftPoints = 0;
+      let ftText = "";
+      if (isShootingFoul && (points === 0 || andOne)) {
+        const attempts = andOne ? 1 : (isThreeAttempt ? 3 : 2);
+        for (let i = 0; i < attempts; i += 1) {
+          if (random() < ftMakeChance) ftPoints += 1;
+        }
+        if (scoringTeamIsUser) {
+          if (userIsHome) homeDelta += ftPoints;
+          else awayDelta += ftPoints;
+        } else if (userIsHome) awayDelta += ftPoints;
+        else homeDelta += ftPoints;
+        ftText = attempts === 1 ? "converte o and-one da linha." : (ftPoints === attempts ? "acerta todos os lances livres." : ftPoints === 0 ? "erra todos da linha." : "divide os lances livres.");
+      }
 
       newEvents.push({
         id: `ev-${Date.now()}-${Math.floor(random() * 99999)}`,
@@ -100,16 +129,30 @@ export class MatchProgressEngine {
         second: elapsed,
         teamId: scoringTeamIsUser ? session.userTeamId : session.opponentTeamId,
         playerName: scorer?.playerName ?? (scoringTeamIsUser ? "Seu time" : "Adversário"),
-        type: points === 3 ? "3PT_MADE" : "2PT_MADE",
-        text: `${scoringTeamIsUser ? "Seu time" : "Adversário"}: ${scorer?.playerName ?? "Jogador"} converte ${points} pts (${formatClock(nextTimeRemaining)}).`,
+        type: points === 3 ? (isMade ? "3PT_MADE" : "3PT_ATTEMPT_MISS") : points === 2 ? (isMade ? "2PT_MADE" : "2PT_ATTEMPT_MISS") : "MISS",
+        text: points > 0
+          ? `${scoringTeamIsUser ? "Seu time" : "Adversário"}: ${scorer?.playerName ?? "Jogador"} converte ${points} pts ${isLateClock ? "no estouro do relógio" : ""}.`
+          : `${scorer?.playerName ?? "Jogador"} força arremesso ${isThreeAttempt ? "de 3" : "de 2"} e erra.`,
       });
+      if (isShootingFoul && (points === 0 || andOne)) {
+        newEvents.push({
+          id: `ev-ft-${Date.now()}-${Math.floor(random() * 99999)}`,
+          fixtureId: userFixture.id,
+          second: elapsed,
+          teamId: scoringTeamIsUser ? session.userTeamId : session.opponentTeamId,
+          playerName: scorer?.playerName ?? "Jogador",
+          type: andOne ? "AND_ONE" : "SHOOTING_FOUL",
+          text: `${scorer?.playerName ?? "Jogador"} sofre falta de arremesso, vai para a linha e ${ftText}`,
+        });
+      }
     }
 
-    if (random() < 0.045) {
+    const canTriggerInjury = session.injuryCooldownTicks <= 0;
+    if (canTriggerInjury && random() < 0.008) {
       const candidates = session.userLineup.filter((player) => player.injuryStatus !== "Lesionado");
       const risky = [...candidates].sort((a, b) => (a.stamina + a.attributes.physical.durability * 0.25) - (b.stamina + b.attributes.physical.durability * 0.25));
       const victim = risky[0];
-      if (victim) {
+      if (victim && (victim.stamina < 58 || random() < 0.2)) {
         newEvents.push({
           id: `ev-injury-${Date.now()}-${Math.floor(random() * 99999)}`,
           fixtureId: userFixture.id,
@@ -171,11 +214,11 @@ export class MatchProgressEngine {
 
     const drainedUserLineup = session.userLineup.map((player) => ({
       ...player,
-      stamina: clamp(player.stamina - simulatedSecondsPerTick * 0.06 * userTacticImpact.staminaDrain, 45, 100),
+      stamina: clamp(player.stamina - simulatedSecondsPerTick * 0.045 * userTacticImpact.staminaDrain, 48, 100),
     }));
     const drainedOpponentLineup = session.opponentLineup.map((player) => ({
       ...player,
-      stamina: clamp(player.stamina - simulatedSecondsPerTick * 0.05 * oppTacticImpact.staminaDrain, 45, 100),
+      stamina: clamp(player.stamina - simulatedSecondsPerTick * 0.04 * oppTacticImpact.staminaDrain, 48, 100),
     }));
 
     const injuryEvent = newEvents.find((event) => event.type === "INJURY");
@@ -199,6 +242,8 @@ export class MatchProgressEngine {
       userLineup: drainedUserLineup.map((player) => injuryPlayerId && player.playerId === injuryPlayerId ? { ...player, injuryStatus: "Lesionado" } : player),
       opponentLineup: drainedOpponentLineup,
       injuredPlayerIds: injuryPlayerId ? [...new Set([...session.injuredPlayerIds, injuryPlayerId])] : session.injuredPlayerIds,
+      injuryCooldownTicks: injuryPlayerId ? 28 : Math.max(0, session.injuryCooldownTicks - 1),
+      recentEventTypes: [...session.recentEventTypes, ...newEvents.map((event) => event.type)].slice(-8),
       pendingInjury: pendingInjury ?? session.pendingInjury,
       score: {
         user: userIsHome ? userFixtureAfter?.homeScore ?? session.score.user : userFixtureAfter?.awayScore ?? session.score.user,

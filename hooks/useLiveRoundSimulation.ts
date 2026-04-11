@@ -10,6 +10,8 @@ import { HalftimeSnapshot } from "@/types/liveMatch";
 
 type Params = {
   saveId: string;
+  fixtureId?: string;
+  forceFresh?: boolean;
   leagueId: string;
   round: number;
   fixtures: Fixture[];
@@ -37,23 +39,26 @@ export function useLiveRoundSimulation(params: Params) {
   useEffect(() => {
     const userFixture = params.fixtures.find((fixture) => fixture.homeTeamId === params.userTeamId || fixture.awayTeamId === params.userTeamId);
     if (!userFixture) return;
+    const effectiveFixtureId = params.fixtureId ?? userFixture.id;
 
-    service
-      .loadOrCreate({
-        saveId: params.saveId,
-        leagueId: params.leagueId,
-        round: params.round,
-        userTeamId: params.userTeamId,
-        userFixture,
-        fixtures: params.fixtures,
-        players: params.players,
-        opponentPlayers: params.opponentPlayers,
-        teamsById: params.teamsById,
-        quarterDuration: params.quarterDuration ?? 180,
-      })
-      .then(setSession);
+    const loader = params.forceFresh ? service.startFreshSession.bind(service) : service.loadOrCreate.bind(service);
+    loader({
+      saveId: params.saveId,
+      fixtureId: effectiveFixtureId,
+      leagueId: params.leagueId,
+      round: params.round,
+      userTeamId: params.userTeamId,
+      userFixture,
+      fixtures: params.fixtures,
+      players: params.players,
+      opponentPlayers: params.opponentPlayers,
+      teamsById: params.teamsById,
+      quarterDuration: params.quarterDuration ?? 180,
+    }).then(setSession);
   }, [
+    params.fixtureId,
     params.fixtures,
+    params.forceFresh,
     params.leagueId,
     params.opponentPlayers,
     params.players,
@@ -111,7 +116,9 @@ export function useLiveRoundSimulation(params: Params) {
 export function readHalftimeSnapshot(saveId: string): HalftimeSnapshot | null {
   if (typeof window === "undefined") return null;
 
-  const rawSession = window.localStorage.getItem(`scores:match_session:${saveId}`);
+  const directKey = `scores:match_session:${saveId}`;
+  const prefixedKey = Object.keys(window.localStorage).find((key) => key.startsWith(`scores:match_session:${saveId}:`));
+  const rawSession = window.localStorage.getItem(directKey) ?? (prefixedKey ? window.localStorage.getItem(prefixedKey) : null);
   if (!rawSession) return null;
 
   try {

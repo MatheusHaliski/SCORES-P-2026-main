@@ -14,6 +14,8 @@ import { SpectatorModeBanner } from "@/components/SpectatorModeBanner";
 
 export function MatchBoardLiveClient({
   saveId,
+  fixtureId,
+  forceFresh,
   leagueId,
   round,
   fixtures,
@@ -25,6 +27,8 @@ export function MatchBoardLiveClient({
   employmentStatus,
 }: {
   saveId: string;
+  fixtureId?: string;
+  forceFresh?: boolean;
   leagueId: string;
   round: number;
   fixtures: Fixture[];
@@ -45,6 +49,8 @@ export function MatchBoardLiveClient({
 
   const { session } = useLiveRoundSimulation({
     saveId,
+    fixtureId,
+    forceFresh,
     leagueId,
     round,
     fixtures,
@@ -80,7 +86,7 @@ export function MatchBoardLiveClient({
             fixtures={session.fixtures}
             events={session.eventFeed}
             userTeamId={userTeamId}
-            onOpenTacticalBoard={() => router.push(`/ht-manager?saveId=${saveId}`)}
+            onOpenTacticalBoard={() => router.push(`/ht-manager?saveId=${saveId}&fixtureId=${session.fixtureId}`)}
           />
         </SectionCard>
       </div>
