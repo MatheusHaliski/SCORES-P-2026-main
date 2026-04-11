@@ -1,14 +1,5 @@
-export type StudioPresetId =
-  | "arena-neon"
-  | "luxury-blue"
-  | "championship-gold"
-  | "dark-tunnel"
-  | "electric-court"
-  | "retro-broadcast"
-  | "playoffs-night"
-  | "minimal-club-premium"
-  | "scores-metallic-premium";
-export type BackgroundStudioPresetId = "arena-night" | "champions-gold" | "deep-ocean" | "auth-default";
+export type StudioVisualPreset = "club-identity" | "reverse-club-identity" | "authview-default";
+export type BackgroundStudioPresetId = StudioVisualPreset;
 
 export type ShapeLanguage = "none" | "orb" | "diamond" | "mesh" | "shards" | "court-lines" | "hex-grid";
 export type PatternStyle = "smooth" | "broadcast" | "gradient-wave" | "high-contrast";
@@ -110,6 +101,12 @@ export interface BackgroundStudioPreset {
   nextMatchGlow: number;
 }
 
+type ClubColorsInput = {
+  primary: string;
+  secondary: string;
+  accent?: string;
+};
+
 export const AUTHVIEW_DEFAULT_BACKGROUND_CSS = "url('/ChatGPT Image 9 de abr. de 2026, 13_10_17.png')";
 export const PAGE_BACKGROUND_GRADIENTS: Array<{ id: PageBackgroundGradientId; name: string; css: string }> = [
   { id: "deep-night", name: "Deep Night", css: "linear-gradient(135deg,#020617,#0f172a,#1e293b)" },
@@ -120,13 +117,13 @@ export const PAGE_BACKGROUND_GRADIENTS: Array<{ id: PageBackgroundGradientId; na
 
 export const BACKGROUND_STUDIO_PRESETS: BackgroundStudioPreset[] = [
   {
-    id: "arena-night",
-    name: "Arena Night",
-    description: "Visual escuro esportivo para MatchView e Next Match.",
+    id: "club-identity",
+    name: "Club Identity",
+    description: "Uses official club colors as the main MatchView and Next Match theme.",
     skinMode: "default",
-    primary: "#0f172a",
-    secondary: "#2563eb",
-    highlight: "#22d3ee",
+    primary: "#2563eb",
+    secondary: "#1e293b",
+    highlight: "#60a5fa",
     glowIntensity: 82,
     blurStrength: 18,
     density: 75,
@@ -138,8 +135,8 @@ export const BACKGROUND_STUDIO_PRESETS: BackgroundStudioPreset[] = [
     pattern: "broadcast",
     motionDirection: "left-to-right",
     contrast: 108,
-    shellBackgroundUrl: "/9C7464B5-579E-4D0D-947F-B24A4D449097.png",
-    nextMatchBackgroundUrl: "/F7B8D2E0-9994-4BFC-8D62-0206D32198DA.png",
+    shellBackgroundUrl: null,
+    nextMatchBackgroundUrl: null,
     shellOverlay: 42,
     nextMatchOverlay: 32,
     shellBlur: 0,
@@ -148,13 +145,13 @@ export const BACKGROUND_STUDIO_PRESETS: BackgroundStudioPreset[] = [
     nextMatchGlow: 48,
   },
   {
-    id: "champions-gold",
-    name: "Champions Gold",
-    description: "Ambientação premium dourada para MatchView.",
+    id: "reverse-club-identity",
+    name: "Reverse Club Identity",
+    description: "Uses club colors with inverted dominance, making the secondary color the main theme.",
     skinMode: "default",
-    primary: "#111827",
-    secondary: "#b45309",
-    highlight: "#fbbf24",
+    primary: "#1e293b",
+    secondary: "#2563eb",
+    highlight: "#93c5fd",
     glowIntensity: 75,
     blurStrength: 15,
     density: 72,
@@ -166,8 +163,8 @@ export const BACKGROUND_STUDIO_PRESETS: BackgroundStudioPreset[] = [
     pattern: "high-contrast",
     motionDirection: "top-down",
     contrast: 115,
-    shellBackgroundUrl: "/1968F4FE-A4FF-44BB-944E-08BE533C975E.png",
-    nextMatchBackgroundUrl: "/8F897497-4F06-4D51-8537-1FEF8E0386E1.png",
+    shellBackgroundUrl: null,
+    nextMatchBackgroundUrl: null,
     shellOverlay: 36,
     nextMatchOverlay: 28,
     shellBlur: 0,
@@ -176,37 +173,9 @@ export const BACKGROUND_STUDIO_PRESETS: BackgroundStudioPreset[] = [
     nextMatchGlow: 54,
   },
   {
-    id: "deep-ocean",
-    name: "Deep Ocean",
-    description: "Profundidade azul e linhas frias para partida.",
-    skinMode: "default",
-    primary: "#020617",
-    secondary: "#1d4ed8",
-    highlight: "#a78bfa",
-    glowIntensity: 68,
-    blurStrength: 20,
-    density: 55,
-    depth: 70,
-    textureIntensity: 44,
-    glossIntensity: 54,
-    borderPolishIntensity: 50,
-    shapeLanguage: "mesh",
-    pattern: "smooth",
-    motionDirection: "center-pulse",
-    contrast: 103,
-    shellBackgroundUrl: "/3EBDF5AB-F316-409D-9580-2361B8552B33.png",
-    nextMatchBackgroundUrl: "/7E8229A2-91F0-4EE7-A227-8B9CF14A4F2B.png",
-    shellOverlay: 48,
-    nextMatchOverlay: 35,
-    shellBlur: 0,
-    shellGlow: 26,
-    nextMatchBlur: 0,
-    nextMatchGlow: 45,
-  },
-  {
-    id: "auth-default",
-    name: "Auth Default",
-    description: "Arte padrão do produto aplicada à MatchView.",
+    id: "authview-default",
+    name: "AuthView Default",
+    description: "Restores the official default SCORES premium product theme.",
     skinMode: "default",
     primary: "#020617",
     secondary: "#0f172a",
@@ -223,7 +192,7 @@ export const BACKGROUND_STUDIO_PRESETS: BackgroundStudioPreset[] = [
     motionDirection: "none",
     contrast: 98,
     shellBackgroundUrl: null,
-    nextMatchBackgroundUrl: "/4EF8DF9F-0088-4132-8F71-282EED3B7506.png",
+    nextMatchBackgroundUrl: null,
     shellOverlay: 40,
     nextMatchOverlay: 30,
     shellBlur: 0,
@@ -232,6 +201,99 @@ export const BACKGROUND_STUDIO_PRESETS: BackgroundStudioPreset[] = [
     nextMatchGlow: 42,
   },
 ];
+
+function blendHexColors(primary: string, secondary: string) {
+  const normalize = (value: string) => {
+    const hex = value.replace("#", "");
+    if (hex.length === 3) {
+      return hex.split("").map((char) => `${char}${char}`).join("");
+    }
+    return hex.padEnd(6, "0").slice(0, 6);
+  };
+  const a = normalize(primary);
+  const b = normalize(secondary);
+  const mix = [0, 2, 4].map((index) => {
+    const left = Number.parseInt(a.slice(index, index + 2), 16);
+    const right = Number.parseInt(b.slice(index, index + 2), 16);
+    return Math.round((left + right) / 2).toString(16).padStart(2, "0");
+  }).join("");
+  return `#${mix}`;
+}
+
+export function resolveStudioPresetTheme(
+  preset: StudioVisualPreset,
+  clubColors: ClubColorsInput,
+): Partial<BackgroundStudioConfig> {
+  const authPreset = getBackgroundStudioPreset("authview-default");
+  if (preset === "authview-default") {
+    return {
+      matchVisual: {
+        presetId: "authview-default",
+        skinMode: authPreset.skinMode,
+        shellBackgroundUrl: null,
+        nextMatchBackgroundUrl: null,
+        shellOverlay: authPreset.shellOverlay,
+        nextMatchOverlay: authPreset.nextMatchOverlay,
+        shellBlur: authPreset.shellBlur,
+        shellGlow: authPreset.shellGlow,
+        nextMatchBlur: authPreset.nextMatchBlur,
+        nextMatchGlow: authPreset.nextMatchGlow,
+        glowIntensity: authPreset.glowIntensity,
+        blurStrength: authPreset.blurStrength,
+        density: authPreset.density,
+        depth: authPreset.depth,
+        textureIntensity: authPreset.textureIntensity,
+        glossIntensity: authPreset.glossIntensity,
+        borderPolishIntensity: authPreset.borderPolishIntensity,
+        shapeLanguage: authPreset.shapeLanguage,
+        pattern: authPreset.pattern,
+        motionDirection: authPreset.motionDirection,
+        contrast: authPreset.contrast,
+      },
+      uiPalette: {
+        useClubColors: false,
+        primary: authPreset.primary,
+        secondary: authPreset.secondary,
+        highlight: authPreset.highlight,
+      },
+    };
+  }
+
+  const isReverse = preset === "reverse-club-identity";
+  const primary = isReverse ? clubColors.secondary : clubColors.primary;
+  const secondary = isReverse ? clubColors.primary : clubColors.secondary;
+  return {
+    matchVisual: {
+      presetId: preset,
+      skinMode: "default",
+      shellBackgroundUrl: null,
+      nextMatchBackgroundUrl: null,
+      shellOverlay: 36,
+      nextMatchOverlay: 28,
+      shellBlur: 0,
+      shellGlow: 34,
+      nextMatchBlur: 0,
+      nextMatchGlow: 48,
+      glowIntensity: 76,
+      blurStrength: 16,
+      density: 66,
+      depth: 74,
+      textureIntensity: 42,
+      glossIntensity: 48,
+      borderPolishIntensity: 50,
+      shapeLanguage: isReverse ? "shards" : "court-lines",
+      pattern: isReverse ? "high-contrast" : "broadcast",
+      motionDirection: isReverse ? "top-down" : "left-to-right",
+      contrast: isReverse ? 112 : 108,
+    },
+    uiPalette: {
+      useClubColors: true,
+      primary,
+      secondary,
+      highlight: clubColors.accent ?? blendHexColors(primary, secondary),
+    },
+  };
+}
 
 export function getBackgroundStudioPreset(presetId: BackgroundStudioPresetId): BackgroundStudioPreset {
   return BACKGROUND_STUDIO_PRESETS.find((preset) => preset.id === presetId) ?? BACKGROUND_STUDIO_PRESETS[0];
@@ -244,7 +306,7 @@ const DEFAULT_TRACKS: SoundtrackItem[] = [
 ];
 
 export function createDefaultStudioConfig(): BackgroundStudioConfig {
-  const preset = BACKGROUND_STUDIO_PRESETS[0];
+  const preset = getBackgroundStudioPreset("club-identity");
   return {
     pageBackground: {
       mode: "auth-default-image",
@@ -256,8 +318,8 @@ export function createDefaultStudioConfig(): BackgroundStudioConfig {
     },
     matchVisual: {
       presetId: preset.id,
-      shellBackgroundUrl: preset.shellBackgroundUrl,
-      nextMatchBackgroundUrl: preset.nextMatchBackgroundUrl,
+      shellBackgroundUrl: null,
+      nextMatchBackgroundUrl: null,
       shellOverlay: preset.shellOverlay,
       nextMatchOverlay: preset.nextMatchOverlay,
       shellBlur: preset.shellBlur,
@@ -292,39 +354,6 @@ export function createDefaultStudioConfig(): BackgroundStudioConfig {
     },
   };
 }
-
-export interface BackgroundPreset {
-  id: StudioPresetId;
-  name: string;
-  description: string;
-  skinMode: BackgroundStudioConfig["matchVisual"]["skinMode"];
-  primary: string;
-  secondary: string;
-  highlight: string;
-  glowIntensity: number;
-  blurStrength: number;
-  density: number;
-  depth: number;
-  textureIntensity: number;
-  glossIntensity: number;
-  borderPolishIntensity: number;
-  shapeLanguage: ShapeLanguage;
-  pattern: PatternStyle;
-  motionDirection: MotionDirection;
-  contrast: number;
-}
-
-export const STUDIO_PRESETS: BackgroundPreset[] = [
-  { id: "arena-neon", name: "Arena Neon", description: "Luzes vibrantes e energia de arena.", skinMode: "default", primary: "#0f172a", secondary: "#2563eb", highlight: "#22d3ee", glowIntensity: 82, blurStrength: 18, density: 75, depth: 78, textureIntensity: 48, glossIntensity: 50, borderPolishIntensity: 52, shapeLanguage: "court-lines", pattern: "broadcast", motionDirection: "left-to-right", contrast: 108 },
-  { id: "luxury-blue", name: "Luxury Blue", description: "Estética premium azul profunda.", skinMode: "default", primary: "#020617", secondary: "#1d4ed8", highlight: "#a78bfa", glowIntensity: 68, blurStrength: 20, density: 55, depth: 70, textureIntensity: 44, glossIntensity: 54, borderPolishIntensity: 50, shapeLanguage: "mesh", pattern: "smooth", motionDirection: "center-pulse", contrast: 103 },
-  { id: "championship-gold", name: "Championship Gold", description: "Aura de título e troféu.", skinMode: "default", primary: "#111827", secondary: "#b45309", highlight: "#fbbf24", glowIntensity: 75, blurStrength: 15, density: 72, depth: 80, textureIntensity: 56, glossIntensity: 60, borderPolishIntensity: 66, shapeLanguage: "shards", pattern: "high-contrast", motionDirection: "top-down", contrast: 115 },
-  { id: "dark-tunnel", name: "Dark Tunnel", description: "Pré-jogo sombrio com foco total.", skinMode: "default", primary: "#020617", secondary: "#0f172a", highlight: "#38bdf8", glowIntensity: 50, blurStrength: 24, density: 40, depth: 85, textureIntensity: 30, glossIntensity: 35, borderPolishIntensity: 42, shapeLanguage: "none", pattern: "smooth", motionDirection: "none", contrast: 98 },
-  { id: "electric-court", name: "Electric Court", description: "Linhas elétricas de quadra.", skinMode: "default", primary: "#111827", secondary: "#4f46e5", highlight: "#22d3ee", glowIntensity: 88, blurStrength: 14, density: 82, depth: 74, textureIntensity: 58, glossIntensity: 64, borderPolishIntensity: 57, shapeLanguage: "court-lines", pattern: "gradient-wave", motionDirection: "right-to-left", contrast: 112 },
-  { id: "retro-broadcast", name: "Retro Sports Broadcast", description: "Pacote visual broadcast retrô.", skinMode: "default", primary: "#1e1b4b", secondary: "#0e7490", highlight: "#f59e0b", glowIntensity: 65, blurStrength: 18, density: 64, depth: 62, textureIntensity: 52, glossIntensity: 43, borderPolishIntensity: 49, shapeLanguage: "diamond", pattern: "broadcast", motionDirection: "left-to-right", contrast: 109 },
-  { id: "playoffs-night", name: "Playoffs Night", description: "Noite de playoffs com tensão máxima.", skinMode: "default", primary: "#020617", secondary: "#7c3aed", highlight: "#22d3ee", glowIntensity: 90, blurStrength: 16, density: 70, depth: 88, textureIntensity: 53, glossIntensity: 61, borderPolishIntensity: 58, shapeLanguage: "hex-grid", pattern: "high-contrast", motionDirection: "center-pulse", contrast: 118 },
-  { id: "minimal-club-premium", name: "Minimal Club Premium", description: "Visual clean e sofisticado.", skinMode: "default", primary: "#0f172a", secondary: "#334155", highlight: "#38bdf8", glowIntensity: 40, blurStrength: 10, density: 25, depth: 55, textureIntensity: 20, glossIntensity: 28, borderPolishIntensity: 32, shapeLanguage: "none", pattern: "smooth", motionDirection: "none", contrast: 100 },
-  { id: "scores-metallic-premium", name: "SCORES Metallic Premium", description: "Luxo esportivo com metal escovado dourado e esmalte verde.", skinMode: "scores-metallic-premium", primary: "#123930", secondary: "#8a6425", highlight: "#e8d086", glowIntensity: 62, blurStrength: 9, density: 58, depth: 86, textureIntensity: 84, glossIntensity: 74, borderPolishIntensity: 88, shapeLanguage: "mesh", pattern: "smooth", motionDirection: "center-pulse", contrast: 112 },
-];
 
 export function buildBackgroundImage(config: BackgroundStudioConfig) {
   const { primary, secondary, highlight } = config.uiPalette;
@@ -430,8 +459,15 @@ export function normalizeBackgroundStudioConfig(input?: Partial<BackgroundStudio
 
   // backward compatibility with previous flat schema
   const legacy = input as Record<string, unknown> | undefined;
-  const legacyPresetId = (legacy?.preset as BackgroundStudioPresetId | undefined) ?? input?.matchVisual?.presetId;
-  const preset = getBackgroundStudioPreset(legacyPresetId ?? fallback.matchVisual.presetId);
+  const presetAliases: Record<string, BackgroundStudioPresetId> = {
+    "arena-night": "club-identity",
+    "deep-ocean": "club-identity",
+    "champions-gold": "reverse-club-identity",
+    "auth-default": "authview-default",
+  };
+  const incomingPresetRaw = (legacy?.preset as string | undefined) ?? (input?.matchVisual?.presetId as string | undefined);
+  const resolvedPresetId = (incomingPresetRaw && presetAliases[incomingPresetRaw]) || (incomingPresetRaw as BackgroundStudioPresetId | undefined);
+  const preset = getBackgroundStudioPreset(resolvedPresetId ?? fallback.matchVisual.presetId);
 
   return {
     pageBackground: {
@@ -447,9 +483,9 @@ export function normalizeBackgroundStudioConfig(input?: Partial<BackgroundStudio
       blur: clampPercent((input?.pageBackground?.blur as number | undefined) ?? 0, 0, 20),
     },
     matchVisual: {
-      presetId: legacyPresetId ?? fallback.matchVisual.presetId,
-      shellBackgroundUrl: input?.matchVisual?.shellBackgroundUrl ?? (legacy?.shellBackgroundUrl as string | null | undefined) ?? preset.shellBackgroundUrl ?? fallback.matchVisual.shellBackgroundUrl,
-      nextMatchBackgroundUrl: input?.matchVisual?.nextMatchBackgroundUrl ?? (legacy?.nextMatchBackgroundUrl as string | null | undefined) ?? preset.nextMatchBackgroundUrl ?? fallback.matchVisual.nextMatchBackgroundUrl,
+      presetId: preset.id,
+      shellBackgroundUrl: input?.matchVisual?.shellBackgroundUrl ?? (legacy?.shellBackgroundUrl as string | null | undefined) ?? fallback.matchVisual.shellBackgroundUrl,
+      nextMatchBackgroundUrl: input?.matchVisual?.nextMatchBackgroundUrl ?? (legacy?.nextMatchBackgroundUrl as string | null | undefined) ?? fallback.matchVisual.nextMatchBackgroundUrl,
       shellOverlay: clampPercent(input?.matchVisual?.shellOverlay ?? (legacy?.shellOverlay as number | undefined) ?? preset.shellOverlay, 0, 90),
       nextMatchOverlay: clampPercent(input?.matchVisual?.nextMatchOverlay ?? (legacy?.nextMatchOverlay as number | undefined) ?? preset.nextMatchOverlay, 0, 90),
       shellBlur: clampPercent(input?.matchVisual?.shellBlur ?? (legacy?.shellBlur as number | undefined) ?? preset.shellBlur, 0, 20),
