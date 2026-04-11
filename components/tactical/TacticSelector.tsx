@@ -1,4 +1,5 @@
 import { FormationId, TacticalPreset, TacticalStyle } from "@/types/tactical";
+import { getMatchPanelStyle } from "@/styles/metallicTheme";
 
 const formations: FormationId[] = ["4-4-2", "4-3-3", "3-5-2", "5-3-2", "4-2-3-1", "4-1-4-1"];
 const styles: Array<{ id: TacticalStyle; label: string }> = [
@@ -32,7 +33,7 @@ function Segmented<T extends string>({ value, options, onChange }: { value: T; o
 
 export function TacticSelector({ value, onChange }: { value: TacticalPreset; onChange: (next: TacticalPreset) => void }) {
   return (
-    <div className="premium-surface space-y-3 p-4">
+    <div className="premium-surface space-y-3 p-4" style={getMatchPanelStyle()}>
       <h3 className="text-sm font-black uppercase tracking-[0.16em] text-cyan-200">Tactical Control Center</h3>
       <div className="grid gap-2 md:grid-cols-2">
         <label className="space-y-1">

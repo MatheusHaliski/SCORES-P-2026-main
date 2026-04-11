@@ -2,6 +2,7 @@ import { formationLayouts, resolveUniformUrl, TacticalPreset } from "@/types/tac
 import { LineupPlayer } from "@/types/matchSession";
 import { ClubUniformAssets } from "@/types/tactical";
 import { PlayerPhotoNode } from "@/components/tactical/PlayerPhotoNode";
+import { getMatchPanelStyle } from "@/styles/metallicTheme";
 
 function styleToOverlayTone(style: TacticalPreset["style"]) {
   if (style === "offensive_press") return "from-rose-500/35 via-orange-400/20 to-transparent";
@@ -31,7 +32,7 @@ export function MiniCourtBoard({ lineup, tactic, uniforms }: { lineup: LineupPla
   });
 
   return (
-    <div className="premium-surface p-3">
+    <div className="premium-surface sa-metallic-sheen p-3" style={getMatchPanelStyle()}>
       <div className="mb-2 flex items-center justify-between">
         <p className="text-xs font-black uppercase tracking-[0.2em] text-cyan-200">Live Tactical Board</p>
         <p className="text-[11px] text-slate-300">{tactic.formation} • {tactic.style.replaceAll("_", " ")}</p>
