@@ -45,6 +45,17 @@ type MetalPalette = {
   highlight: string;
 };
 
+function toMetalPalette(palette: MetalPalette | ClubIdentityTheme): MetalPalette {
+  if ("primary" in palette && "secondary" in palette && "highlight" in palette) {
+    return palette;
+  }
+  return {
+    primary: palette.primaryColor,
+    secondary: palette.secondaryColor,
+    highlight: palette.accentColor,
+  };
+}
+
 const defaultPalette: MetalPalette = {
   primary: "#0f172a",
   secondary: "#1e293b",
@@ -83,12 +94,13 @@ export function getMetalInfoPanelStyle(palette: MetalPalette = defaultPalette): 
   };
 }
 
-export function getClubIdentityPanelStyle(palette: MetalPalette = defaultPalette): CSSProperties {
+export function getClubIdentityPanelStyle(palette: MetalPalette | ClubIdentityTheme = defaultPalette): CSSProperties {
+  const metalPalette = toMetalPalette(palette);
   return {
-    ...getMetalInfoPanelStyle(palette),
+    ...getMetalInfoPanelStyle(metalPalette),
     borderRadius: "14px",
-    backgroundImage: `${getMetallicGradient()}, linear-gradient(128deg, ${withAlpha(palette.primary, "bf")}, ${withAlpha(palette.secondary, "7d")}), repeating-linear-gradient(-10deg, rgba(255,255,255,0.025) 0px, rgba(255,255,255,0.025) 1px, transparent 1px, transparent 5px)`,
-    boxShadow: `inset 0 1px 0 rgba(255,255,255,0.16), inset 0 -12px 24px rgba(2,6,23,0.22), 0 10px 22px rgba(2,6,23,0.44), 0 0 16px ${withAlpha(palette.highlight, "26")}`,
+    backgroundImage: `${getMetallicGradient()}, linear-gradient(128deg, ${withAlpha(metalPalette.primary, "bf")}, ${withAlpha(metalPalette.secondary, "7d")}), repeating-linear-gradient(-10deg, rgba(255,255,255,0.025) 0px, rgba(255,255,255,0.025) 1px, transparent 1px, transparent 5px)`,
+    boxShadow: `inset 0 1px 0 rgba(255,255,255,0.16), inset 0 -12px 24px rgba(2,6,23,0.22), 0 10px 22px rgba(2,6,23,0.44), 0 0 16px ${withAlpha(metalPalette.highlight, "26")}`,
   };
 }
 
