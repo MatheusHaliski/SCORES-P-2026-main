@@ -1,6 +1,7 @@
 import { TeamColorBadge } from "@/components/TeamColorBadge";
 import { LiveFixtureState } from "@/types/matchSession";
 import { MatchEvent } from "@/types/liveMatch";
+import { getElectronicScoreDisplayStyle, getElectronicScoreShellStyle, getMatchCardStyle } from "@/styles/metallicTheme";
 
 const SCORING_TYPES = new Set(["2PT_MADE", "3PT_MADE", "FREE_THROW_MADE"]);
 
@@ -28,11 +29,16 @@ export function FixtureScoreRow({
     <button
       type="button"
       onClick={() => onOpenTacticalBoard?.(fixture.id)}
-      className={`w-full rounded-xl border p-3 text-left transition hover:-translate-y-0.5 hover:shadow-[0_0_28px_rgba(34,211,238,0.32)] ${fixture.isUserMatch ? "border-yellow-300 bg-yellow-500/10 hover:border-cyan-300" : "border-white/10 bg-slate-900/70 hover:border-cyan-300/60"}`}
+      className={`w-full rounded-xl border p-3 text-left transition hover:-translate-y-0.5 ${fixture.isUserMatch ? "hover:shadow-[0_0_30px_rgba(232,208,149,0.35)]" : "hover:shadow-[0_0_24px_rgba(210,218,227,0.2)]"}`}
+      style={getMatchCardStyle(fixture.isUserMatch)}
     >
       <div className="grid grid-cols-[minmax(0,1fr)_auto_minmax(0,1fr)] items-center gap-3">
         <TeamColorBadge name={fixture.homeTeamName} color={fixture.homeColor} logo={fixture.homeLogo} side="home" />
-        <p className="whitespace-nowrap text-lg font-black text-white sm:text-xl">{fixture.homeScore} x {fixture.awayScore}</p>
+        <div className="p-1" style={getElectronicScoreShellStyle()}>
+          <p className="whitespace-nowrap px-4 py-1 text-lg sm:text-xl" style={getElectronicScoreDisplayStyle()}>
+            {fixture.homeScore} - {fixture.awayScore}
+          </p>
+        </div>
         <TeamColorBadge name={fixture.awayTeamName} color={fixture.awayColor} logo={fixture.awayLogo} side="away" />
       </div>
 

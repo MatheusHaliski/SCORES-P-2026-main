@@ -11,6 +11,7 @@ import { PostMatchModal } from "@/components/PostMatchModal";
 import { getLS } from "@/app/lib/SafeStorage";
 import { getSimulationSpeedOption, SIMULATION_SPEED_KEY } from "@/app/lib/simulationConfig";
 import { SpectatorModeBanner } from "@/components/SpectatorModeBanner";
+import { getMatchInfoBarStyle, getMatchPanelStyle } from "@/styles/metallicTheme";
 
 export function MatchBoardLiveClient({
   saveId,
@@ -75,13 +76,13 @@ export function MatchBoardLiveClient({
         </div>
       )}
       <QuarterProgressHeader session={session} />
-      <div className="sa-premium-gradient-surface mt-3 rounded-2xl p-3 text-xs text-slate-100">
+      <div className="sa-premium-gradient-surface mt-3 rounded-2xl p-3 text-xs text-slate-100" style={getMatchInfoBarStyle()}>
         <p>Venue: <strong>{session.venueName ?? "Arena principal"}</strong></p>
         <p>Público: <strong>{(session.attendance ?? 0).toLocaleString()}</strong> • Receita estimada: <strong>${(session.ticketRevenueEstimate ?? 0).toLocaleString()}</strong></p>
       </div>
 
       <div className="mt-4">
-        <SectionCard title="Rodada completa - placares ao vivo">
+        <SectionCard title="Rodada completa - placares ao vivo" style={getMatchPanelStyle()}>
           <LiveRoundFixtureList
             fixtures={session.fixtures}
             events={session.eventFeed}
@@ -94,7 +95,7 @@ export function MatchBoardLiveClient({
       {session.phase === "POST_MATCH" && <PostMatchModal saveId={saveId} standings={standings} teamsById={teamsById} userTeamId={userTeamId} round={round} fixtures={session.fixtures} leagueId={leagueId} />}
       {session.pendingInjury && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/80 p-4">
-          <div className="sa-premium-gradient-surface w-full max-w-xl rounded-2xl border-rose-300/50 p-4 text-sm text-slate-100">
+          <div className="sa-premium-gradient-surface w-full max-w-xl rounded-2xl border-rose-300/50 p-4 text-sm text-slate-100" style={getMatchPanelStyle()}>
             <h3 className="text-lg font-black text-rose-200">InjurySubstitutionModal</h3>
             <p className="mt-2">{session.pendingInjury.outPlayerName} se lesionou. Substituição obrigatória.</p>
             <div className="mt-3 grid gap-2">

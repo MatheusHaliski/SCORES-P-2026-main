@@ -16,7 +16,7 @@ export function LiveRoundFixtureList({
   onOpenTacticalBoard?: (fixtureId: string) => void;
 }) {
   return (
-    <div className="space-y-2">
+    <div className="sa-premium-gradient-surface space-y-2 rounded-2xl border border-white/20 p-3">
       {fixtures.map((fixture) => {
         const latestScoreEvent = [...events]
           .reverse()
