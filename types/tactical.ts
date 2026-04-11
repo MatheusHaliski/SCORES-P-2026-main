@@ -7,48 +7,60 @@ export type ClubUniformAssets = {
   active_uniform_slot: UniformSlot;
 };
 
-export type FormationId = "4-4-2" | "4-3-3" | "3-5-2" | "5-3-2" | "4-2-3-1" | "4-1-4-1";
-
-export type TacticalStyle =
+export type FormationId =
   | "balanced"
-  | "fast_pace"
-  | "defensive"
-  | "three_point_focus"
-  | "paint_attack"
-  | "aggressive_press"
-  | "offensive_press"
-  | "defensive_block"
-  | "counter_attack"
-  | "possession_control"
-  | "fast_transition"
-  | "wing_play";
+  | "pace_space"
+  | "five_out"
+  | "pick_roll_heavy"
+  | "post_centric"
+  | "motion_offense"
+  | "isolation_heavy"
+  | "perimeter_creation";
+
+export type DefensiveScheme =
+  | "man_to_man"
+  | "zone_2_3"
+  | "zone_3_2"
+  | "zone_1_3_1"
+  | "full_court_press"
+  | "half_court_pressure"
+  | "drop_coverage"
+  | "switch_everything";
+
+export type TacticalStyle = FormationId;
 
 export type TacticalPreset = {
   formation: FormationId;
   style: TacticalStyle;
-  pressure: "low" | "medium" | "high";
-  buildUp: "direct" | "mixed" | "possession";
-  defensiveLine: "deep" | "standard" | "high";
-  transitionSpeed: "slow" | "balanced" | "quick";
-  width: "narrow" | "balanced" | "wide";
-  tempo: "calm" | "normal" | "high";
+  defensiveScheme: DefensiveScheme;
+  tempo: "controlled" | "balanced" | "high";
+  shotSelection: "rim_and_kickout" | "balanced" | "shot_hunting";
+  threePointFrequency: "low" | "balanced" | "high";
+  paintAttackFrequency: "low" | "balanced" | "high";
+  defensivePressure: "low" | "balanced" | "high";
+  reboundingEmphasis: "guard_balance" | "balanced" | "crash_glass";
+  transitionAggression: "low" | "balanced" | "high";
+  rotationDepth: "tight_8" | "balanced_10" | "deep_12";
 };
 
 export type TacticalRolePosition = {
-  role: string;
+  role: "PG" | "SG" | "SF" | "PF" | "C";
   x: number;
   y: number;
 };
 
 export const defaultTacticalPreset: TacticalPreset = {
-  formation: "4-3-3",
+  formation: "balanced",
   style: "balanced",
-  pressure: "medium",
-  buildUp: "mixed",
-  defensiveLine: "standard",
-  transitionSpeed: "balanced",
-  width: "balanced",
-  tempo: "normal",
+  defensiveScheme: "man_to_man",
+  tempo: "balanced",
+  shotSelection: "balanced",
+  threePointFrequency: "balanced",
+  paintAttackFrequency: "balanced",
+  defensivePressure: "balanced",
+  reboundingEmphasis: "balanced",
+  transitionAggression: "balanced",
+  rotationDepth: "balanced_10",
 };
 
 export const defaultUniformAssets: ClubUniformAssets = {
@@ -59,83 +71,61 @@ export const defaultUniformAssets: ClubUniformAssets = {
 };
 
 export const formationLayouts: Record<FormationId, TacticalRolePosition[]> = {
-  "4-4-2": [
-    { role: "GK", x: 50, y: 92 },
-    { role: "LB", x: 16, y: 74 },
-    { role: "CB", x: 38, y: 76 },
-    { role: "CB", x: 62, y: 76 },
-    { role: "RB", x: 84, y: 74 },
-    { role: "LM", x: 14, y: 56 },
-    { role: "CM", x: 38, y: 58 },
-    { role: "CM", x: 62, y: 58 },
-    { role: "RM", x: 86, y: 56 },
-    { role: "ST", x: 42, y: 30 },
-    { role: "ST", x: 58, y: 28 },
+  balanced: [
+    { role: "PG", x: 50, y: 74 },
+    { role: "SG", x: 28, y: 60 },
+    { role: "SF", x: 72, y: 60 },
+    { role: "PF", x: 36, y: 42 },
+    { role: "C", x: 64, y: 36 },
   ],
-  "4-3-3": [
-    { role: "GK", x: 50, y: 92 },
-    { role: "LB", x: 16, y: 74 },
-    { role: "CB", x: 38, y: 76 },
-    { role: "CB", x: 62, y: 76 },
-    { role: "RB", x: 84, y: 74 },
-    { role: "CM", x: 30, y: 56 },
-    { role: "DM", x: 50, y: 60 },
-    { role: "CM", x: 70, y: 56 },
-    { role: "LW", x: 18, y: 30 },
-    { role: "ST", x: 50, y: 24 },
-    { role: "RW", x: 82, y: 30 },
+  pace_space: [
+    { role: "PG", x: 50, y: 76 },
+    { role: "SG", x: 20, y: 57 },
+    { role: "SF", x: 80, y: 57 },
+    { role: "PF", x: 32, y: 34 },
+    { role: "C", x: 68, y: 34 },
   ],
-  "3-5-2": [
-    { role: "GK", x: 50, y: 92 },
-    { role: "LCB", x: 28, y: 74 },
-    { role: "CB", x: 50, y: 76 },
-    { role: "RCB", x: 72, y: 74 },
-    { role: "LWB", x: 12, y: 56 },
-    { role: "CM", x: 34, y: 56 },
-    { role: "DM", x: 50, y: 60 },
-    { role: "CM", x: 66, y: 56 },
-    { role: "RWB", x: 88, y: 56 },
-    { role: "ST", x: 42, y: 30 },
-    { role: "ST", x: 58, y: 28 },
+  five_out: [
+    { role: "PG", x: 50, y: 72 },
+    { role: "SG", x: 18, y: 56 },
+    { role: "SF", x: 82, y: 56 },
+    { role: "PF", x: 30, y: 30 },
+    { role: "C", x: 70, y: 30 },
   ],
-  "5-3-2": [
-    { role: "GK", x: 50, y: 92 },
-    { role: "LWB", x: 10, y: 74 },
-    { role: "LCB", x: 30, y: 78 },
-    { role: "CB", x: 50, y: 80 },
-    { role: "RCB", x: 70, y: 78 },
-    { role: "RWB", x: 90, y: 74 },
-    { role: "CM", x: 34, y: 56 },
-    { role: "CM", x: 50, y: 60 },
-    { role: "CM", x: 66, y: 56 },
-    { role: "ST", x: 42, y: 30 },
-    { role: "ST", x: 58, y: 28 },
+  pick_roll_heavy: [
+    { role: "PG", x: 48, y: 70 },
+    { role: "SG", x: 20, y: 56 },
+    { role: "SF", x: 78, y: 56 },
+    { role: "PF", x: 56, y: 50 },
+    { role: "C", x: 50, y: 40 },
   ],
-  "4-2-3-1": [
-    { role: "GK", x: 50, y: 92 },
-    { role: "LB", x: 16, y: 74 },
-    { role: "CB", x: 38, y: 76 },
-    { role: "CB", x: 62, y: 76 },
-    { role: "RB", x: 84, y: 74 },
-    { role: "DM", x: 40, y: 60 },
-    { role: "DM", x: 60, y: 60 },
-    { role: "LAM", x: 20, y: 44 },
-    { role: "CAM", x: 50, y: 44 },
-    { role: "RAM", x: 80, y: 44 },
-    { role: "ST", x: 50, y: 24 },
+  post_centric: [
+    { role: "PG", x: 52, y: 76 },
+    { role: "SG", x: 24, y: 57 },
+    { role: "SF", x: 78, y: 57 },
+    { role: "PF", x: 38, y: 44 },
+    { role: "C", x: 52, y: 33 },
   ],
-  "4-1-4-1": [
-    { role: "GK", x: 50, y: 92 },
-    { role: "LB", x: 16, y: 74 },
-    { role: "CB", x: 38, y: 76 },
-    { role: "CB", x: 62, y: 76 },
-    { role: "RB", x: 84, y: 74 },
-    { role: "DM", x: 50, y: 62 },
-    { role: "LM", x: 18, y: 48 },
-    { role: "CM", x: 38, y: 50 },
-    { role: "CM", x: 62, y: 50 },
-    { role: "RM", x: 82, y: 48 },
-    { role: "ST", x: 50, y: 24 },
+  motion_offense: [
+    { role: "PG", x: 50, y: 74 },
+    { role: "SG", x: 24, y: 54 },
+    { role: "SF", x: 76, y: 54 },
+    { role: "PF", x: 34, y: 40 },
+    { role: "C", x: 66, y: 40 },
+  ],
+  isolation_heavy: [
+    { role: "PG", x: 50, y: 68 },
+    { role: "SG", x: 22, y: 56 },
+    { role: "SF", x: 80, y: 56 },
+    { role: "PF", x: 34, y: 36 },
+    { role: "C", x: 66, y: 36 },
+  ],
+  perimeter_creation: [
+    { role: "PG", x: 48, y: 76 },
+    { role: "SG", x: 18, y: 58 },
+    { role: "SF", x: 82, y: 58 },
+    { role: "PF", x: 30, y: 38 },
+    { role: "C", x: 70, y: 38 },
   ],
 };
 

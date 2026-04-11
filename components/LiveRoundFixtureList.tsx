@@ -8,15 +8,19 @@ export function LiveRoundFixtureList({
   fixtures,
   events,
   userTeamId,
+  sharedClock,
+  sharedPeriod,
   onOpenTacticalBoard,
 }: {
   fixtures: LiveFixtureState[];
   events: MatchEvent[];
   userTeamId: string;
+  sharedClock: string;
+  sharedPeriod: string;
   onOpenTacticalBoard?: (fixtureId: string) => void;
 }) {
   return (
-    <div className="sa-premium-gradient-surface space-y-2 rounded-2xl border border-white/20 p-3">
+    <div className="sa-premium-gradient-surface space-y-3 rounded-2xl border border-white/20 p-3">
       {fixtures.map((fixture) => {
         const latestScoreEvent = [...events]
           .reverse()
@@ -28,6 +32,8 @@ export function LiveRoundFixtureList({
             fixture={fixture}
             latestScoreEvent={latestScoreEvent}
             userTeamId={userTeamId}
+            sharedClock={sharedClock}
+            sharedPeriod={sharedPeriod}
             onOpenTacticalBoard={onOpenTacticalBoard}
           />
         );

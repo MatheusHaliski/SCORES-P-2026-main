@@ -1,25 +1,24 @@
-import { TeamColorBadge } from "@/components/TeamColorBadge";
 import { LiveFixtureState } from "@/types/matchSession";
 import { MatchEvent } from "@/types/liveMatch";
-import { getCenterScoreDisplayStyle, getElectronicScoreShellStyle, getScoreboardRowShellStyle, getScoreboardStatusBarStyle, getTeamStripStyle } from "@/styles/metallicTheme";
+import Image from "next/image";
+
+const isImageLogo = (logo: string) => logo.startsWith("/") || logo.startsWith("http") || logo.startsWith("data:");
 
 const SCORING_TYPES = new Set(["2PT_MADE", "3PT_MADE", "FREE_THROW_MADE"]);
-
-const formatMinute = (seconds: number) => `${Math.max(1, Math.floor(seconds / 60))}'`;
-const formatStatusLabel = (status: LiveFixtureState["status"]) => {
-  if (status === "break") return "BREAK";
-  return status.toUpperCase();
-};
 
 export function FixtureScoreRow({
   fixture,
   latestScoreEvent,
   userTeamId,
+  sharedClock,
+  sharedPeriod,
   onOpenTacticalBoard,
 }: {
   fixture: LiveFixtureState;
   latestScoreEvent?: MatchEvent;
   userTeamId: string;
+  sharedClock: string;
+  sharedPeriod: string;
   onOpenTacticalBoard?: (fixtureId: string) => void;
 }) {
   const scoredByUserClub = latestScoreEvent?.teamId === userTeamId;
@@ -29,42 +28,40 @@ export function FixtureScoreRow({
     <button
       type="button"
       onClick={() => onOpenTacticalBoard?.(fixture.id)}
-      className={`w-full rounded-xl border p-3 text-left transition hover:-translate-y-0.5 ${fixture.isUserMatch ? "hover:shadow-[0_0_30px_rgba(232,208,149,0.35)]" : "hover:shadow-[0_0_24px_rgba(210,218,227,0.2)]"}`}
-      style={getScoreboardRowShellStyle(fixture.isUserMatch)}
+      className="w-full rounded-2xl border border-slate-400/30 bg-gradient-to-b from-slate-700/80 to-slate-950/95 p-4 text-left shadow-[inset_0_0_30px_rgba(148,163,184,.15),0_8px_24px_rgba(0,0,0,.45)] transition hover:-translate-y-0.5"
     >
-      <div className="grid grid-cols-[minmax(0,1fr)_auto_minmax(0,1fr)] items-center gap-3">
-        <div style={getTeamStripStyle(fixture.homeColor)} className="rounded-lg">
-          <TeamColorBadge name={fixture.homeTeamName} color="transparent" logo={fixture.homeLogo} side="home" />
+      <div className="grid grid-cols-[70px_1fr_70px] items-center gap-3">
+        <div className="flex justify-center">
+          <div className="relative flex h-12 w-12 items-center justify-center overflow-hidden rounded-full border border-white/30 bg-slate-900/80">
+            {isImageLogo(fixture.homeLogo) ? <Image src={fixture.homeLogo || "/sai.png"} alt={fixture.homeTeamName} fill className="object-cover" /> : <span className="text-xl">{fixture.homeLogo || "🏀"}</span>}
+          </div>
         </div>
-        <div className="p-1" style={getElectronicScoreShellStyle()}>
-          <p className="whitespace-nowrap px-4 py-1 text-lg sm:text-xl" style={getCenterScoreDisplayStyle()}>
-            {fixture.homeScore} - {fixture.awayScore}
-          </p>
+
+        <div className="rounded-xl border border-amber-200/25 bg-slate-900/90 px-3 py-2">
+          <div className="grid grid-cols-[1fr_auto_1fr] items-center gap-2 text-center">
+            <div className="text-xl font-black text-amber-300 [text-shadow:0_0_10px_rgba(253,224,71,.35)]">{fixture.homeScore}</div>
+            <div>
+              <p className="text-[10px] font-bold tracking-[0.2em] text-cyan-200">{sharedPeriod}</p>
+              <p className="font-mono text-lg font-black text-emerald-300 [text-shadow:0_0_12px_rgba(110,231,183,.5)]">{sharedClock}</p>
+            </div>
+            <div className="text-xl font-black text-amber-300 [text-shadow:0_0_10px_rgba(253,224,71,.35)]">{fixture.awayScore}</div>
+          </div>
+          <div className="mt-2 grid grid-cols-2 gap-2 text-center text-[10px] uppercase tracking-widest text-slate-300">
+            <p>Fouls: <span className="font-black text-rose-300">{fixture.homeFouls}</span></p>
+            <p>Fouls: <span className="font-black text-rose-300">{fixture.awayFouls}</span></p>
+          </div>
         </div>
-        <div style={getTeamStripStyle(fixture.awayColor)} className="rounded-lg">
-          <TeamColorBadge name={fixture.awayTeamName} color="transparent" logo={fixture.awayLogo} side="away" />
+
+        <div className="flex justify-center">
+          <div className="relative flex h-12 w-12 items-center justify-center overflow-hidden rounded-full border border-white/30 bg-slate-900/80">
+            {isImageLogo(fixture.awayLogo) ? <Image src={fixture.awayLogo || "/sai.png"} alt={fixture.awayTeamName} fill className="object-cover" /> : <span className="text-xl">{fixture.awayLogo || "🏀"}</span>}
+          </div>
         </div>
       </div>
 
-      <div style={getScoreboardStatusBarStyle()}
-        className={`mt-2 flex min-h-9 items-center justify-center rounded-lg px-3 text-sm font-semibold text-white ${
-          hasScoreInfo && scoredByUserClub ? "bg-yellow-300/25" : "bg-white/5"
-        }`}
-      >
-        {hasScoreInfo ? (
-          <p className="w-full truncate text-center whitespace-nowrap">
-            <span className="mr-2" aria-hidden>
-              🏀
-            </span>
-            <span>{latestScoreEvent.playerName ?? "Jogador"}</span>
-            <span className="ml-2">{formatMinute(latestScoreEvent.second)}</span>
-          </p>
-        ) : (
-          <p className="w-full truncate text-center whitespace-nowrap">Sem ponto registrado</p>
-        )}
+      <div className={`mt-2 rounded-lg px-3 py-1.5 text-center text-xs font-semibold ${hasScoreInfo && scoredByUserClub ? "bg-yellow-300/20 text-yellow-100" : "bg-white/5 text-slate-200"}`}>
+        {hasScoreInfo ? `${latestScoreEvent?.playerName ?? "Jogador"} marcou agora` : "Rodada sincronizada ao vivo"}
       </div>
-
-      <p className="mt-2 text-center text-[11px] uppercase tracking-wider text-slate-300">{formatStatusLabel(fixture.status)} • {fixture.venueName}</p>
     </button>
   );
 }

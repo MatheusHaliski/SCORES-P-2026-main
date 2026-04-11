@@ -4,6 +4,7 @@ import { useEffect, useMemo, useState } from "react";
 import { clearAuthSessionProfile, clearAuthSessionToken } from "@/app/lib/authSession";
 import { clearServerSession } from "@/app/lib/clientSession";
 import { useRouter } from "next/navigation";
+import Image from "next/image";
 import { BackgroundStudioModal } from "@/components/BackgroundStudioModal";
 import { BackgroundStudioChangeDetail, BackgroundStudioConfig, buildBackgroundImage, buildShellBackgroundStyle, createDefaultStudioConfig, normalizeBackgroundStudioConfig } from "@/types/backgroundStudio";
 import { SHELL_BACKGROUND_CUSTOM_OPTION_ID, SHELL_BACKGROUND_CUSTOM_STYLE_KEY, SHELL_BACKGROUND_KEY } from "@/app/lib/shellBackground";
@@ -137,6 +138,12 @@ export function UserProfileSidebar({
     <>
       <aside className="sa-premium-gradient-surface relative z-20 w-full max-w-xs rounded-3xl border p-5 shadow-2xl" style={sidebarStyle}>
         <h2 className="text-xs font-bold uppercase tracking-[0.2em] text-cyan-300">Perfil</h2>
+        <div className="mt-3 rounded-2xl border border-cyan-300/40 bg-slate-900/60 p-2 shadow-[inset_0_0_18px_rgba(56,189,248,.2)]">
+          <div className="h-16 w-full overflow-hidden rounded-xl bg-slate-950/70 p-1">
+            <Image src="/1968F4FE-A4FF-44BB-944E-08BE533C975E.png" alt="SCORES" width={220} height={64} className="h-full w-full object-contain" />
+          </div>
+        </div>
+
         <div className="mt-3 space-y-3 text-sm text-slate-200">
           <div className="sa-premium-gradient-surface-soft rounded-xl border p-3" style={panelStyle}>
             <p className="text-[11px] uppercase tracking-wide text-slate-400">Usuário</p>
