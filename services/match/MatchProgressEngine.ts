@@ -65,11 +65,13 @@ export class MatchProgressEngine {
     const oppTacticImpact = TacticImpactEngine.for(session.opponentTeamTactic);
 
     const paceProfile = getSimulationPaceProfile(simulationSpeed);
+    const normalSimulatedSecondsPerTick = 3;
+    const tickTempoScale = Math.max(1, simulatedSecondsPerTick / normalSimulatedSecondsPerTick);
     const quarterPulse = 0.92 + (session.quarter * 0.04) + random() * 0.08;
     const basePossessions = 0.2 * ((userTacticImpact.possessions + oppTacticImpact.possessions) / 2) * quarterPulse;
     const paceFactor = (userSkill.transitionPace + oppSkill.transitionPace) / 2;
-    const possessionRoll = basePossessions * paceFactor * paceProfile.eventCadenceMultiplier;
-    const paceLoopBudget = paceProfile.possessionResolutionMultiplier;
+    const possessionRoll = basePossessions * paceFactor * paceProfile.eventCadenceMultiplier * tickTempoScale;
+    const paceLoopBudget = paceProfile.possessionResolutionMultiplier * tickTempoScale;
     const possessionWindows = Math.max(1, Math.floor(paceLoopBudget));
     const extraWindowChance = paceLoopBudget - possessionWindows;
 
@@ -166,6 +168,52 @@ export class MatchProgressEngine {
         ftText = attempts === 1 ? "converte o and-one da linha." : (ftPoints === attempts ? "acerta todos os lances livres." : ftPoints === 0 ? "erra todos da linha." : "divide os lances livres.");
       }
 
+      const offReboundChance = clamp(
+        0.2
+          + (shootingLineupSkill.offenseCreation - defendingLineupSkill.defensivePressure) * 0.12
+          + (paceProfile.eventCadenceMultiplier - 1) * 0.03,
+        0.12,
+        0.42,
+      );
+      const turnoverChance = clamp(
+        0.11
+          + (defendingLineupSkill.defensivePressure - shootingLineupSkill.passingControl) * 0.12
+          + (paceProfile.eventCadenceMultiplier - 1) * 0.025,
+        0.06,
+        0.28,
+      );
+      const turnoverHappened = points === 0 && random() < turnoverChance;
+      if (turnoverHappened) {
+        newEvents.push({
+          id: `ev-tov-${Date.now()}-${Math.floor(random() * 99999)}`,
+          fixtureId: userFixture.id,
+          second: elapsed,
+          teamId: scoringTeamIsUser ? session.userTeamId : session.opponentTeamId,
+          playerName: scorer?.playerName ?? "Jogador",
+          type: "TURNOVER",
+          text: `${scorer?.playerName ?? "Jogador"} perde a posse sob pressão defensiva.`,
+        });
+      } else if (points === 0 && random() < offReboundChance) {
+        newEvents.push({
+          id: `ev-oreb-${Date.now()}-${Math.floor(random() * 99999)}`,
+          fixtureId: userFixture.id,
+          second: elapsed,
+          teamId: scoringTeamIsUser ? session.userTeamId : session.opponentTeamId,
+          playerName: scorer?.playerName ?? "Jogador",
+          type: "OFF_REBOUND",
+          text: `${scorer?.playerName ?? "Jogador"} garante rebote ofensivo e mantém a posse.`,
+        });
+      } else if (points === 0) {
+        newEvents.push({
+          id: `ev-dreb-${Date.now()}-${Math.floor(random() * 99999)}`,
+          fixtureId: userFixture.id,
+          second: elapsed,
+          teamId: scoringTeamIsUser ? session.opponentTeamId : session.userTeamId,
+          type: "DEF_REBOUND",
+          text: `${scoringTeamIsUser ? "Adversário" : "Seu time"} fecha o garrafão com rebote defensivo.`,
+        });
+      }
+
       newEvents.push({
         id: `ev-${Date.now()}-${Math.floor(random() * 99999)}`,
         fixtureId: userFixture.id,
@@ -191,7 +239,7 @@ export class MatchProgressEngine {
     }
 
     const canTriggerInjury = session.injuryCooldownTicks <= 0;
-    if (canTriggerInjury && random() < (0.008 * paceProfile.eventCadenceMultiplier)) {
+    if (canTriggerInjury && random() < (0.008 * paceProfile.eventCadenceMultiplier * tickTempoScale)) {
       const candidates = session.userLineup.filter((player) => player.injuryStatus !== "Lesionado");
       const risky = [...candidates].sort((a, b) => (a.stamina + a.attributes.physical.durability * 0.25) - (b.stamina + b.attributes.physical.durability * 0.25));
       const victim = risky[0];
@@ -249,8 +297,9 @@ export class MatchProgressEngine {
           ? "finished"
           : "break"
         : "live";
-      const homeFoulDelta = random() < 0.13 ? 1 : 0;
-      const awayFoulDelta = random() < 0.13 ? 1 : 0;
+      const foulSamplingChance = clamp(0.13 * paceProfile.eventCadenceMultiplier * Math.sqrt(tickTempoScale), 0.1, 0.45);
+      const homeFoulDelta = random() < foulSamplingChance ? 1 : 0;
+      const awayFoulDelta = random() < foulSamplingChance ? 1 : 0;
       return { ...nextFixture, status, homeFouls: Math.min(9, (nextFixture.homeFouls ?? 0) + homeFoulDelta), awayFouls: Math.min(9, (nextFixture.awayFouls ?? 0) + awayFoulDelta) };
     });
 
@@ -259,11 +308,11 @@ export class MatchProgressEngine {
 
     const drainedUserLineup = session.userLineup.map((player) => ({
       ...player,
-      stamina: clamp(player.stamina - simulatedSecondsPerTick * 0.045 * userTacticImpact.staminaDrain, 48, 100),
+      stamina: clamp(player.stamina - simulatedSecondsPerTick * 0.045 * userTacticImpact.staminaDrain * paceProfile.tickRateMultiplier, 48, 100),
     }));
     const drainedOpponentLineup = session.opponentLineup.map((player) => ({
       ...player,
-      stamina: clamp(player.stamina - simulatedSecondsPerTick * 0.04 * oppTacticImpact.staminaDrain, 48, 100),
+      stamina: clamp(player.stamina - simulatedSecondsPerTick * 0.04 * oppTacticImpact.staminaDrain * paceProfile.tickRateMultiplier, 48, 100),
     }));
 
     const injuryEvent = newEvents.find((event) => event.type === "INJURY");

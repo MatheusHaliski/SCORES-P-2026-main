@@ -31,7 +31,7 @@ export const SIMULATION_SPEED_OPTIONS: SimulationSpeedOption[] = [
     description: "Quarter mais ágil, sem perder leitura do jogo.",
     tickIntervalMs: 350,
     simulatedSecondsPerTick: 4,
-    quarterDuration: 150,
+    quarterDuration: 180,
   },
   {
     id: "turbo",
@@ -39,7 +39,7 @@ export const SIMULATION_SPEED_OPTIONS: SimulationSpeedOption[] = [
     description: "Máxima fluidez para avançar partidas rapidamente.",
     tickIntervalMs: 250,
     simulatedSecondsPerTick: 6,
-    quarterDuration: 120,
+    quarterDuration: 180,
   },
 ];
 
