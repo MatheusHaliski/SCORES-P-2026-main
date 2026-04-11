@@ -76,6 +76,11 @@ export interface BackgroundStudioConfig {
   };
 }
 
+export type BackgroundStudioChangeDetail = {
+  saveId: string;
+  config: BackgroundStudioConfig;
+};
+
 export interface BackgroundStudioPreset {
   id: BackgroundStudioPresetId;
   name: string;
@@ -352,8 +357,6 @@ export function buildShellBackgroundStyle(config: BackgroundStudioConfig) {
     ? `url('${config.matchVisual.shellBackgroundUrl}')`
     : AUTHVIEW_DEFAULT_BACKGROUND_CSS;
   const fallbackLayer = buildBackgroundImage(config);
-  const totalBlur = Math.max(0, config.pageBackground.blur + config.matchVisual.shellBlur);
-
   return {
     backgroundColor: config.uiPalette.primary,
     backgroundImage: `linear-gradient(rgba(2, 6, 23, ${pageOverlayOpacity}), rgba(2, 6, 23, ${pageOverlayOpacity})), linear-gradient(rgba(2, 6, 23, ${shellOverlayOpacity}), rgba(2, 6, 23, ${shellOverlayOpacity})), ${shellLayer}, ${fallbackLayer}, ${pageLayer}`,
@@ -361,9 +364,53 @@ export function buildShellBackgroundStyle(config: BackgroundStudioConfig) {
     backgroundPosition: "center",
     backgroundRepeat: "no-repeat",
     backgroundAttachment: "fixed",
-    filter: `blur(${totalBlur}px) contrast(${config.matchVisual.contrast}%)`,
     backgroundBlendMode: "normal",
     boxShadow: `inset 0 0 ${Math.max(0, config.matchVisual.shellGlow)}px ${config.uiPalette.highlight}33`,
+  };
+}
+
+export function buildMatchVisualOverlay(config: BackgroundStudioConfig) {
+  const { shapeLanguage, pattern, motionDirection, density, depth, blurStrength, contrast } = config.matchVisual;
+  const highlight = config.uiPalette.highlight;
+  const secondary = config.uiPalette.secondary;
+
+  const densityScale = Math.max(0.15, density / 100);
+  const depthAlpha = Math.max(0.08, depth / 300);
+
+  const shapeLayerMap: Record<ShapeLanguage, string> = {
+    none: "none",
+    orb: `radial-gradient(circle at 18% 22%, ${highlight}22 0%, transparent ${24 + densityScale * 18}%)`,
+    diamond: `repeating-linear-gradient(45deg, ${highlight}14 0 10px, transparent 10px 26px)`,
+    mesh: `repeating-linear-gradient(0deg, ${highlight}10 0 1px, transparent 1px 18px), repeating-linear-gradient(90deg, ${secondary}10 0 1px, transparent 1px 18px)`,
+    shards: `linear-gradient(120deg, transparent 0 35%, ${highlight}18 45%, transparent 55%), linear-gradient(300deg, transparent 0 42%, ${secondary}16 52%, transparent 62%)`,
+    "court-lines": `repeating-linear-gradient(90deg, transparent 0 54px, ${highlight}20 54px 56px), radial-gradient(circle at 50% 50%, transparent 0 80px, ${highlight}1a 80px 82px, transparent 82px)`,
+    "hex-grid": `repeating-linear-gradient(60deg, ${highlight}10 0 2px, transparent 2px 24px), repeating-linear-gradient(-60deg, ${highlight}10 0 2px, transparent 2px 24px), repeating-linear-gradient(0deg, ${secondary}0e 0 2px, transparent 2px 24px)`,
+  };
+
+  const patternLayerMap: Record<PatternStyle, string> = {
+    smooth: `linear-gradient(135deg, rgba(255,255,255,${depthAlpha * 0.45}), transparent 42%, transparent 100%)`,
+    broadcast: `repeating-linear-gradient(-45deg, rgba(255,255,255,${depthAlpha * 0.45}) 0 2px, transparent 2px 16px)`,
+    "gradient-wave": `radial-gradient(circle at 0% 50%, ${secondary}18, transparent 35%), radial-gradient(circle at 100% 50%, ${highlight}18, transparent 35%)`,
+    "high-contrast": `linear-gradient(135deg, rgba(255,255,255,${depthAlpha * 0.75}), transparent 28%, rgba(0,0,0,${depthAlpha * 0.55}) 72%, transparent 100%)`,
+  };
+
+  const motionMap: Record<MotionDirection, string> = {
+    none: "center",
+    "left-to-right": "0% 50%",
+    "right-to-left": "100% 50%",
+    "top-down": "50% 0%",
+    "center-pulse": "50% 50%",
+  };
+
+  const visualLayers = [shapeLayerMap[shapeLanguage], patternLayerMap[pattern]].filter((layer) => layer && layer !== "none").join(", ");
+  return {
+    backgroundImage: visualLayers || "none",
+    backgroundPosition: `${motionMap[motionDirection]}, center`,
+    backgroundSize: `${Math.max(140, 260 - density)}px ${Math.max(140, 260 - density)}px, cover`,
+    opacity: Math.min(0.5, 0.16 + depth / 260),
+    filter: `blur(${Math.max(0, blurStrength / 5)}px) contrast(${contrast}%)`,
+    pointerEvents: "none" as const,
+    mixBlendMode: "screen" as const,
   };
 }
 
