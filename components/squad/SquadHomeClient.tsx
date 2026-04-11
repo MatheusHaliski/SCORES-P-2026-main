@@ -22,7 +22,7 @@ import { ClubUniformAssets, defaultTacticalPreset, defaultUniformAssets, resolve
 import { writeClubUniforms, writePreMatchTactic } from "@/lib/tacticalState";
 import { ClubIdentityTheme, createDefaultClubIdentityTheme, normalizeClubIdentityTheme } from "@/types/clubIdentityTheme";
 import { BackgroundStudioChangeDetail, BackgroundStudioConfig, buildMatchVisualOverlay, buildShellBackgroundStyle, createDefaultStudioConfig, normalizeBackgroundStudioConfig } from "@/types/backgroundStudio";
-import { getMetallicGradient, getMetallicStyle } from "@/styles/metallicTheme";
+import { getMetalInfoPanelStyle, getMetalListPanelStyle, getMetalPanelStyle, getMetalPlayerRowStyle, getMetallicGradient, getMetallicStyle } from "@/styles/metallicTheme";
 
 type InboxMessage = {
   id: string;
@@ -955,15 +955,21 @@ export function SquadHomeClient({
     borderRadius: "10px",
     padding: "8px 14px",
   }), [backgroundStudio, identityTheme.textColor]);
-  const centralPanelStyle = useMemo(() => ({
-    borderColor: `${backgroundStudio.uiPalette.highlight}66`,
-    backgroundImage: `${getMetallicGradient()}, linear-gradient(160deg, ${backgroundStudio.uiPalette.primary}85, ${backgroundStudio.uiPalette.secondary}55)`,
-    boxShadow: `0 0 24px ${backgroundStudio.uiPalette.highlight}28`,
+  const metalPalette = useMemo(() => ({
+    primary: backgroundStudio.uiPalette.primary,
+    secondary: backgroundStudio.uiPalette.secondary,
+    highlight: backgroundStudio.uiPalette.highlight,
   }), [backgroundStudio.uiPalette.highlight, backgroundStudio.uiPalette.primary, backgroundStudio.uiPalette.secondary]);
-  const rowStyle = useMemo(() => ({
-    borderColor: `${backgroundStudio.uiPalette.highlight}66`,
-    backgroundImage: `linear-gradient(112deg, ${backgroundStudio.uiPalette.primary}88, ${backgroundStudio.uiPalette.secondary}44)`,
-  }), [backgroundStudio.uiPalette.highlight, backgroundStudio.uiPalette.primary, backgroundStudio.uiPalette.secondary]);
+  const centralPanelStyle = useMemo(() => getMetalPanelStyle(metalPalette), [metalPalette]);
+  const squadListStyle = useMemo(() => getMetalListPanelStyle(metalPalette), [metalPalette]);
+  const infoPanelStyle = useMemo(() => getMetalInfoPanelStyle(metalPalette), [metalPalette]);
+  const infoPanelItemStyle = useMemo(() => getMetalInfoPanelStyle(metalPalette), [metalPalette]);
+  const infoPanelButtonStyle = useMemo(() => ({
+    ...getMetalInfoPanelStyle(metalPalette),
+    borderRadius: "10px",
+    padding: "8px 10px",
+    color: "#f8fafc",
+  }), [metalPalette]);
 
   const handleSaveGame = async () => {
     setSaveStatus({ saving: true, ok: null, message: "Salvando progresso completo..." });
@@ -1065,6 +1071,9 @@ export function SquadHomeClient({
               stadiumName={stadium?.name ?? `${payload.team.shortName} Arena`}
               boardExpectation={boardExpectation}
               secondaryColor={secondaryColor}
+              panelStyle={infoPanelStyle}
+              itemStyle={infoPanelItemStyle}
+              buttonStyle={infoPanelButtonStyle}
               onOpenColorEditor={() => {
                 setColorDraft({ primaryColor, secondaryColor: state.teamColors?.secondaryColor ?? payload.team.secondaryColor });
                 setOpenModal("Identidade do Clube");
@@ -1087,7 +1096,7 @@ export function SquadHomeClient({
               />
             ) : null}
             {payload.save.employmentStatus !== "employed" && <SpectatorModeBanner />}
-            <div className="rounded-xl border p-3 text-xs text-emerald-100" style={studioPanelStyle}>
+            <div className="rounded-xl border p-3 text-xs text-emerald-100" style={infoPanelStyle}>
               <p>Caixa: ${state.budget.toLocaleString()}</p>
               <p>Folha salarial: ${payroll.toLocaleString()}/rodada</p>
               <p>Atletas listados: {listedPlayers.length}</p>
@@ -1118,9 +1127,9 @@ export function SquadHomeClient({
                 </div>
               </div>
             </div>
-            <div className="space-y-2">
+            <div className="premium-surface space-y-2 border p-2" style={squadListStyle}>
               {mergedPlayers.map((player) => (
-                <button key={player.id} onClick={() => setSelectedPlayerId(player.id)} className="premium-surface list-row grid w-full grid-cols-[auto,2fr,repeat(6,minmax(0,1fr))] gap-2 border p-2 text-left text-xs text-slate-100 hover:brightness-110" style={rowStyle}>
+                <button key={player.id} onClick={() => setSelectedPlayerId(player.id)} className="premium-surface list-row grid w-full grid-cols-[auto,2fr,repeat(6,minmax(0,1fr))] gap-2 border p-2 text-left text-xs text-slate-100 hover:brightness-110" style={getMetalPlayerRowStyle(metalPalette, selectedPlayerId === player.id)}>
                   <div className="relative h-8 w-8 overflow-hidden rounded-full border border-white/20">
                     {player.photoUrl ? <Image src={player.photoUrl} alt={player.name} fill className="object-cover" /> : <span className="flex h-full w-full items-center justify-center bg-slate-800 text-[11px] font-black">{player.name.slice(0, 1)}</span>}
                   </div>
