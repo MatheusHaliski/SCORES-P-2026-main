@@ -39,7 +39,7 @@ const nbaConfigs = [
   ["t-horizon", "LA Horizon", "HRZ", "🌅", "#c026d3", "#701a75", 82],
   ["t-guard", "Boston Guardians", "GRD", "🛡️", "#1e40af", "#172554", 83],
   ["t-rhythm", "Memphis Rhythm", "RHY", "🎵", "#9333ea", "#3b0764", 77],
-  ["t-flames", "Cleveland Flames", "FLM", "🔥", "#ea580c", "#431407", 78],
+  ["t-flames", "Cleveland Flames", "FLM", "🔥", "#dc2626", "#450a0a", 78],
 ] as const;
 
 const toTeam = (row: (typeof nbaConfigs)[number]): Team => ({
