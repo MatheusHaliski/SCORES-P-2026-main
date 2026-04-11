@@ -364,8 +364,9 @@ export function buildBackgroundImage(config: BackgroundStudioConfig) {
 }
 
 function resolvePageBackgroundLayer(config: BackgroundStudioConfig) {
-  if (config.pageBackground.mode === "solid-color") return config.pageBackground.solidColor;
-  if (config.pageBackground.mode === "upload-image" && config.pageBackground.imageDataUrl) return `url('${config.pageBackground.imageDataUrl}')`;
+  if (config.pageBackground.mode === "upload-image" && config.pageBackground.imageDataUrl) {
+    return `url('${config.pageBackground.imageDataUrl}')`;
+  }
   if (config.pageBackground.mode === "preset-gradient") {
     const gradients: Record<PageBackgroundGradientId, string> = {
       "deep-night": "linear-gradient(135deg,#020617,#0f172a,#1e293b)",
@@ -375,7 +376,9 @@ function resolvePageBackgroundLayer(config: BackgroundStudioConfig) {
     };
     return gradients[config.pageBackground.gradientId] ?? gradients["deep-night"];
   }
-  return AUTHVIEW_DEFAULT_BACKGROUND_CSS;
+  if (config.pageBackground.mode === "solid-color") return config.pageBackground.solidColor;
+  if (config.pageBackground.mode === "auth-default-image") return AUTHVIEW_DEFAULT_BACKGROUND_CSS;
+  return "linear-gradient(135deg,#020617,#0f172a,#111827)";
 }
 
 export function buildShellBackgroundStyle(config: BackgroundStudioConfig) {
@@ -384,11 +387,11 @@ export function buildShellBackgroundStyle(config: BackgroundStudioConfig) {
   const pageLayer = resolvePageBackgroundLayer(config);
   const shellLayer = config.matchVisual.shellBackgroundUrl
     ? `url('${config.matchVisual.shellBackgroundUrl}')`
-    : AUTHVIEW_DEFAULT_BACKGROUND_CSS;
+    : "linear-gradient(145deg, rgba(2,6,23,0.42), rgba(2,6,23,0.2))";
   const fallbackLayer = buildBackgroundImage(config);
   return {
     backgroundColor: config.uiPalette.primary,
-    backgroundImage: `linear-gradient(rgba(2, 6, 23, ${pageOverlayOpacity}), rgba(2, 6, 23, ${pageOverlayOpacity})), linear-gradient(rgba(2, 6, 23, ${shellOverlayOpacity}), rgba(2, 6, 23, ${shellOverlayOpacity})), ${shellLayer}, ${fallbackLayer}, ${pageLayer}`,
+    backgroundImage: `linear-gradient(rgba(2, 6, 23, ${pageOverlayOpacity}), rgba(2, 6, 23, ${pageOverlayOpacity})), linear-gradient(rgba(2, 6, 23, ${shellOverlayOpacity}), rgba(2, 6, 23, ${shellOverlayOpacity})), ${pageLayer}, ${shellLayer}, ${fallbackLayer}`,
     backgroundSize: "cover",
     backgroundPosition: "center",
     backgroundRepeat: "no-repeat",
