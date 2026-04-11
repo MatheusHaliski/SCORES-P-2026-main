@@ -35,7 +35,13 @@ export class MatchSessionRepository {
     const raw = fixtureId
       ? window.localStorage.getItem(localKey(saveId, fixtureId))
       : window.localStorage.getItem(legacyLocalKey(saveId));
-    const fallbackRaw = !raw && fixtureId ? window.localStorage.getItem(legacyLocalKey(saveId)) : null;
+    const prefixedKey = !raw && !fixtureId
+      ? Object.keys(window.localStorage)
+        .find((key) => key.startsWith(`scores:match_session:${saveId}:`))
+      : null;
+    const fallbackRaw = !raw
+      ? (fixtureId ? window.localStorage.getItem(legacyLocalKey(saveId)) : (prefixedKey ? window.localStorage.getItem(prefixedKey) : null))
+      : null;
     if (!raw && !fallbackRaw) return null;
     try {
       return normalizeSessionTactics(JSON.parse(raw ?? fallbackRaw ?? "") as MatchSession);

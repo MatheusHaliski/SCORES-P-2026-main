@@ -14,14 +14,20 @@ import { getElectronicScoreDisplayStyle, getElectronicScoreShellStyle, getHalfti
 export function HTManagerClient({ saveId, fixtureId }: { saveId: string; fixtureId: string }) {
   const router = useRouter();
   const service = useMemo(() => new MatchSessionService(), []);
-  const [session, setSession] = useState<MatchSession | null>(null);
+  const [session, setSession] = useState<MatchSession | null | undefined>(undefined);
   const [selectedOutPlayerId, setSelectedOutPlayerId] = useState<string | null>(null);
 
   useEffect(() => {
-    service.getSession(saveId, fixtureId).then(setSession);
+    const load = async () => {
+      const byFixture = fixtureId ? await service.getSession(saveId, fixtureId) : null;
+      const fallback = byFixture ?? await service.getSession(saveId, "");
+      setSession(fallback);
+    };
+    void load();
   }, [fixtureId, saveId, service]);
 
-  if (!session) return <p className="text-slate-300">Carregando sessão...</p>;
+  if (session === undefined) return <p className="text-slate-300">Carregando sessão...</p>;
+  if (!session) return <p className="text-rose-200">Sessão de intervalo não encontrada. Retorne ao Match Board para iniciar/retomar a partida.</p>;
 
   const tacticPreset: TacticalPreset = session.userTacticalPreset ?? { ...defaultTacticalPreset, style: session.userTeamTactic ?? "balanced" };
   const uniforms = session.clubUniformAssets ?? defaultUniformAssets;
@@ -29,6 +35,12 @@ export function HTManagerClient({ saveId, fixtureId }: { saveId: string; fixture
   return (
     <div className="space-y-4">
       <SectionCard title={`HTManagerBoardView • ${session.phase}`} style={getHalftimeBoardStyle()}>
+        {session.quarterBreakSnapshot && (
+          <div className="mb-3 rounded-xl border border-cyan-300/35 bg-cyan-500/10 p-3 text-xs text-cyan-100">
+            <p className="font-bold uppercase tracking-[0.16em]">Quarter Break Snapshot • Q{session.quarterBreakSnapshot.quarterJustEnded}</p>
+            <p className="mt-1">Score: {session.quarterBreakSnapshot.homeScore} - {session.quarterBreakSnapshot.awayScore} • Rotações restantes: {session.quarterBreakSnapshot.remainingRotations}</p>
+          </div>
+        )}
         <div className="grid gap-4 lg:grid-cols-[1.5fr,1fr]">
           <MiniCourtBoard lineup={session.userLineup} tactic={tacticPreset} uniforms={uniforms} />
           <div className="space-y-3">

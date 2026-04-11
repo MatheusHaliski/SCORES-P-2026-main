@@ -231,11 +231,38 @@ export class MatchProgressEngine {
         }
       : null;
     const injuryPlayerId = pendingInjury?.outPlayerId;
+    const phaseState = QuarterFlowEngine.toPhaseState(nextPhase);
+    const recommendedActions = [
+      "Revisar fadiga dos titulares e planejar rotação.",
+      "Ajustar intensidade defensiva para o próximo período.",
+      "Priorizar jogadas para seu melhor criador no clutch.",
+    ];
+    const quarterBreakSnapshot = quarterEnded && nextPhase !== "POST_MATCH"
+      ? {
+          sessionId: session.id,
+          fixtureId: userFixture.id,
+          quarterJustEnded: session.quarter,
+          homeScore: userFixtureAfter?.homeScore ?? userFixture.homeScore,
+          awayScore: userFixtureAfter?.awayScore ?? userFixture.awayScore,
+          remainingRotations: Math.max(0, 4 - session.substitutions.length),
+          recommendedActions,
+          playerStates: drainedUserLineup.map((player) => ({
+            playerId: player.playerId,
+            playerName: player.playerName,
+            stamina: player.stamina,
+            injuryStatus: player.injuryStatus,
+            morale: player.morale,
+          })),
+          tacticalState: session.userTacticalPreset,
+          generatedAt: new Date().toISOString(),
+        }
+      : session.quarterBreakSnapshot ?? null;
 
     return {
       ...session,
       quarter: nextQuarter,
       phase: nextPhase,
+      phaseState,
       timeRemaining: quarterEnded && nextPhase !== "POST_MATCH" ? session.quarterDuration : nextTimeRemaining,
       isFinished: nextPhase === "POST_MATCH",
       fixtures: updatedFixtures,
@@ -249,6 +276,7 @@ export class MatchProgressEngine {
         user: userIsHome ? userFixtureAfter?.homeScore ?? session.score.user : userFixtureAfter?.awayScore ?? session.score.user,
         opponent: userIsHome ? userFixtureAfter?.awayScore ?? session.score.opponent : userFixtureAfter?.homeScore ?? session.score.opponent,
       },
+      quarterBreakSnapshot,
       eventFeed: [...session.eventFeed, ...newEvents].slice(-60),
       updatedAt: new Date().toISOString(),
     };

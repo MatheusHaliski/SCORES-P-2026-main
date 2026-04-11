@@ -13,7 +13,7 @@ export class MatchBoardService {
     private seasonFlowService = new SeasonFlowService(),
   ) {}
 
-  async getLiveBoard(saveId: string) {
+  async getLiveBoard(saveId: string, requestedFixtureId?: string) {
     const save = await this.savesRepository.getSaveById(saveId);
     if (!save) throw new Error("Save não encontrado");
 
@@ -24,7 +24,10 @@ export class MatchBoardService {
 
     const fixtures = await this.fixturesRepository.getFixturesByLeagueAndRound(save.leagueId, seasonContext.nextFixture.round);
     const controlledTeamId = save.currentClubId ?? save.teamId;
-    const userFixture = fixtures.find((fixture) => fixture.homeTeamId === controlledTeamId || fixture.awayTeamId === controlledTeamId) ?? fixtures[0];
+    const userFixture = fixtures.find((fixture) => fixture.id === requestedFixtureId)
+      ?? fixtures.find((fixture) => fixture.id === seasonContext.nextFixture?.id)
+      ?? fixtures.find((fixture) => fixture.homeTeamId === controlledTeamId || fixture.awayTeamId === controlledTeamId)
+      ?? fixtures[0];
     if (!userFixture) throw new Error("Rodada não possui jogos válidos");
 
     const isSpectator = save.employmentStatus !== "employed";

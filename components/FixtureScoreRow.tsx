@@ -1,7 +1,7 @@
 import { TeamColorBadge } from "@/components/TeamColorBadge";
 import { LiveFixtureState } from "@/types/matchSession";
 import { MatchEvent } from "@/types/liveMatch";
-import { getElectronicScoreDisplayStyle, getElectronicScoreShellStyle, getMatchCardStyle } from "@/styles/metallicTheme";
+import { getCenterScoreDisplayStyle, getElectronicScoreShellStyle, getScoreboardRowShellStyle, getScoreboardStatusBarStyle, getTeamStripStyle } from "@/styles/metallicTheme";
 
 const SCORING_TYPES = new Set(["2PT_MADE", "3PT_MADE", "FREE_THROW_MADE"]);
 
@@ -30,19 +30,23 @@ export function FixtureScoreRow({
       type="button"
       onClick={() => onOpenTacticalBoard?.(fixture.id)}
       className={`w-full rounded-xl border p-3 text-left transition hover:-translate-y-0.5 ${fixture.isUserMatch ? "hover:shadow-[0_0_30px_rgba(232,208,149,0.35)]" : "hover:shadow-[0_0_24px_rgba(210,218,227,0.2)]"}`}
-      style={getMatchCardStyle(fixture.isUserMatch)}
+      style={getScoreboardRowShellStyle(fixture.isUserMatch)}
     >
       <div className="grid grid-cols-[minmax(0,1fr)_auto_minmax(0,1fr)] items-center gap-3">
-        <TeamColorBadge name={fixture.homeTeamName} color={fixture.homeColor} logo={fixture.homeLogo} side="home" />
+        <div style={getTeamStripStyle(fixture.homeColor)} className="rounded-lg">
+          <TeamColorBadge name={fixture.homeTeamName} color="transparent" logo={fixture.homeLogo} side="home" />
+        </div>
         <div className="p-1" style={getElectronicScoreShellStyle()}>
-          <p className="whitespace-nowrap px-4 py-1 text-lg sm:text-xl" style={getElectronicScoreDisplayStyle()}>
+          <p className="whitespace-nowrap px-4 py-1 text-lg sm:text-xl" style={getCenterScoreDisplayStyle()}>
             {fixture.homeScore} - {fixture.awayScore}
           </p>
         </div>
-        <TeamColorBadge name={fixture.awayTeamName} color={fixture.awayColor} logo={fixture.awayLogo} side="away" />
+        <div style={getTeamStripStyle(fixture.awayColor)} className="rounded-lg">
+          <TeamColorBadge name={fixture.awayTeamName} color="transparent" logo={fixture.awayLogo} side="away" />
+        </div>
       </div>
 
-      <div
+      <div style={getScoreboardStatusBarStyle()}
         className={`mt-2 flex min-h-9 items-center justify-center rounded-lg px-3 text-sm font-semibold text-white ${
           hasScoreInfo && scoredByUserClub ? "bg-yellow-300/25" : "bg-white/5"
         }`}

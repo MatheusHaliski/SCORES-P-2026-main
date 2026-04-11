@@ -7,7 +7,7 @@ export default async function MatchBoardView({ searchParams }: { searchParams: P
   const params = await searchParams;
   const saveId = params.saveId ?? "save-001";
   const forceFresh = params.fresh === "1";
-  const board = await new MatchBoardService().getLiveBoard(saveId).catch(() => null);
+  const board = await new MatchBoardService().getLiveBoard(saveId, params.fixtureId).catch(() => null);
 
   if (!board) {
     redirect(`/squad?saveId=${saveId}&tab=standings`);
