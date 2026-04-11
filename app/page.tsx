@@ -12,17 +12,24 @@ export default async function HomeView() {
   const userLabel = session?.email ?? "manager@scores";
 
   return (
-    <main className="mx-auto flex min-h-screen max-w-6xl items-center justify-center p-6">
+    <main
+      className="mx-auto flex min-h-screen max-w-6xl items-center justify-center p-6"
+      style={{
+        backgroundImage: "linear-gradient(135deg, rgba(2,6,23,.75), rgba(15,23,42,.68), rgba(2,6,23,.8)), url('/ChatGPT Image 9 de abr. de 2026, 13_10_17.png')",
+        backgroundPosition: "center",
+        backgroundSize: "cover",
+      }}
+    >
       <ContentAccessGate>
         <section className="grid w-full max-w-5xl gap-4 lg:grid-cols-[280px,1fr]">
           <UserProfileSidebar userIdentifier={userLabel} />
-          <div className="w-full rounded-3xl border border-white/20 bg-slate-950/70 p-8 shadow-2xl">
-            <div className="mb-4 h-14 w-40">
+          <div className="w-full rounded-3xl border border-white/20 bg-slate-950/72 p-8 shadow-2xl backdrop-blur-sm">
+            <div className="mb-4 h-20 w-52 rounded-2xl border border-cyan-300/30 bg-slate-900/65 p-2 shadow-[0_0_25px_rgba(34,211,238,.22)]">
               <Image
-                src="/81002908-DEEB-4A44-AD5F-F5FA637A495C_1_105_c.jpeg"
-                alt="Logo do Scores"
-                width={160}
-                height={56}
+                src="/1968F4FE-A4FF-44BB-944E-08BE533C975E.png"
+                alt="Logo oficial do SCORES"
+                width={208}
+                height={80}
                 className="h-full w-full object-contain object-left"
                 priority
               />
@@ -32,7 +39,8 @@ export default async function HomeView() {
             <div className="mt-8 space-y-3">
               <PrimaryMenuButton href="/select-team" title="Novo Jogo" description="Escolha liga e clube para iniciar um save." />
               <PrimaryMenuButton href="/save-board" title="Jogo Salvo" description="Carregue, gerencie ou remova saves existentes." />
-              <PrimaryMenuButton href="/config" title="Configurações" description="Ajuste experiência, idioma, simulação e preferências." />
+              <PrimaryMenuButton href="/config" title="Preferências" description="Ajuste experiência, idioma, simulação e preferências." />
+              <PrimaryMenuButton href="/database-editor" title="Editar Clubes / Ligas / Jogadores" description="Editor global da base do jogo para novos saves." />
             </div>
           </div>
         </section>

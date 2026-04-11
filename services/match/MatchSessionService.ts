@@ -128,6 +128,8 @@ export class MatchSessionService {
         homeLastScorer: undefined,
         awayLastScorer: undefined,
         isUserMatch: fixture.id === payload.userFixture.id,
+        homeFouls: 0,
+        awayFouls: 0,
         status: fixture.id === payload.userFixture.id ? "live" : "scheduled",
       })),
       eventFeed: [],
