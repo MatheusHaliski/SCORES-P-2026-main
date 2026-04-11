@@ -54,9 +54,23 @@ export class SaveGameService {
     return decorated;
   }
 
+  async listSaves(userId: string) {
+    return this.getSaveSlots(userId);
+  }
+
+  static registerLocalSaveSlot(save: UserSave) {
+    if (typeof window === "undefined") return;
+    const key = "scores:save_slots:index";
+    const raw = window.localStorage.getItem(key);
+    const existing = raw ? (JSON.parse(raw) as UserSave[]) : [];
+    const merged = [...existing.filter((item) => item.id !== save.id), save];
+    window.localStorage.setItem(key, JSON.stringify(merged));
+  }
+
   async saveFullGameState(saveId: string, payload: FullSavePayload): Promise<SaveResult> {
     try {
       const now = new Date().toISOString();
+      const currentSave = await this.savesRepository.getSaveById(saveId);
       const completePatch: Partial<UserSave> = {
         ...payload.savePatch,
         backgroundStudioConfig: payload.backgroundStudioConfig ?? payload.savePatch.backgroundStudioConfig,
@@ -65,6 +79,9 @@ export class SaveGameService {
       this.savesRepository.upsertSaveProgress(saveId, completePatch);
 
       if (typeof window !== "undefined") {
+        if (currentSave) {
+          SaveGameService.registerLocalSaveSlot({ ...currentSave, ...completePatch } as UserSave);
+        }
         window.localStorage.setItem(`scores:save_meta:${saveId}`, JSON.stringify({
           savedAt: now,
           seasonState: payload.seasonState ?? {},

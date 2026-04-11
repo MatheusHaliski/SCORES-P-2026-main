@@ -6,6 +6,7 @@ import { parseNewSaveId } from "@/lib/saveId";
 
 const saveProgressOverrides = new Map<string, Partial<UserSave>>();
 const persistedSaveStateKey = (saveId: string) => `scores:save:${saveId}`;
+const saveSlotIndexKey = "scores:save_slots:index";
 
 const clampStars = (value: number) => Math.max(0, Math.min(10, Math.round(value)));
 
@@ -74,6 +75,25 @@ const buildDynamicSave = (saveId: string): UserSave | undefined => {
 };
 
 export class UserSavesRepository {
+  private readPersistedSaveSlots(): UserSave[] {
+    if (typeof window === "undefined") return [];
+    const raw = window.localStorage.getItem(saveSlotIndexKey);
+    if (!raw) return [];
+    try {
+      const parsed = JSON.parse(raw) as UserSave[];
+      return Array.isArray(parsed) ? parsed.filter((item) => item && typeof item.id === "string") : [];
+    } catch {
+      return [];
+    }
+  }
+
+  private persistSaveSlot(save: UserSave) {
+    if (typeof window === "undefined") return;
+    const current = this.readPersistedSaveSlots();
+    const merged = [...current.filter((item) => item.id !== save.id), save];
+    window.localStorage.setItem(saveSlotIndexKey, JSON.stringify(merged));
+  }
+
   private readPersistedSaveState(saveId: string): Partial<UserSave> {
     if (typeof window === "undefined") return {};
     const raw = window.localStorage.getItem(persistedSaveStateKey(saveId));
@@ -110,7 +130,18 @@ export class UserSavesRepository {
     if (shouldUseFirebase && firestoreDb) {
       // TODO: query `user_saves` where userId == userId.
     }
-    return mockUserSaves.filter((save) => save.userId === userId).map(normalizeSave);
+    const mockSource = mockUserSaves.filter((save) => save.userId === userId);
+    const baseline = mockSource.length > 0 ? mockSource : mockUserSaves;
+    const indexed = this.readPersistedSaveSlots();
+    const dynamicFromIndex = indexed.map((save) => normalizeSave(save));
+    const combined = [...baseline.map(normalizeSave), ...dynamicFromIndex];
+    const deduped = new Map<string, UserSave>();
+    combined.forEach((save) => {
+      const runtimeOverrides = saveProgressOverrides.get(save.id) ?? {};
+      const persistedOverrides = this.readPersistedSaveState(save.id);
+      deduped.set(save.id, normalizeSave({ ...save, ...persistedOverrides, ...runtimeOverrides } as UserSave));
+    });
+    return Array.from(deduped.values()).sort((a, b) => (b.updatedAt || "").localeCompare(a.updatedAt || ""));
   }
 
   async getSaveById(saveId: string): Promise<UserSave | undefined> {
@@ -126,6 +157,8 @@ export class UserSavesRepository {
 
     const dynamic = buildDynamicSave(saveId);
     if (!dynamic) return undefined;
-    return normalizeSave({ ...dynamic, ...persistedOverrides, ...runtimeOverrides } as UserSave);
+    const resolved = normalizeSave({ ...dynamic, ...persistedOverrides, ...runtimeOverrides } as UserSave);
+    this.persistSaveSlot(resolved);
+    return resolved;
   }
 }

@@ -12,6 +12,16 @@ export interface ClubIdentityTheme {
   themePreset: "club-default" | "neon" | "classic";
 }
 
+export type ClubThemeInput = {
+  clubId: string;
+  clubName: string;
+  primaryColor?: string;
+  secondaryColor?: string;
+  accentColor?: string;
+  textColor?: string;
+  savedTheme?: Partial<ClubIdentityTheme> | null;
+};
+
 export function createDefaultClubIdentityTheme(primaryColor: string, secondaryColor: string): ClubIdentityTheme {
   return {
     primaryColor,
@@ -32,4 +42,16 @@ export function normalizeClubIdentityTheme(candidate: Partial<ClubIdentityTheme>
   const base = createDefaultClubIdentityTheme(primaryColor, secondaryColor);
   if (!candidate) return base;
   return { ...base, ...candidate };
+}
+
+export function resolveClubIdentityTheme(input: ClubThemeInput): ClubIdentityTheme {
+  const primary = input.primaryColor ?? "#0f172a";
+  const secondary = input.secondaryColor ?? "#1e293b";
+  const base = createDefaultClubIdentityTheme(primary, secondary);
+  return {
+    ...base,
+    accentColor: input.accentColor ?? base.accentColor,
+    textColor: input.textColor ?? base.textColor,
+    ...(input.savedTheme ?? {}),
+  };
 }

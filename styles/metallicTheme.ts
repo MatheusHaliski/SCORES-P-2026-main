@@ -1,4 +1,5 @@
 import { CSSProperties } from "react";
+import { ClubIdentityTheme } from "@/types/clubIdentityTheme";
 
 export function getMetallicGradient() {
   return `
