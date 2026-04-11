@@ -5,8 +5,9 @@ import { clearAuthSessionProfile, clearAuthSessionToken } from "@/app/lib/authSe
 import { clearServerSession } from "@/app/lib/clientSession";
 import { useRouter } from "next/navigation";
 import { BackgroundStudioModal } from "@/components/BackgroundStudioModal";
-import { BackgroundStudioConfig, buildBackgroundImage, buildShellBackgroundStyle, createDefaultStudioConfig, normalizeBackgroundStudioConfig } from "@/types/backgroundStudio";
+import { BackgroundStudioChangeDetail, BackgroundStudioConfig, buildBackgroundImage, buildShellBackgroundStyle, createDefaultStudioConfig, normalizeBackgroundStudioConfig } from "@/types/backgroundStudio";
 import { SHELL_BACKGROUND_CUSTOM_OPTION_ID, SHELL_BACKGROUND_CUSTOM_STYLE_KEY, SHELL_BACKGROUND_KEY } from "@/app/lib/shellBackground";
+import { getMetallicGradient, getMetallicStyle } from "@/styles/metallicTheme";
 
 type UserProfileSidebarProps = {
   userIdentifier?: string;
@@ -47,9 +48,12 @@ export function UserProfileSidebar({
   const clubSecondary = clubSecondaryColor ?? initialStudioConfig?.uiPalette.secondary ?? createDefaultStudioConfig().uiPalette.secondary;
   const sidebarStyle = useMemo(
     () => ({
+      ...getMetallicStyle(),
       borderColor: `${resolvedConfig.uiPalette.highlight}66`,
-      backgroundImage: `linear-gradient(132deg, ${resolvedConfig.uiPalette.primary}dd, ${resolvedConfig.uiPalette.secondary}c2)`,
+      backgroundImage: `${getMetallicGradient()}, linear-gradient(to bottom, rgba(255,255,255,0.08), transparent), linear-gradient(132deg, ${resolvedConfig.uiPalette.primary}99, ${resolvedConfig.uiPalette.secondary}88)`,
+      borderRight: "1px solid rgba(255,255,255,0.12)",
       boxShadow: `0 18px 45px rgba(0,0,0,0.35), inset 0 0 0 1px ${resolvedConfig.uiPalette.highlight}33`,
+      color: "#ffffff",
     }),
     [resolvedConfig.uiPalette.highlight, resolvedConfig.uiPalette.primary, resolvedConfig.uiPalette.secondary],
   );
@@ -62,19 +66,25 @@ export function UserProfileSidebar({
   );
   const primaryButtonStyle = useMemo(
     () => ({
+      ...getMetallicStyle(),
       borderColor: `${resolvedConfig.uiPalette.highlight}88`,
-      backgroundImage: `linear-gradient(136deg, ${resolvedConfig.uiPalette.secondary}dd, ${resolvedConfig.uiPalette.primary}f0)`,
+      backgroundImage: `${getMetallicGradient()}, linear-gradient(136deg, ${resolvedConfig.uiPalette.secondary}aa, ${resolvedConfig.uiPalette.primary}c8)`,
       color: "#ecfeff",
+      borderRadius: "10px",
+      padding: "8px 14px",
     }),
     [resolvedConfig.uiPalette.highlight, resolvedConfig.uiPalette.primary, resolvedConfig.uiPalette.secondary],
   );
   const secondaryButtonStyle = useMemo(
     () => ({
+      ...getMetallicStyle(),
       borderColor: `${resolvedConfig.uiPalette.highlight}55`,
-      backgroundColor: `${resolvedConfig.uiPalette.primary}b8`,
+      backgroundImage: `${getMetallicGradient()}, linear-gradient(136deg, ${resolvedConfig.uiPalette.primary}88, ${resolvedConfig.uiPalette.secondary}66)`,
       color: "#ffffff",
+      borderRadius: "10px",
+      padding: "8px 14px",
     }),
-    [resolvedConfig.uiPalette.highlight, resolvedConfig.uiPalette.primary],
+    [resolvedConfig.uiPalette.highlight, resolvedConfig.uiPalette.primary, resolvedConfig.uiPalette.secondary],
   );
 
   useEffect(() => {
@@ -89,21 +99,26 @@ export function UserProfileSidebar({
     root.style.setProperty("--scores-metallic-polish", `${Math.max(0.1, resolvedConfig.matchVisual.borderPolishIntensity / 100)}`);
 
     const shellStyle = buildShellBackgroundStyle(resolvedConfig);
+    window.localStorage.setItem(studioStorageKey(saveId), JSON.stringify(resolvedConfig));
     window.localStorage.setItem(SHELL_BACKGROUND_CUSTOM_STYLE_KEY, JSON.stringify(shellStyle));
     window.localStorage.setItem(SHELL_BACKGROUND_KEY, SHELL_BACKGROUND_CUSTOM_OPTION_ID);
-    window.dispatchEvent(new Event("scores-shell-background-change"));
+    window.dispatchEvent(
+      new CustomEvent<BackgroundStudioChangeDetail>("scores-shell-background-change", {
+        detail: { saveId, config: resolvedConfig },
+      }),
+    );
     return () => {
       delete root.dataset.scoresSkin;
     };
-  }, [resolvedConfig]);
+  }, [resolvedConfig, saveId]);
 
   const handleSaveStudio = async () => {
-    window.localStorage.setItem(studioStorageKey(saveId), JSON.stringify(config));
+    window.localStorage.setItem(studioStorageKey(saveId), JSON.stringify(resolvedConfig));
     try {
       await fetch("/api/save/background-studio", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ saveId, config }),
+        body: JSON.stringify({ saveId, config: resolvedConfig }),
       });
     } catch {
       // fallback no local storage já aplicado.
@@ -136,7 +151,7 @@ export function UserProfileSidebar({
         <button
           type="button"
           onClick={() => setOpenStudio(true)}
-          className="sa-premium-gradient-surface-soft mt-5 w-full rounded-xl border px-4 py-2 text-sm font-black shadow-[0_0_20px_rgba(34,211,238,0.24)] transition hover:scale-[1.01]"
+          className="sa-premium-gradient-surface-soft mt-5 w-full rounded-xl border px-4 py-2 text-sm font-black transition-all duration-200 hover:scale-[1.03] hover:shadow-[0_0_25px_rgba(34,197,94,0.35)]"
           style={primaryButtonStyle}
         >
           Abrir Background Studio
@@ -145,7 +160,7 @@ export function UserProfileSidebar({
         <button
           type="button"
           onClick={handleLogout}
-          className="sa-premium-gradient-surface-soft mt-3 w-full rounded-xl border px-4 py-2 text-sm font-bold transition hover:border-rose-200/60"
+          className="sa-premium-gradient-surface-soft mt-3 w-full rounded-xl border px-4 py-2 text-sm font-bold transition-all duration-200 hover:scale-[1.03] hover:shadow-[0_0_25px_rgba(34,197,94,0.35)]"
           style={secondaryButtonStyle}
         >
           Logout
