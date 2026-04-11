@@ -103,7 +103,7 @@ export function useLiveRoundSimulation(params: Params) {
 
     if (QuarterFlowEngine.isBreakPhase(session.phase)) {
       navigatingRef.current = true;
-      router.push(`/ht-manager?saveId=${params.saveId}`);
+      router.push(`/ht-manager?saveId=${params.saveId}&fixtureId=${session.fixtureId}`);
       return;
     }
 
@@ -141,7 +141,7 @@ export function readHalftimeSnapshot(saveId: string): HalftimeSnapshot | null {
     return {
       saveId,
       quarterFinished,
-      savedAt: session.updatedAt,
+      savedAt: session.quarterBreakSnapshot?.generatedAt ?? session.updatedAt,
       fixtures: session.fixtures.map((fixture) => ({
         id: fixture.id,
         homeTeamId: fixture.homeTeamId,

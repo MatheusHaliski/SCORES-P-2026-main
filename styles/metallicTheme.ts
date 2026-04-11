@@ -146,6 +146,44 @@ export function getMatchCardStyle(isHighlighted = false): CSSProperties {
   };
 }
 
+export function getScoreboardRowShellStyle(isHighlighted = false): CSSProperties {
+  return {
+    ...getMatchCardStyle(isHighlighted),
+    borderRadius: "16px",
+    padding: "14px",
+    backgroundImage: `
+      linear-gradient(145deg, rgba(18, 44, 39, 0.97), rgba(12, 29, 26, 0.95)),
+      linear-gradient(90deg, rgba(209,176,108,0.12), transparent 22%, transparent 78%, rgba(209,176,108,0.12)),
+      repeating-linear-gradient(0deg, rgba(255,255,255,0.03) 0 1px, transparent 1px 3px)
+    `,
+  };
+}
+
+export function getTeamStripStyle(teamColor: string): CSSProperties {
+  return {
+    backgroundImage: `linear-gradient(120deg, ${teamColor}, ${teamColor}cc 55%, rgba(15,23,42,0.92))`,
+    border: "1px solid rgba(255,255,255,0.2)",
+    boxShadow: "inset 0 1px 0 rgba(255,255,255,0.24), inset 0 -8px 12px rgba(0,0,0,0.28)",
+  };
+}
+
+export function getCenterScoreDisplayStyle(): CSSProperties {
+  return {
+    ...getElectronicScoreDisplayStyle(),
+    color: "#eafff3",
+    textShadow: "0 0 12px rgba(74,222,128,0.55), 0 0 20px rgba(148,163,184,0.35)",
+    letterSpacing: "0.18em",
+  };
+}
+
+export function getScoreboardStatusBarStyle(): CSSProperties {
+  return {
+    border: "1px solid rgba(245, 223, 162, 0.35)",
+    backgroundImage: "linear-gradient(90deg, rgba(5,17,15,0.85), rgba(20,57,51,0.92), rgba(5,17,15,0.85))",
+    boxShadow: "inset 0 1px 0 rgba(255,255,255,0.12), 0 0 16px rgba(0,0,0,0.28)",
+  };
+}
+
 export function getMatchInfoBarStyle(): CSSProperties {
   return {
     ...getMetalInfoPanelStyle(scoresMatchPalette),

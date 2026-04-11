@@ -43,6 +43,8 @@ export class SeasonCalendarRepository {
       teamId: save.teamId,
       entries,
       currentEntryIndex: firstScheduledIndex >= 0 ? firstScheduledIndex : entries.length,
+      currentDate: entries[firstScheduledIndex >= 0 ? firstScheduledIndex : Math.max(0, entries.length - 1)]?.date ?? now.slice(0, 10),
+      activeFixtureId: entries[firstScheduledIndex >= 0 ? firstScheduledIndex : entries.length]?.fixtureId ?? null,
       completedRounds: {},
       createdAt: now,
       updatedAt: now,

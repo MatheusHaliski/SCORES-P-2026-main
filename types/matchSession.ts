@@ -13,6 +13,34 @@ export type MatchPhase =
   | "Q4"
   | "POST_MATCH";
 
+export type MatchPhaseState =
+  | "pre-game"
+  | "live-quarter"
+  | "quarter-break"
+  | "halftime"
+  | "final";
+
+export type PlayerMatchState = {
+  playerId: string;
+  playerName: string;
+  stamina: number;
+  injuryStatus: "Disponível" | "Lesionado";
+  morale: "Muito Feliz" | "Feliz" | "Contente" | "Insatisfeito" | "Muito Insatisfeito";
+};
+
+export type QuarterBreakSnapshot = {
+  sessionId: string;
+  fixtureId: string;
+  quarterJustEnded: number;
+  homeScore: number;
+  awayScore: number;
+  remainingRotations: number;
+  recommendedActions: string[];
+  playerStates: PlayerMatchState[];
+  tacticalState: TacticalPreset;
+  generatedAt: string;
+};
+
 export type TeamTactic = TacticalStyle;
 
 export type LineupPlayer = {
@@ -63,6 +91,7 @@ export type MatchSession = {
   round: number;
   quarter: 1 | 2 | 3 | 4;
   phase: MatchPhase;
+  phaseState: MatchPhaseState;
   timeRemaining: number;
   quarterDuration: number;
   isFinished: boolean;
@@ -97,6 +126,7 @@ export type MatchSession = {
     user: number;
     opponent: number;
   };
+  quarterBreakSnapshot?: QuarterBreakSnapshot | null;
   createdAt: string;
   updatedAt: string;
 };

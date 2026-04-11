@@ -88,6 +88,7 @@ export class MatchSessionService {
       round: payload.round,
       quarter: 1,
       phase: "Q1",
+      phaseState: "pre-game",
       timeRemaining: payload.quarterDuration,
       quarterDuration: payload.quarterDuration,
       isFinished: false,
@@ -134,6 +135,7 @@ export class MatchSessionService {
         user: userIsHome ? payload.userFixture.homeScore : payload.userFixture.awayScore,
         opponent: userIsHome ? payload.userFixture.awayScore : payload.userFixture.homeScore,
       },
+      quarterBreakSnapshot: null,
       createdAt: now,
       updatedAt: now,
     };
@@ -157,12 +159,14 @@ export class MatchSessionService {
     const next: MatchSession = {
       ...session,
       phase,
+      phaseState: QuarterFlowEngine.toPhaseState(phase),
       quarter: QuarterFlowEngine.toQuarter(phase),
       timeRemaining: session.quarterDuration,
       fixtures: session.fixtures.map((fixture) => ({
         ...fixture,
         status: fixture.status === "finished" ? "finished" : "live",
       })),
+      quarterBreakSnapshot: null,
       updatedAt: new Date().toISOString(),
     };
     await this.repository.upsert(next);

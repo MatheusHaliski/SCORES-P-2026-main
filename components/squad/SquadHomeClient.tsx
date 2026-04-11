@@ -7,6 +7,7 @@ import { TeamIdentityHeader } from "@/components/TeamIdentityHeader";
 import { MiniNextMatchCard } from "@/components/MiniNextMatchCard";
 import { SpectatorModeBanner } from "@/components/SpectatorModeBanner";
 import { StandingsTable } from "@/components/StandingsTable";
+import { MonthlyScheduleCalendar } from "@/components/squad/MonthlyScheduleCalendar";
 import Link from "next/link";
 import Image from "next/image";
 import { PlayerMoraleService } from "@/services/PlayerMoraleService";
@@ -1742,7 +1743,15 @@ export function SquadHomeClient({
       ))}
 
       {openModal === "Calendário" && modalShell("Calendário", () => setOpenModal(null), (
-        <div className="space-y-1 text-sm text-slate-100">{(payload.seasonCalendar?.entries ?? []).map((entry) => <p key={entry.fixtureId}>R{entry.round} • {teamsMap[entry.homeTeamId]?.shortName} vs {teamsMap[entry.awayTeamId]?.shortName}</p>)}</div>
+        payload.seasonCalendar ? (
+          <MonthlyScheduleCalendar
+            calendar={payload.seasonCalendar}
+            teamsById={teamsMap}
+            userTeamId={payload.team.id}
+            currentDate={payload.seasonCalendar.currentDate}
+            nextFixtureId={payload.nextFixture?.id}
+          />
+        ) : <p className="text-sm text-slate-300">Calendário indisponível.</p>
       ))}
 
       {openModal === "Salvar Jogo" && modalShell("Salvar Jogo", () => setOpenModal(null), (

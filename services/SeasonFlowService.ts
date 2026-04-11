@@ -6,6 +6,7 @@ import { Fixture, StandingRow } from "@/types/game";
 import { SeasonCalendar, SeasonSummary } from "@/types/season";
 import { ManagerCareerService } from "@/services/ManagerCareerService";
 import { JobOfferService } from "@/services/JobOfferService";
+import { buildLeagueProgressState, resolveNextCalendarEntry } from "@/services/seasonScheduleResolver";
 
 export class SeasonFlowService {
   constructor(
@@ -23,8 +24,13 @@ export class SeasonFlowService {
 
     const leagueFixtures = await this.fixturesRepository.getLatestFixturesByLeague(save.leagueId);
     const calendar = this.calendarRepository.getOrCreate(save, leagueFixtures);
-
-    const nextEntry = calendar.entries[calendar.currentEntryIndex];
+    const progress = buildLeagueProgressState(calendar);
+    const nextEntry = resolveNextCalendarEntry(calendar.entries, progress);
+    calendar.activeFixtureId = nextEntry?.fixtureId ?? null;
+    calendar.currentDate = nextEntry?.date ?? calendar.currentDate;
+    calendar.currentEntryIndex = nextEntry ? calendar.entries.findIndex((entry) => entry.fixtureId === nextEntry.fixtureId) : calendar.entries.length;
+    calendar.updatedAt = new Date().toISOString();
+    this.calendarRepository.upsert(calendar);
     const nextFixture = nextEntry ? {
       id: nextEntry.fixtureId,
       leagueId: nextEntry.leagueId,
@@ -40,7 +46,7 @@ export class SeasonFlowService {
     } : null;
 
     const standings = await this.buildStandings(calendar.leagueId, calendar.completedRounds);
-    const isFinished = calendar.currentEntryIndex >= calendar.entries.length;
+    const isFinished = !nextEntry;
     const playoffSpots = Math.min(8, Math.max(2, Math.floor(standings.length / 2)));
 
     const summary: SeasonSummary = {
@@ -60,23 +66,26 @@ export class SeasonFlowService {
 
     const leagueFixtures = await this.fixturesRepository.getLatestFixturesByLeague(save.leagueId);
     const calendar = this.calendarRepository.getOrCreate(save, leagueFixtures);
-    const currentEntry = calendar.entries[calendar.currentEntryIndex];
+    const progress = buildLeagueProgressState(calendar);
+    const currentEntry = resolveNextCalendarEntry(calendar.entries, progress);
     if (!currentEntry) throw new Error("Temporada já finalizada");
 
     calendar.completedRounds[round] = finishedFixtures.map((fixture) => ({ ...fixture, status: "finished", quarter: 4, clock: "00:00" }));
 
-    calendar.entries = calendar.entries.map((entry, index) => {
-      if (index !== calendar.currentEntryIndex) return entry;
+    calendar.entries = calendar.entries.map((entry) => {
+      if (entry.fixtureId !== currentEntry.fixtureId) return entry;
       const played = finishedFixtures.find((fixture) => fixture.id === entry.fixtureId);
       if (!played) return { ...entry, status: "finished" };
       return { ...entry, status: "finished", homeScore: played.homeScore, awayScore: played.awayScore };
     });
-
-    calendar.currentEntryIndex = Math.min(calendar.currentEntryIndex + 1, calendar.entries.length);
+    const nextProgress = buildLeagueProgressState(calendar);
+    nextProgress.currentDate = currentEntry.date;
+    const nextEntry = resolveNextCalendarEntry(calendar.entries, nextProgress);
+    calendar.currentEntryIndex = nextEntry ? calendar.entries.findIndex((entry) => entry.fixtureId === nextEntry.fixtureId) : calendar.entries.length;
+    calendar.activeFixtureId = nextEntry?.fixtureId ?? null;
+    calendar.currentDate = nextEntry?.date ?? currentEntry.date;
     calendar.updatedAt = new Date().toISOString();
     this.calendarRepository.upsert(calendar);
-
-    const nextEntry = calendar.entries[calendar.currentEntryIndex];
     const savePatch = {
       currentRound: nextEntry?.round ?? save.currentRound,
       nextFixtureId: nextEntry?.fixtureId ?? save.nextFixtureId,
@@ -93,7 +102,7 @@ export class SeasonFlowService {
     const pendingJobOffer = refreshedSave
       ? await this.jobOfferService.generateJobOfferForRound(refreshedSave, round, standings)
       : null;
-    const isFinished = calendar.currentEntryIndex >= calendar.entries.length;
+    const isFinished = !nextEntry;
     const playoffSpots = Math.min(8, Math.max(2, Math.floor(standings.length / 2)));
 
     return {

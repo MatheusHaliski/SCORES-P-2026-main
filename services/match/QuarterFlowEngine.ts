@@ -1,4 +1,4 @@
-import { MatchPhase } from "@/types/matchSession";
+import { MatchPhase, MatchPhaseState } from "@/types/matchSession";
 
 const quarterByPhase: Record<MatchPhase, 1 | 2 | 3 | 4> = {
   Q1: 1,
@@ -50,5 +50,12 @@ export class QuarterFlowEngine {
 
   static isBreakPhase(phase: MatchPhase) {
     return phase === "BREAK_Q1" || phase === "BREAK_Q2" || phase === "BREAK_Q3";
+  }
+
+  static toPhaseState(phase: MatchPhase): MatchPhaseState {
+    if (phase === "POST_MATCH") return "final";
+    if (phase === "BREAK_Q2") return "halftime";
+    if (this.isBreakPhase(phase)) return "quarter-break";
+    return "live-quarter";
   }
 }

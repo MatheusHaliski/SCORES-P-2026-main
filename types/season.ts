@@ -18,6 +18,8 @@ export type SeasonCalendar = {
   teamId: string;
   entries: SeasonCalendarEntry[];
   currentEntryIndex: number;
+  currentDate: string;
+  activeFixtureId: string | null;
   completedRounds: Record<number, Fixture[]>;
   createdAt: string;
   updatedAt: string;
