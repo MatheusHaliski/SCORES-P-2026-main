@@ -2,6 +2,7 @@
 
 import { useMemo, useState } from "react";
 import { mockLeagues, mockTeams, enrichedMockPlayers } from "@/mocks/gameData";
+import { readGlobalDb, writeGlobalDb } from "@/lib/globalDb";
 
 type GlobalDb = {
   version: string;
@@ -10,29 +11,14 @@ type GlobalDb = {
   players: typeof enrichedMockPlayers;
 };
 
-const GLOBAL_DB_KEY = "scores:global-db:v1";
-
-function readDb(): GlobalDb {
-  if (typeof window === "undefined") {
-    return { version: new Date().toISOString(), leagues: mockLeagues, teams: mockTeams, players: enrichedMockPlayers };
-  }
-  const raw = window.localStorage.getItem(GLOBAL_DB_KEY);
-  if (!raw) return { version: new Date().toISOString(), leagues: mockLeagues, teams: mockTeams, players: enrichedMockPlayers };
-  try {
-    return JSON.parse(raw) as GlobalDb;
-  } catch {
-    return { version: new Date().toISOString(), leagues: mockLeagues, teams: mockTeams, players: enrichedMockPlayers };
-  }
-}
-
 export default function DatabaseEditorPage() {
-  const [db, setDb] = useState<GlobalDb>(() => readDb());
+  const [db, setDb] = useState<GlobalDb>(() => readGlobalDb());
   const totals = useMemo(() => ({ leagues: db.leagues.length, teams: db.teams.length, players: db.players.length }), [db]);
 
   const save = () => {
     const next = { ...db, version: new Date().toISOString() };
     setDb(next);
-    window.localStorage.setItem(GLOBAL_DB_KEY, JSON.stringify(next));
+    writeGlobalDb(next);
     alert("Base global salva. Novos saves usarão essa base; saves existentes mantêm o snapshot já carregado.");
   };
 
