@@ -83,6 +83,15 @@ export function getMetalInfoPanelStyle(palette: MetalPalette = defaultPalette): 
   };
 }
 
+export function getClubIdentityPanelStyle(palette: MetalPalette = defaultPalette): CSSProperties {
+  return {
+    ...getMetalInfoPanelStyle(palette),
+    borderRadius: "14px",
+    backgroundImage: `${getMetallicGradient()}, linear-gradient(128deg, ${withAlpha(palette.primary, "bf")}, ${withAlpha(palette.secondary, "7d")}), repeating-linear-gradient(-10deg, rgba(255,255,255,0.025) 0px, rgba(255,255,255,0.025) 1px, transparent 1px, transparent 5px)`,
+    boxShadow: `inset 0 1px 0 rgba(255,255,255,0.16), inset 0 -12px 24px rgba(2,6,23,0.22), 0 10px 22px rgba(2,6,23,0.44), 0 0 16px ${withAlpha(palette.highlight, "26")}`,
+  };
+}
+
 export function getMetalPlayerRowStyle(palette: MetalPalette = defaultPalette, selected = false): CSSProperties {
   return {
     ...getMetallicStyle(),
