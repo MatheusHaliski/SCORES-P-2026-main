@@ -23,7 +23,7 @@ export function HTManagerClient({ saveId, fixtureId }: { saveId: string; fixture
       try {
         const byFixture = fixtureId ? await service.getSession(saveId, fixtureId) : null;
         const fallback = byFixture ?? await service.getSession(saveId, "");
-        setSession(fallback ?? null);
+        setSession(fallback);
       } catch {
         setSession(null);
       }
@@ -93,21 +93,18 @@ export function HTManagerClient({ saveId, fixtureId }: { saveId: string; fixture
 
       <button
         onClick={async () => {
-          if (QuarterFlowEngine.isBreakPhase(session.phase)) {
+          if (session.phase === "BREAK_Q1" || session.phase === "BREAK_Q2" || session.phase === "BREAK_Q3") {
             const next = await service.continueFromBreak(session);
             setSession(next);
-            router.push(`/match-board?saveId=${saveId}&fixtureId=${next.fixtureId}`);
-            return;
           }
-
-          router.push(`/match-board?saveId=${saveId}&fixtureId=${session.fixtureId}`);
+          router.push(`/match-board?saveId=${saveId}&fixtureId=${fixtureId}`);
         }}
         className="premium-control w-full border border-cyan-300/50 bg-cyan-500/20 px-4 py-3 text-sm font-bold text-cyan-100"
         style={getMatchPanelStyle()}
       >
-        {QuarterFlowEngine.isBreakPhase(session.phase)
+        {session.phase === "BREAK_Q1" || session.phase === "BREAK_Q2" || session.phase === "BREAK_Q3"
           ? `Confirmar ajustes e continuar para Q${session.quarter + 1}`
-          : "Voltar para a partida ao vivo"}
+          : "Voltar para Match Board sem resetar o relógio"}
       </button>
     </div>
   );

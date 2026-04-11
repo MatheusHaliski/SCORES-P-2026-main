@@ -26,9 +26,13 @@ const normalizeSessionTactics = (session: MatchSession): MatchSession => ({
 export class MatchSessionRepository {
   async getBySaveId(saveId: string, fixtureId?: string): Promise<MatchSession | null> {
     if (shouldUseFirebase && firestoreDb) {
-      const ref = doc(firestoreDb, COLLECTION, fixtureId ? `${saveId}:${fixtureId}` : saveId);
-      const snap = await getDoc(ref);
-      if (snap.exists()) return normalizeSessionTactics(snap.data() as MatchSession);
+      try {
+        const ref = doc(firestoreDb, COLLECTION, fixtureId ? `${saveId}:${fixtureId}` : saveId);
+        const snap = await getDoc(ref);
+        if (snap.exists()) return normalizeSessionTactics(snap.data() as MatchSession);
+      } catch {
+        // Fallback para localStorage em caso de indisponibilidade de rede/permissão.
+      }
     }
 
     if (typeof window === "undefined") return null;

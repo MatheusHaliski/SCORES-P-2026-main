@@ -155,6 +155,10 @@ export class MatchSessionService {
   }
 
   async continueFromBreak(session: MatchSession): Promise<MatchSession> {
+    if (!QuarterFlowEngine.isBreakPhase(session.phase)) {
+      return session;
+    }
+
     const phase = QuarterFlowEngine.continueFromBreak(session.phase);
     const next: MatchSession = {
       ...session,
