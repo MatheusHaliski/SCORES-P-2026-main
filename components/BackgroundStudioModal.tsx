@@ -11,6 +11,7 @@ import {
   SoundtrackItem,
   buildBackgroundImage,
   getBackgroundStudioPreset,
+  resolveStudioPresetTheme,
 } from "@/types/backgroundStudio";
 import { getMetallicGradient, getMetallicStyle } from "@/styles/metallicTheme";
 
@@ -95,38 +96,19 @@ export function BackgroundStudioModal({ open, onClose, config, onChange, onSave,
   if (!open) return null;
 
   const applyPreset = (presetId: BackgroundStudioConfig["matchVisual"]["presetId"]) => {
-    const preset = getBackgroundStudioPreset(presetId);
+    const presetTheme = resolveStudioPresetTheme(presetId, {
+      primary: clubPrimary,
+      secondary: clubSecondary,
+    });
     onChange({
       ...config,
       matchVisual: {
         ...config.matchVisual,
-        presetId: preset.id,
-        shellBackgroundUrl: preset.shellBackgroundUrl,
-        nextMatchBackgroundUrl: preset.nextMatchBackgroundUrl,
-        shellOverlay: preset.shellOverlay,
-        nextMatchOverlay: preset.nextMatchOverlay,
-        shellBlur: preset.shellBlur,
-        shellGlow: preset.shellGlow,
-        nextMatchBlur: preset.nextMatchBlur,
-        nextMatchGlow: preset.nextMatchGlow,
-        skinMode: preset.skinMode,
-        glowIntensity: preset.glowIntensity,
-        blurStrength: preset.blurStrength,
-        density: preset.density,
-        depth: preset.depth,
-        textureIntensity: preset.textureIntensity,
-        glossIntensity: preset.glossIntensity,
-        borderPolishIntensity: preset.borderPolishIntensity,
-        shapeLanguage: preset.shapeLanguage,
-        pattern: preset.pattern,
-        motionDirection: preset.motionDirection,
-        contrast: preset.contrast,
+        ...(presetTheme.matchVisual ?? {}),
       },
       uiPalette: {
         ...config.uiPalette,
-        primary: config.uiPalette.useClubColors ? clubPrimary : preset.primary,
-        secondary: config.uiPalette.useClubColors ? clubSecondary : preset.secondary,
-        highlight: preset.highlight,
+        ...(presetTheme.uiPalette ?? {}),
       },
     });
   };
@@ -225,12 +207,12 @@ export function BackgroundStudioModal({ open, onClose, config, onChange, onSave,
           <div className="space-y-4">
             <section className="rounded-2xl border border-violet-300/30 bg-violet-500/5 p-3">
               <p className="mb-2 text-sm font-black text-violet-200">1) Presets visuais (somente CAMADA B)</p>
-              <div className="grid gap-2 md:grid-cols-2">
+              <div className="grid gap-2 md:grid-cols-3">
                 {BACKGROUND_STUDIO_PRESETS.map((preset) => (
                   <button
                     key={preset.id}
                     onClick={() => applyPreset(preset.id)}
-                    className={`rounded-xl border p-3 text-left transition hover:scale-[1.01] ${config.matchVisual.presetId === preset.id ? "border-cyan-300/70 bg-cyan-500/15" : "border-white/10 bg-slate-900/70"}`}
+                    className={`rounded-xl border p-3 text-left transition hover:scale-[1.01] ${config.matchVisual.presetId === preset.id ? "border-cyan-300 bg-cyan-500/20 shadow-[0_0_0_1px_rgba(34,211,238,0.5)]" : "border-white/10 bg-slate-900/70"}`}
                   >
                     <p className="font-bold text-white">{preset.name}</p>
                     <p className="text-xs text-slate-300">{preset.description}</p>
