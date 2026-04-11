@@ -87,7 +87,7 @@ export function MatchBoardLiveClient({
             fixtures={session.fixtures}
             events={session.eventFeed}
             userTeamId={userTeamId}
-            onOpenTacticalBoard={() => router.push(`/ht-manager?saveId=${saveId}&fixtureId=${session.fixtureId}`)}
+            onOpenTacticalBoard={(targetFixtureId) => router.push(`/ht-manager?saveId=${saveId}&fixtureId=${targetFixtureId || session.fixtureId}`)}
           />
         </SectionCard>
       </div>
