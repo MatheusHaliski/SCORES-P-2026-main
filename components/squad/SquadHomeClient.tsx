@@ -20,9 +20,9 @@ import { ClubVisualService } from "@/services/ClubVisualService";
 import { SaveGameService } from "@/services/SaveGameService";
 import { ClubUniformAssets, defaultTacticalPreset, defaultUniformAssets, resolveUniformUrl, TacticalPreset, UniformSlot } from "@/types/tactical";
 import { writeClubUniforms, writePreMatchTactic } from "@/lib/tacticalState";
-import { ClubIdentityTheme, createDefaultClubIdentityTheme, normalizeClubIdentityTheme } from "@/types/clubIdentityTheme";
-import { BackgroundStudioChangeDetail, BackgroundStudioConfig, buildMatchVisualOverlay, buildShellBackgroundStyle, createDefaultStudioConfig, normalizeBackgroundStudioConfig } from "@/types/backgroundStudio";
-import { getMetalInfoPanelStyle, getMetalListPanelStyle, getMetalPanelStyle, getMetalPlayerRowStyle, getMetallicGradient, getMetallicStyle } from "@/styles/metallicTheme";
+import { ClubIdentityTheme, createDefaultClubIdentityTheme, normalizeClubIdentityTheme, resolveClubIdentityTheme } from "@/types/clubIdentityTheme";
+import { BackgroundStudioChangeDetail, BackgroundStudioConfig, buildMatchVisualOverlay, buildShellBackgroundStyle, createDefaultStudioConfig, normalizeBackgroundStudioConfig, resolveStudioPresetTheme } from "@/types/backgroundStudio";
+import { getClubIdentityPanelStyle, getMetalInfoPanelStyle, getMetalListPanelStyle, getMetalPanelStyle, getMetalPlayerRowStyle, getMetallicGradient, getMetallicStyle } from "@/styles/metallicTheme";
 
 type InboxMessage = {
   id: string;
@@ -501,6 +501,10 @@ export function SquadHomeClient({
   const [saveStatus, setSaveStatus] = useState<{ saving: boolean; ok: boolean | null; message: string }>({ saving: false, ok: null, message: "" });
 
   useEffect(() => {
+    SaveGameService.registerLocalSaveSlot(payload.save);
+  }, [payload.save]);
+
+  useEffect(() => {
     const syncBackgroundStudioFromStorage = () => {
       const raw = window.localStorage.getItem(`scores:background-studio:${payload.save.id}`);
       if (!raw) {
@@ -915,7 +919,26 @@ export function SquadHomeClient({
     : (state.teamColors?.secondaryColor ?? payload.team.secondaryColor);
   const primaryColor = activePrimaryColor;
   const secondaryColor = clubVisualService.ensureReadableAccent(activeSecondaryColor);
-  const identityTheme = normalizeClubIdentityTheme(state.clubIdentityTheme, primaryColor, secondaryColor);
+  const identityTheme = resolveClubIdentityTheme({
+    clubId: payload.team.id,
+    clubName: payload.team.name,
+    primaryColor,
+    secondaryColor,
+    accentColor: secondaryColor,
+    savedTheme: state.clubIdentityTheme,
+  });
+  const effectiveStudioPalette = useMemo(() => {
+    if (!backgroundStudio.uiPalette.useClubColors) return backgroundStudio.uiPalette;
+    if (!["club-identity", "reverse-club-identity"].includes(backgroundStudio.matchVisual.presetId)) return backgroundStudio.uiPalette;
+    const resolvedTheme = resolveStudioPresetTheme(backgroundStudio.matchVisual.presetId, {
+      primary: primaryColor,
+      secondary: secondaryColor,
+    });
+    return {
+      ...backgroundStudio.uiPalette,
+      ...(resolvedTheme.uiPalette ?? {}),
+    };
+  }, [backgroundStudio.matchVisual.presetId, backgroundStudio.uiPalette, primaryColor, secondaryColor]);
   const activeUniformUrl = resolveUniformUrl(state.uniformAssets ?? defaultUniformAssets);
   const boardMoraleLabel = clubVisualService.reputationToLabel(payload.save.boardReputation);
   const fansMoraleLabel = clubVisualService.reputationToLabel(payload.save.fansReputation);
@@ -942,34 +965,33 @@ export function SquadHomeClient({
   const matchVisualOverlay = useMemo(() => buildMatchVisualOverlay(backgroundStudio), [backgroundStudio]);
   const studioPanelStyle = useMemo(() => ({
     ...getMetallicStyle(),
-    borderColor: `${backgroundStudio.uiPalette.highlight}66`,
-    backgroundImage: `${getMetallicGradient()}, linear-gradient(145deg, ${backgroundStudio.uiPalette.primary}99, ${backgroundStudio.uiPalette.secondary}66)`,
-    boxShadow: `0 0 ${Math.max(18, backgroundStudio.matchVisual.glowIntensity / 2)}px ${backgroundStudio.uiPalette.highlight}22`,
+    borderColor: `${effectiveStudioPalette.highlight}66`,
+    backgroundImage: `${getMetallicGradient()}, linear-gradient(145deg, ${effectiveStudioPalette.primary}99, ${effectiveStudioPalette.secondary}66)`,
+    boxShadow: `0 0 ${Math.max(18, backgroundStudio.matchVisual.glowIntensity / 2)}px ${effectiveStudioPalette.highlight}22`,
     color: "#ffffff",
-  }), [backgroundStudio]);
+  }), [backgroundStudio.matchVisual.glowIntensity, effectiveStudioPalette.highlight, effectiveStudioPalette.primary, effectiveStudioPalette.secondary]);
   const studioControlStyle = useMemo(() => ({
     ...getMetallicStyle(),
-    borderColor: `${backgroundStudio.uiPalette.highlight}66`,
-    backgroundImage: `${getMetallicGradient()}, linear-gradient(120deg, ${backgroundStudio.uiPalette.primary}88, ${backgroundStudio.uiPalette.secondary}66)`,
+    borderColor: `${effectiveStudioPalette.highlight}66`,
+    backgroundImage: `${getMetallicGradient()}, linear-gradient(120deg, ${effectiveStudioPalette.primary}88, ${effectiveStudioPalette.secondary}66)`,
     color: identityTheme.textColor,
     borderRadius: "10px",
     padding: "8px 14px",
-  }), [backgroundStudio, identityTheme.textColor]);
+  }), [effectiveStudioPalette.highlight, effectiveStudioPalette.primary, effectiveStudioPalette.secondary, identityTheme.textColor]);
   const metalPalette = useMemo(() => ({
-    primary: backgroundStudio.uiPalette.primary,
-    secondary: backgroundStudio.uiPalette.secondary,
-    highlight: backgroundStudio.uiPalette.highlight,
-  }), [backgroundStudio.uiPalette.highlight, backgroundStudio.uiPalette.primary, backgroundStudio.uiPalette.secondary]);
+    primary: effectiveStudioPalette.primary,
+    secondary: effectiveStudioPalette.secondary,
+    highlight: effectiveStudioPalette.highlight,
+  }), [effectiveStudioPalette.highlight, effectiveStudioPalette.primary, effectiveStudioPalette.secondary]);
   const centralPanelStyle = useMemo(() => getMetalPanelStyle(metalPalette), [metalPalette]);
   const squadListStyle = useMemo(() => getMetalListPanelStyle(metalPalette), [metalPalette]);
   const infoPanelStyle = useMemo(() => getMetalInfoPanelStyle(metalPalette), [metalPalette]);
-  const infoPanelItemStyle = useMemo(() => getMetalInfoPanelStyle(metalPalette), [metalPalette]);
-  const infoPanelButtonStyle = useMemo(() => ({
-    ...getMetalInfoPanelStyle(metalPalette),
+  const clubIdentityPanelStyle = useMemo(() => getClubIdentityPanelStyle(identityTheme), [identityTheme]);
+  const clubIdentityItemStyle = useMemo(() => ({
+    ...getClubIdentityPanelStyle(identityTheme),
     borderRadius: "10px",
     padding: "8px 10px",
-    color: "#f8fafc",
-  }), [metalPalette]);
+  }), [identityTheme]);
 
   const handleSaveGame = async () => {
     setSaveStatus({ saving: true, ok: null, message: "Salvando progresso completo..." });
@@ -1021,7 +1043,10 @@ export function SquadHomeClient({
     <main
       className="relative min-h-screen overflow-hidden p-6"
       style={{
-        ...buildShellBackgroundStyle(backgroundStudio),
+        ...buildShellBackgroundStyle({
+          ...backgroundStudio,
+          uiPalette: effectiveStudioPalette,
+        }),
         color: identityTheme.textColor,
       }}
     >
@@ -1071,9 +1096,9 @@ export function SquadHomeClient({
               stadiumName={stadium?.name ?? `${payload.team.shortName} Arena`}
               boardExpectation={boardExpectation}
               secondaryColor={secondaryColor}
-              panelStyle={infoPanelStyle}
-              itemStyle={infoPanelItemStyle}
-              buttonStyle={infoPanelButtonStyle}
+              panelStyle={clubIdentityPanelStyle}
+              itemStyle={clubIdentityItemStyle}
+              buttonStyle={clubIdentityItemStyle}
               onOpenColorEditor={() => {
                 setColorDraft({ primaryColor, secondaryColor: state.teamColors?.secondaryColor ?? payload.team.secondaryColor });
                 setOpenModal("Identidade do Clube");

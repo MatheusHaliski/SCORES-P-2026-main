@@ -1,4 +1,5 @@
 import { CSSProperties } from "react";
+import { ClubIdentityTheme } from "@/types/clubIdentityTheme";
 
 export function getMetallicGradient() {
   return `
@@ -92,5 +93,16 @@ export function getMetalPlayerRowStyle(palette: MetalPalette = defaultPalette, s
       ? `inset 0 1px 0 rgba(255,255,255,0.2), 0 0 0 1px ${withAlpha(palette.highlight, "42")}, 0 10px 24px rgba(2,6,23,0.48), 0 0 16px ${withAlpha(palette.highlight, "2e")}`
       : `inset 0 1px 0 rgba(255,255,255,0.14), 0 8px 20px rgba(2,6,23,0.4), 0 0 14px ${withAlpha(palette.highlight, "1f")}`,
     transition: "filter 180ms ease, box-shadow 180ms ease, transform 180ms ease",
+  };
+}
+
+export function getClubIdentityPanelStyle(identityTheme: ClubIdentityTheme): CSSProperties {
+  return {
+    ...getMetallicStyle(),
+    borderRadius: "14px",
+    border: `1px solid ${identityTheme.borderColor || `${identityTheme.glowColor}66`}`,
+    backgroundImage: `${getMetallicGradient()}, linear-gradient(138deg, ${identityTheme.primaryColor}c9, ${identityTheme.secondaryColor}87), repeating-linear-gradient(0deg, rgba(255,255,255,0.02) 0px, rgba(255,255,255,0.02) 1px, transparent 1px, transparent 4px)`,
+    boxShadow: `inset 0 1px 0 rgba(255,255,255,0.16), inset 0 -12px 24px rgba(2,6,23,0.26), 0 10px 28px rgba(2,6,23,0.46), 0 0 16px ${identityTheme.glowColor}2e`,
+    color: identityTheme.textColor,
   };
 }
