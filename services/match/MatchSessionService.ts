@@ -150,8 +150,13 @@ export class MatchSessionService {
     return this.repository.getBySaveId(saveId, fixtureId);
   }
 
-  async tick(session: MatchSession, simulatedSecondsPerTick: number, random: () => number): Promise<MatchSession> {
-    const next = this.progressEngine.tick(session, simulatedSecondsPerTick, random);
+  async tick(
+    session: MatchSession,
+    simulatedSecondsPerTick: number,
+    random: () => number,
+    simulationSpeed: "normal" | "fast" | "turbo" = "normal",
+  ): Promise<MatchSession> {
+    const next = this.progressEngine.tick(session, simulatedSecondsPerTick, random, simulationSpeed);
     await this.repository.upsert(next);
     return next;
   }

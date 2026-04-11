@@ -3,6 +3,7 @@ import { MatchSession } from "@/types/matchSession";
 import { LineupImpactEngine } from "@/services/match/LineupImpactEngine";
 import { TacticImpactEngine } from "@/services/match/TacticImpactEngine";
 import { QuarterFlowEngine } from "@/services/match/QuarterFlowEngine";
+import { getSimulationPaceProfile, SimulationSpeedOption } from "@/app/lib/simulationConfig";
 
 const clamp = (value: number, min: number, max: number) => Math.min(max, Math.max(min, value));
 
@@ -29,7 +30,12 @@ const formatClock = (seconds: number) => {
 };
 
 export class MatchProgressEngine {
-  tick(session: MatchSession, simulatedSecondsPerTick: number, random: () => number): MatchSession {
+  tick(
+    session: MatchSession,
+    simulatedSecondsPerTick: number,
+    random: () => number,
+    simulationSpeed: SimulationSpeedOption["id"] = "normal",
+  ): MatchSession {
     if (!QuarterFlowEngine.isLivePhase(session.phase)) return session;
     if (session.pendingInjury) return session;
 
@@ -58,22 +64,47 @@ export class MatchProgressEngine {
     const userTacticImpact = TacticImpactEngine.for(session.userTeamTactic);
     const oppTacticImpact = TacticImpactEngine.for(session.opponentTeamTactic);
 
+    const paceProfile = getSimulationPaceProfile(simulationSpeed);
     const quarterPulse = 0.92 + (session.quarter * 0.04) + random() * 0.08;
     const basePossessions = 0.2 * ((userTacticImpact.possessions + oppTacticImpact.possessions) / 2) * quarterPulse;
     const paceFactor = (userSkill.transitionPace + oppSkill.transitionPace) / 2;
-    const possessionRoll = basePossessions * paceFactor;
+    const possessionRoll = basePossessions * paceFactor * paceProfile.eventCadenceMultiplier;
+    const paceLoopBudget = paceProfile.possessionResolutionMultiplier;
+    const possessionWindows = Math.max(1, Math.floor(paceLoopBudget));
+    const extraWindowChance = paceLoopBudget - possessionWindows;
 
     let homeDelta = 0;
     let awayDelta = 0;
     const newEvents: MatchEvent[] = [];
+    const userFixtureScore = session.fixtures.find((fixture) => fixture.id === userFixture.id);
+    const userIsHomeForExpectation = userFixture.homeTeamId === session.userTeamId;
+    let currentUserPoints = userIsHomeForExpectation ? (userFixtureScore?.homeScore ?? session.score.user) : (userFixtureScore?.awayScore ?? session.score.user);
+    let currentOppPoints = userIsHomeForExpectation ? (userFixtureScore?.awayScore ?? session.score.opponent) : (userFixtureScore?.homeScore ?? session.score.opponent);
+    const paceWeight = (userTacticImpact.possessions + oppTacticImpact.possessions) / 2;
+    const tacticalWindowScale = clamp(0.9 + (paceWeight - 1) * 0.45, 0.82, 1.22);
+    const fatigueWindowScale = clamp((userLineupImpact.staminaPenalty + oppLineupImpact.staminaPenalty) / 2, 0.8, 1.05);
+    const offenseDefenseBalance = clamp((userLineupImpact.attack / Math.max(0.1, oppLineupImpact.defense) + oppLineupImpact.attack / Math.max(0.1, userLineupImpact.defense)) / 2, 0.82, 1.2);
+    const quarterProgress = clamp((session.quarterDuration - nextTimeRemaining) / Math.max(1, session.quarterDuration), 0, 1);
+    const expectedQuarterPointsPerTeam = 20.5 * tacticalWindowScale * fatigueWindowScale * offenseDefenseBalance;
+    const teamQuarterExpectation = {
+      minPoints: Math.max(12, Math.round(expectedQuarterPointsPerTeam - 5)),
+      expectedPoints: Math.round(expectedQuarterPointsPerTeam),
+      maxPoints: Math.min(39, Math.round(expectedQuarterPointsPerTeam + 7)),
+    };
+    const targetPointsNow = teamQuarterExpectation.expectedPoints * quarterProgress;
+    const totalWindows = possessionWindows + (random() < extraWindowChance ? 1 : 0);
 
-    if (random() < possessionRoll) {
+    for (let possessionWindow = 0; possessionWindow < totalWindows; possessionWindow += 1) {
+      if (random() >= possessionRoll) continue;
       const userIsHome = userFixture.homeTeamId === session.userTeamId;
       const attackStrength = userLineupImpact.attack * userTacticImpact.attack * userLineupImpact.staminaPenalty * (0.45 + userSkill.offenseCreation * 0.3 + userSkill.passingControl * 0.25);
       const defenseResistance = oppLineupImpact.defense * oppTacticImpact.defense * oppLineupImpact.staminaPenalty * (0.55 + oppSkill.defensivePressure * 0.45);
       const clutchWindow = nextTimeRemaining < 180 ? (userSkill.clutchAndIq - oppSkill.clutchAndIq) * 0.08 : 0;
       const momentumNoise = (random() - 0.5) * 0.08;
-      const userChanceToScore = clamp(0.37 + (attackStrength - defenseResistance) * 0.78 + clutchWindow + momentumNoise, 0.2, 0.78);
+      const userWindowDelta = targetPointsNow - currentUserPoints;
+      const oppWindowDelta = targetPointsNow - currentOppPoints;
+      const scoringWindowBalance = clamp((userWindowDelta - oppWindowDelta) * 0.005, -0.05, 0.05);
+      const userChanceToScore = clamp(0.37 + (attackStrength - defenseResistance) * 0.78 + clutchWindow + momentumNoise + scoringWindowBalance, 0.2, 0.78);
 
       const scoringTeamIsUser = random() < userChanceToScore;
       const scoringTactic = scoringTeamIsUser ? session.userTeamTactic : session.opponentTeamTactic;
@@ -88,7 +119,15 @@ export class MatchProgressEngine {
 
       const isThreeAttempt = random() < shot3Chance;
       const isLateClock = nextTimeRemaining < 24 || random() < 0.12;
-      const madeChance = clamp((isThreeAttempt ? 0.34 : 0.49) + (shootingLineupSkill.contestShooting - 0.5) * 0.2 - (defendingLineupSkill.defensivePressure - 0.5) * 0.18 + (isLateClock ? -0.06 : 0), 0.2, 0.78);
+      const madeChance = clamp(
+        (isThreeAttempt ? 0.34 : 0.49)
+          + (shootingLineupSkill.contestShooting - 0.5) * 0.2
+          - (defendingLineupSkill.defensivePressure - 0.5) * 0.18
+          + (isLateClock ? -0.06 : 0)
+          + (paceProfile.scoringCadenceMultiplier - 1) * 0.04,
+        0.2,
+        0.78,
+      );
       const isMade = random() < madeChance;
       let points: 0 | 2 | 3 = isThreeAttempt ? 3 : 2;
       if (!isMade) points = 0;
@@ -100,8 +139,10 @@ export class MatchProgressEngine {
       if (points > 0 && scoringTeamIsUser) {
         if (userIsHome) homeDelta += points;
         else awayDelta += points;
+        currentUserPoints += points;
       } else if (points > 0 && userIsHome) awayDelta += points;
       else if (points > 0) homeDelta += points;
+      if (points > 0 && !scoringTeamIsUser) currentOppPoints += points;
 
       const isShootingFoul = random() < (0.08 + Math.max(0, (1 - defendingLineupSkill.defensivePressure) * 0.06));
       const andOne = points === 2 && isShootingFoul && random() < 0.22;
@@ -118,8 +159,10 @@ export class MatchProgressEngine {
         if (scoringTeamIsUser) {
           if (userIsHome) homeDelta += ftPoints;
           else awayDelta += ftPoints;
+          currentUserPoints += ftPoints;
         } else if (userIsHome) awayDelta += ftPoints;
         else homeDelta += ftPoints;
+        if (!scoringTeamIsUser) currentOppPoints += ftPoints;
         ftText = attempts === 1 ? "converte o and-one da linha." : (ftPoints === attempts ? "acerta todos os lances livres." : ftPoints === 0 ? "erra todos da linha." : "divide os lances livres.");
       }
 
@@ -148,7 +191,7 @@ export class MatchProgressEngine {
     }
 
     const canTriggerInjury = session.injuryCooldownTicks <= 0;
-    if (canTriggerInjury && random() < 0.008) {
+    if (canTriggerInjury && random() < (0.008 * paceProfile.eventCadenceMultiplier)) {
       const candidates = session.userLineup.filter((player) => player.injuryStatus !== "Lesionado");
       const risky = [...candidates].sort((a, b) => (a.stamina + a.attributes.physical.durability * 0.25) - (b.stamina + b.attributes.physical.durability * 0.25));
       const victim = risky[0];
