@@ -5,6 +5,7 @@ import { firestoreDb, shouldUseFirebase } from "@/lib/firebase/config";
 import { parseNewSaveId } from "@/lib/saveId";
 
 const saveProgressOverrides = new Map<string, Partial<UserSave>>();
+const persistedSaveStateKey = (saveId: string) => `scores:save:${saveId}`;
 
 const clampStars = (value: number) => Math.max(0, Math.min(10, Math.round(value)));
 
@@ -73,13 +74,36 @@ const buildDynamicSave = (saveId: string): UserSave | undefined => {
 };
 
 export class UserSavesRepository {
+  private readPersistedSaveState(saveId: string): Partial<UserSave> {
+    if (typeof window === "undefined") return {};
+    const raw = window.localStorage.getItem(persistedSaveStateKey(saveId));
+    if (!raw) return {};
+    try {
+      const parsed = JSON.parse(raw) as Partial<UserSave>;
+      return parsed && typeof parsed === "object" ? parsed : {};
+    } catch {
+      return {};
+    }
+  }
+
+  private persistSaveState(saveId: string, patch: Partial<UserSave>) {
+    if (typeof window === "undefined") return;
+    const current = this.readPersistedSaveState(saveId);
+    window.localStorage.setItem(
+      persistedSaveStateKey(saveId),
+      JSON.stringify({ ...current, ...patch, id: saveId, updatedAt: new Date().toISOString() }),
+    );
+  }
+
   upsertBackgroundStudioConfig(saveId: string, config: BackgroundStudioConfig) {
     this.upsertSaveProgress(saveId, { backgroundStudioConfig: config });
   }
 
   upsertSaveProgress(saveId: string, patch: Partial<UserSave>) {
     const current = saveProgressOverrides.get(saveId) ?? {};
-    saveProgressOverrides.set(saveId, { ...current, ...patch });
+    const merged = { ...current, ...patch };
+    saveProgressOverrides.set(saveId, merged);
+    this.persistSaveState(saveId, merged);
   }
 
   async getUserSaves(userId: string): Promise<UserSave[]> {
@@ -94,11 +118,14 @@ export class UserSavesRepository {
       // TODO: read `user_saves/{saveId}`.
     }
 
+    const runtimeOverrides = saveProgressOverrides.get(saveId) ?? {};
+    const persistedOverrides = this.readPersistedSaveState(saveId);
+
     const staticSave = mockUserSaves.find((save) => save.id === saveId);
-    if (staticSave) return normalizeSave({ ...staticSave, ...(saveProgressOverrides.get(saveId) ?? {}) } as UserSave);
+    if (staticSave) return normalizeSave({ ...staticSave, ...persistedOverrides, ...runtimeOverrides } as UserSave);
 
     const dynamic = buildDynamicSave(saveId);
     if (!dynamic) return undefined;
-    return normalizeSave({ ...dynamic, ...(saveProgressOverrides.get(saveId) ?? {}) } as UserSave);
+    return normalizeSave({ ...dynamic, ...persistedOverrides, ...runtimeOverrides } as UserSave);
   }
 }

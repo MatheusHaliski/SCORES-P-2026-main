@@ -17,6 +17,7 @@ import { GlobalSearchService } from "@/services/GlobalSearchService";
 import { FinanceService } from "@/services/FinanceService";
 import { StadiumRevenueService } from "@/services/StadiumRevenueService";
 import { ClubVisualService } from "@/services/ClubVisualService";
+import { SaveGameService } from "@/services/SaveGameService";
 import { ClubUniformAssets, defaultTacticalPreset, defaultUniformAssets, resolveUniformUrl, TacticalPreset, UniformSlot } from "@/types/tactical";
 import { writeClubUniforms, writePreMatchTactic } from "@/lib/tacticalState";
 import { ClubIdentityTheme, createDefaultClubIdentityTheme, normalizeClubIdentityTheme } from "@/types/clubIdentityTheme";
@@ -72,6 +73,7 @@ const globalSearchService = new GlobalSearchService();
 const financeService = new FinanceService();
 const stadiumRevenueService = new StadiumRevenueService();
 const clubVisualService = new ClubVisualService();
+const saveGameService = new SaveGameService();
 
 const nowIso = () => new Date().toISOString();
 
@@ -496,6 +498,7 @@ export function SquadHomeClient({
       return createDefaultStudioConfig();
     }
   });
+  const [saveStatus, setSaveStatus] = useState<{ saving: boolean; ok: boolean | null; message: string }>({ saving: false, ok: null, message: "" });
 
   useEffect(() => {
     const syncBackgroundStudioFromStorage = () => {
@@ -952,6 +955,62 @@ export function SquadHomeClient({
     borderRadius: "10px",
     padding: "8px 14px",
   }), [backgroundStudio, identityTheme.textColor]);
+  const centralPanelStyle = useMemo(() => ({
+    borderColor: `${backgroundStudio.uiPalette.highlight}66`,
+    backgroundImage: `${getMetallicGradient()}, linear-gradient(160deg, ${backgroundStudio.uiPalette.primary}85, ${backgroundStudio.uiPalette.secondary}55)`,
+    boxShadow: `0 0 24px ${backgroundStudio.uiPalette.highlight}28`,
+  }), [backgroundStudio.uiPalette.highlight, backgroundStudio.uiPalette.primary, backgroundStudio.uiPalette.secondary]);
+  const rowStyle = useMemo(() => ({
+    borderColor: `${backgroundStudio.uiPalette.highlight}66`,
+    backgroundImage: `linear-gradient(112deg, ${backgroundStudio.uiPalette.primary}88, ${backgroundStudio.uiPalette.secondary}44)`,
+  }), [backgroundStudio.uiPalette.highlight, backgroundStudio.uiPalette.primary, backgroundStudio.uiPalette.secondary]);
+
+  const handleSaveGame = async () => {
+    setSaveStatus({ saving: true, ok: null, message: "Salvando progresso completo..." });
+    const payloadToSave = {
+      savePatch: {
+        budgetSnapshot: state.budget,
+        backgroundStudioConfig: backgroundStudio,
+      },
+      seasonState: {
+        currentRound: payload.save.currentRound,
+        nextFixtureId: payload.nextFixture?.id ?? payload.save.nextFixtureId,
+        seasonSummary: payload.seasonSummary ?? {},
+      },
+      squadState: {
+        state,
+        mergedPlayers,
+      },
+      tacticalState: state.preMatchTactic,
+      uiState: {
+        clubIdentityTheme: state.clubIdentityTheme,
+        teamColors: state.teamColors,
+      },
+      backgroundStudioConfig: backgroundStudio,
+    };
+
+    try {
+      const localResult = await saveGameService.saveFullGameState(payload.save.id, payloadToSave);
+      const response = await fetch("/api/save/full-state", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ saveId: payload.save.id, payload: payloadToSave }),
+      });
+      const serverResult = await response.json() as { ok?: boolean; message?: string };
+      const ok = localResult.ok && response.ok && Boolean(serverResult.ok);
+      setSaveStatus({
+        saving: false,
+        ok,
+        message: ok ? "Jogo salvo com sucesso e persistido no save ativo." : (serverResult.message ?? localResult.message ?? "Falha ao salvar."),
+      });
+      if (ok) {
+        window.localStorage.setItem(`${STORAGE_PREFIX}${payload.save.id}`, JSON.stringify(state));
+        setTimeout(() => setOpenModal(null), 450);
+      }
+    } catch (error) {
+      setSaveStatus({ saving: false, ok: false, message: `Falha real ao salvar: ${String(error)}` });
+    }
+  };
   return (
     <main
       className="relative min-h-screen overflow-hidden p-6"
@@ -1045,7 +1104,7 @@ export function SquadHomeClient({
           </div>
 
           <SectionCard title="Elenco Principal" subtitle="Hub de gestão do save" className="lg:col-span-3">
-            <div className="premium-surface mb-3 grid gap-3 p-3 md:grid-cols-[120px,1fr]">
+            <div className="premium-surface mb-3 grid gap-3 border p-3 md:grid-cols-[120px,1fr]" style={centralPanelStyle}>
               <div className="relative h-24 overflow-hidden rounded-2xl border border-cyan-300/45 bg-slate-900/70">
                 {activeUniformUrl ? <Image src={activeUniformUrl} alt="Uniforme ativo" fill className="object-cover" /> : <div className="flex h-full items-center justify-center text-[11px] font-bold uppercase tracking-[0.18em] text-slate-300">No Uniform</div>}
               </div>
@@ -1061,7 +1120,7 @@ export function SquadHomeClient({
             </div>
             <div className="space-y-2">
               {mergedPlayers.map((player) => (
-                <button key={player.id} onClick={() => setSelectedPlayerId(player.id)} className="premium-surface grid w-full grid-cols-[auto,2fr,repeat(6,minmax(0,1fr))] gap-2 p-2 text-left text-xs text-slate-100 hover:border-cyan-300/60">
+                <button key={player.id} onClick={() => setSelectedPlayerId(player.id)} className="premium-surface list-row grid w-full grid-cols-[auto,2fr,repeat(6,minmax(0,1fr))] gap-2 border p-2 text-left text-xs text-slate-100 hover:brightness-110" style={rowStyle}>
                   <div className="relative h-8 w-8 overflow-hidden rounded-full border border-white/20">
                     {player.photoUrl ? <Image src={player.photoUrl} alt={player.name} fill className="object-cover" /> : <span className="flex h-full w-full items-center justify-center bg-slate-800 text-[11px] font-black">{player.name.slice(0, 1)}</span>}
                   </div>
@@ -1617,7 +1676,7 @@ export function SquadHomeClient({
               onClick={() => {
                 writePreMatchTactic(payload.save.id, state.preMatchTactic);
                 writeClubUniforms(payload.save.id, state.uniformAssets);
-                window.location.href = `/match-board?saveId=${payload.save.id}`;
+                window.location.href = `/match-board?saveId=${payload.save.id}&fixtureId=${payload.nextFixture?.id ?? ""}&fresh=1`;
               }}
             >
               Salvar plano e iniciar partida
@@ -1654,8 +1713,9 @@ export function SquadHomeClient({
 
       {openModal === "Salvar Jogo" && modalShell("Salvar Jogo", () => setOpenModal(null), (
         <div className="space-y-2 text-sm text-slate-100">
-          <p>Estado atual persistido localmente para este save.</p>
-          <button onClick={() => window.localStorage.setItem(`${STORAGE_PREFIX}${payload.save.id}`, JSON.stringify(state))} className="rounded bg-emerald-500 px-3 py-1 font-bold text-slate-950">Salvar agora</button>
+          <p>Persistência completa do save (elenco, tática, tema, progressão de temporada e customizações).</p>
+          <button onClick={handleSaveGame} disabled={saveStatus.saving} className="rounded bg-emerald-500 px-3 py-1 font-bold text-slate-950 disabled:opacity-60">{saveStatus.saving ? "Salvando..." : "Salvar agora"}</button>
+          {saveStatus.message && <p className={saveStatus.ok ? "text-emerald-300" : saveStatus.ok === false ? "text-rose-300" : "text-cyan-200"}>{saveStatus.message}</p>}
         </div>
       ))}
 

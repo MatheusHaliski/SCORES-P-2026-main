@@ -5,7 +5,8 @@ import { doc, getDoc, setDoc } from "firebase/firestore";
 
 const COLLECTION = "matches_live_state";
 
-const localKey = (saveId: string) => `scores:match_session:${saveId}`;
+const localKey = (saveId: string, fixtureId: string) => `scores:match_session:${saveId}:${fixtureId}`;
+const legacyLocalKey = (saveId: string) => `scores:match_session:${saveId}`;
 
 
 const normalizeSessionTactics = (session: MatchSession): MatchSession => ({
@@ -23,18 +24,21 @@ const normalizeSessionTactics = (session: MatchSession): MatchSession => ({
 });
 
 export class MatchSessionRepository {
-  async getBySaveId(saveId: string): Promise<MatchSession | null> {
+  async getBySaveId(saveId: string, fixtureId?: string): Promise<MatchSession | null> {
     if (shouldUseFirebase && firestoreDb) {
-      const ref = doc(firestoreDb, COLLECTION, saveId);
+      const ref = doc(firestoreDb, COLLECTION, fixtureId ? `${saveId}:${fixtureId}` : saveId);
       const snap = await getDoc(ref);
       if (snap.exists()) return normalizeSessionTactics(snap.data() as MatchSession);
     }
 
     if (typeof window === "undefined") return null;
-    const raw = window.localStorage.getItem(localKey(saveId));
-    if (!raw) return null;
+    const raw = fixtureId
+      ? window.localStorage.getItem(localKey(saveId, fixtureId))
+      : window.localStorage.getItem(legacyLocalKey(saveId));
+    const fallbackRaw = !raw && fixtureId ? window.localStorage.getItem(legacyLocalKey(saveId)) : null;
+    if (!raw && !fallbackRaw) return null;
     try {
-      return normalizeSessionTactics(JSON.parse(raw) as MatchSession);
+      return normalizeSessionTactics(JSON.parse(raw ?? fallbackRaw ?? "") as MatchSession);
     } catch {
       return null;
     }
@@ -42,18 +46,21 @@ export class MatchSessionRepository {
 
   async upsert(session: MatchSession): Promise<void> {
     if (shouldUseFirebase && firestoreDb) {
-      const ref = doc(firestoreDb, COLLECTION, session.saveId);
+      const ref = doc(firestoreDb, COLLECTION, `${session.saveId}:${session.fixtureId}`);
       await setDoc(ref, session, { merge: true });
     }
 
     if (typeof window !== "undefined") {
-      window.localStorage.setItem(localKey(session.saveId), JSON.stringify(session));
+      window.localStorage.setItem(localKey(session.saveId, session.fixtureId), JSON.stringify(session));
     }
   }
 
-  async clear(saveId: string) {
+  async clear(saveId: string, fixtureId?: string) {
     if (typeof window !== "undefined") {
-      window.localStorage.removeItem(localKey(saveId));
+      if (fixtureId) {
+        window.localStorage.removeItem(localKey(saveId, fixtureId));
+      }
+      window.localStorage.removeItem(legacyLocalKey(saveId));
     }
   }
 }

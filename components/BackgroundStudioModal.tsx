@@ -36,6 +36,7 @@ export function BackgroundStudioModal({ open, onClose, config, onChange, onSave,
   const [activeTrackPlaybackUrl, setActiveTrackPlaybackUrl] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement | null>(null);
   const imageInputRef = useRef<HTMLInputElement | null>(null);
+  const nextMatchImageInputRef = useRef<HTMLInputElement | null>(null);
 
   const activeTrack = config.soundtrack.tracks.find((track) => track.id === config.soundtrack.activeTrackId) ?? null;
   const activeTrackPlaybackSrc = activeTrack?.fileDataUrl ? activeTrackPlaybackUrl : (activeTrack?.fileUrl ?? null);
@@ -219,6 +220,30 @@ export function BackgroundStudioModal({ open, onClose, config, onChange, onSave,
                   </button>
                 ))}
               </div>
+            </section>
+
+            <section className="rounded-2xl border border-fuchsia-300/30 bg-fuchsia-500/5 p-3">
+              <p className="mb-2 text-sm font-black text-fuchsia-100">4.5) Arte do card Next Match</p>
+              <p className="mb-2 text-xs text-fuchsia-100/80">Faça upload de arte personalizada para o card decorativo da próxima partida.</p>
+              <div className="flex flex-wrap gap-2">
+                <button type="button" onClick={() => nextMatchImageInputRef.current?.click()} className="rounded-lg border border-white/15 bg-slate-800 px-2 py-1 text-xs text-white">Upload imagem do card</button>
+                <button type="button" onClick={() => onChange({ ...config, matchVisual: { ...config.matchVisual, nextMatchBackgroundUrl: null } })} className="rounded-lg border border-white/15 bg-slate-800 px-2 py-1 text-xs text-white">Usar fallback</button>
+              </div>
+              <input ref={nextMatchImageInputRef} type="file" accept="image/*" className="hidden" onChange={(event) => {
+                const file = event.target.files?.[0];
+                if (!file) return;
+                const reader = new FileReader();
+                reader.onload = () => {
+                  if (typeof reader.result === "string") onChange({ ...config, matchVisual: { ...config.matchVisual, nextMatchBackgroundUrl: reader.result } });
+                };
+                reader.readAsDataURL(file);
+              }} />
+              <div className="mt-2 grid gap-2 md:grid-cols-3">
+                <label className="rounded-lg border border-white/10 bg-slate-900/70 p-2 text-xs text-slate-200">Overlay {config.matchVisual.nextMatchOverlay}%<input type="range" min={0} max={90} value={config.matchVisual.nextMatchOverlay} className={sliderClass} onChange={(event) => onChange({ ...config, matchVisual: { ...config.matchVisual, nextMatchOverlay: Number(event.target.value) } })} /></label>
+                <label className="rounded-lg border border-white/10 bg-slate-900/70 p-2 text-xs text-slate-200">Blur {config.matchVisual.nextMatchBlur}px<input type="range" min={0} max={20} value={config.matchVisual.nextMatchBlur} className={sliderClass} onChange={(event) => onChange({ ...config, matchVisual: { ...config.matchVisual, nextMatchBlur: Number(event.target.value) } })} /></label>
+                <label className="rounded-lg border border-white/10 bg-slate-900/70 p-2 text-xs text-slate-200">Glow {config.matchVisual.nextMatchGlow}<input type="range" min={0} max={120} value={config.matchVisual.nextMatchGlow} className={sliderClass} onChange={(event) => onChange({ ...config, matchVisual: { ...config.matchVisual, nextMatchGlow: Number(event.target.value) } })} /></label>
+              </div>
+              {config.matchVisual.nextMatchBackgroundUrl && <div className="mt-2 h-24 rounded-lg border border-white/15 bg-cover bg-center" style={{ backgroundImage: `url('${config.matchVisual.nextMatchBackgroundUrl}')` }} />}
             </section>
 
             <section className="rounded-2xl border border-cyan-300/25 bg-cyan-500/5 p-3">

@@ -42,10 +42,23 @@ export class MatchSessionService {
   ) {}
 
   async loadOrCreate(payload: CreateMatchSessionPayload): Promise<MatchSession> {
-    const existing = await this.repository.getBySaveId(payload.saveId);
+    const existing = await this.repository.getBySaveId(payload.saveId, payload.fixtureId);
     if (existing && existing.round === payload.round) return existing;
-    if (existing && existing.round !== payload.round) await this.repository.clear(payload.saveId);
+    if (existing && existing.round !== payload.round) await this.repository.clear(payload.saveId, payload.fixtureId);
+    return this.createFreshSession(payload);
+  }
 
+  async startFreshSession(payload: CreateMatchSessionPayload): Promise<MatchSession> {
+    await this.repository.clear(payload.saveId, payload.fixtureId);
+    if (typeof window !== "undefined") {
+      window.localStorage.removeItem(`scores:halftime_snapshot:${payload.saveId}:${payload.fixtureId}`);
+      window.localStorage.removeItem(`scores:match_board_temp:${payload.saveId}:${payload.fixtureId}`);
+      window.localStorage.removeItem(`scores:pending_injury_prompt:${payload.saveId}:${payload.fixtureId}`);
+    }
+    return this.createFreshSession(payload);
+  }
+
+  private async createFreshSession(payload: CreateMatchSessionPayload): Promise<MatchSession> {
     const now = new Date().toISOString();
     const userIsHome = payload.userFixture.homeTeamId === payload.userTeamId;
     const opponentTeamId = userIsHome ? payload.userFixture.awayTeamId : payload.userFixture.homeTeamId;
@@ -68,8 +81,9 @@ export class MatchSessionService {
     });
 
     const session: MatchSession = {
-      id: `ms-${payload.saveId}`,
+      id: `ms-${payload.saveId}-${payload.fixtureId}`,
       saveId: payload.saveId,
+      fixtureId: payload.fixtureId,
       leagueId: payload.leagueId,
       round: payload.round,
       quarter: 1,
@@ -90,6 +104,9 @@ export class MatchSessionService {
       opponentBench,
       substitutions: [],
       injuredPlayerIds: [],
+      injuryCooldownTicks: 0,
+      recentEventTypes: [],
+      runtimeSeed: Math.floor(Math.random() * 1_000_000_000),
       pendingInjury: null,
       venueName: `${payload.teamsById[payload.userTeamId]?.shortName ?? "HOME"} Arena`,
       attendance: revenueEstimate.attendance,
@@ -125,8 +142,8 @@ export class MatchSessionService {
     return session;
   }
 
-  async getSession(saveId: string): Promise<MatchSession | null> {
-    return this.repository.getBySaveId(saveId);
+  async getSession(saveId: string, fixtureId: string): Promise<MatchSession | null> {
+    return this.repository.getBySaveId(saveId, fixtureId);
   }
 
   async tick(session: MatchSession, simulatedSecondsPerTick: number, random: () => number): Promise<MatchSession> {
