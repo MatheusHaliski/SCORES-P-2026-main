@@ -9,6 +9,7 @@ import { MiniCourtBoard } from "@/components/tactical/MiniCourtBoard";
 import { TacticSelector } from "@/components/tactical/TacticSelector";
 import { BenchStrip } from "@/components/tactical/BenchStrip";
 import { defaultTacticalPreset, defaultUniformAssets, TacticalPreset } from "@/types/tactical";
+import { getElectronicScoreDisplayStyle, getElectronicScoreShellStyle, getHalftimeBoardStyle, getMatchInfoBarStyle, getMatchPanelStyle } from "@/styles/metallicTheme";
 
 export function HTManagerClient({ saveId, fixtureId }: { saveId: string; fixtureId: string }) {
   const router = useRouter();
@@ -27,16 +28,19 @@ export function HTManagerClient({ saveId, fixtureId }: { saveId: string; fixture
 
   return (
     <div className="space-y-4">
-      <SectionCard title={`HTManagerBoardView • ${session.phase}`}>
+      <SectionCard title={`HTManagerBoardView • ${session.phase}`} style={getHalftimeBoardStyle()}>
         <div className="grid gap-4 lg:grid-cols-[1.5fr,1fr]">
           <MiniCourtBoard lineup={session.userLineup} tactic={tacticPreset} uniforms={uniforms} />
           <div className="space-y-3">
-            <div className="sa-premium-gradient-surface rounded-2xl p-3 text-xs text-slate-100">
+            <div className="sa-premium-gradient-surface rounded-2xl p-3 text-xs text-slate-100" style={getMatchInfoBarStyle()}>
               <p>Público: <strong>{(session.attendance ?? 0).toLocaleString()}</strong></p>
               <p>Receita de bilheteria estimada: <strong>${(session.ticketRevenueEstimate ?? 0).toLocaleString()}</strong></p>
               <p>Substituições: <strong>{session.substitutions.length}</strong></p>
             </div>
-            <div className="premium-surface p-3">
+            <div className="premium-surface p-3" style={getMatchPanelStyle()}>
+              <div className="mb-3 p-1" style={getElectronicScoreShellStyle()}>
+                <p className="text-center text-xl" style={getElectronicScoreDisplayStyle()}>{session.score.user} - {session.score.opponent}</p>
+              </div>
               <p className="text-xs font-bold uppercase tracking-[0.16em] text-cyan-200">Lineup Swap</p>
               <div className="mt-2 space-y-2">
                 {session.userLineup.map((starter) => (
@@ -77,6 +81,7 @@ export function HTManagerClient({ saveId, fixtureId }: { saveId: string; fixture
           router.push(`/match-board?saveId=${saveId}&fixtureId=${fixtureId}`);
         }}
         className="premium-control w-full border border-cyan-300/50 bg-cyan-500/20 px-4 py-3 text-sm font-bold text-cyan-100"
+        style={getMatchPanelStyle()}
       >
         Confirmar ajustes e continuar para Q{session.quarter + 1}
       </button>
