@@ -19,9 +19,13 @@ export function HTManagerClient({ saveId, fixtureId }: { saveId: string; fixture
 
   useEffect(() => {
     const load = async () => {
-      const byFixture = fixtureId ? await service.getSession(saveId, fixtureId) : null;
-      const fallback = byFixture ?? await service.getSession(saveId, "");
-      setSession(fallback);
+      try {
+        const byFixture = fixtureId ? await service.getSession(saveId, fixtureId) : null;
+        const fallback = byFixture ?? await service.getSession(saveId, "");
+        setSession(fallback);
+      } catch {
+        setSession(null);
+      }
     };
     void load();
   }, [fixtureId, saveId, service]);
@@ -88,14 +92,18 @@ export function HTManagerClient({ saveId, fixtureId }: { saveId: string; fixture
 
       <button
         onClick={async () => {
-          const next = await service.continueFromBreak(session);
-          setSession(next);
+          if (session.phase === "BREAK_Q1" || session.phase === "BREAK_Q2" || session.phase === "BREAK_Q3") {
+            const next = await service.continueFromBreak(session);
+            setSession(next);
+          }
           router.push(`/match-board?saveId=${saveId}&fixtureId=${fixtureId}`);
         }}
         className="premium-control w-full border border-cyan-300/50 bg-cyan-500/20 px-4 py-3 text-sm font-bold text-cyan-100"
         style={getMatchPanelStyle()}
       >
-        Confirmar ajustes e continuar para Q{session.quarter + 1}
+        {session.phase === "BREAK_Q1" || session.phase === "BREAK_Q2" || session.phase === "BREAK_Q3"
+          ? `Confirmar ajustes e continuar para Q${session.quarter + 1}`
+          : "Voltar para Match Board sem resetar o relógio"}
       </button>
     </div>
   );
