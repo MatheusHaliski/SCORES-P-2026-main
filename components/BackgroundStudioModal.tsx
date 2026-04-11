@@ -12,6 +12,7 @@ import {
   buildBackgroundImage,
   getBackgroundStudioPreset,
 } from "@/types/backgroundStudio";
+import { getMetallicGradient, getMetallicStyle } from "@/styles/metallicTheme";
 
 type Props = {
   open: boolean;
@@ -51,19 +52,23 @@ export function BackgroundStudioModal({ open, onClose, config, onChange, onSave,
   }, [config]);
   const modalChromeStyle = useMemo(
     () => ({
+      ...getMetallicStyle(),
       borderColor: `${config.uiPalette.highlight}66`,
-      backgroundImage: `linear-gradient(160deg, ${config.uiPalette.primary}f0, ${config.uiPalette.secondary}c8)`,
-      boxShadow: `0 0 60px ${config.uiPalette.highlight}33`,
+      backgroundImage: `${getMetallicGradient()}, linear-gradient(160deg, ${config.uiPalette.primary}b8, ${config.uiPalette.secondary}8f), repeating-linear-gradient(0deg, rgba(255,255,255,0.02) 0px, rgba(255,255,255,0.02) 1px, transparent 1px, transparent 3px)`,
+      boxShadow: "inset 0 0 25px rgba(255,255,255,0.1), 0 10px 40px rgba(0,0,0,0.6)",
     }),
     [config.uiPalette.highlight, config.uiPalette.primary, config.uiPalette.secondary],
   );
   const primaryActionStyle = useMemo(
     () => ({
+      ...getMetallicStyle(),
       borderColor: `${config.uiPalette.highlight}99`,
-      backgroundColor: `${config.uiPalette.highlight}33`,
+      backgroundImage: `${getMetallicGradient()}, linear-gradient(120deg, ${config.uiPalette.highlight}33, ${config.uiPalette.primary}66)`,
       color: "#ecfeff",
+      borderRadius: "10px",
+      padding: "8px 14px",
     }),
-    [config.uiPalette.highlight],
+    [config.uiPalette.highlight, config.uiPalette.primary],
   );
 
   useEffect(() => {
@@ -197,7 +202,7 @@ export function BackgroundStudioModal({ open, onClose, config, onChange, onSave,
 
   return (
     <div className="fixed inset-0 z-[70] flex items-center justify-center bg-slate-950/85 p-3">
-      <div className="max-h-[94vh] w-full max-w-6xl overflow-auto rounded-3xl border p-4" style={modalChromeStyle}>
+      <div className="max-h-[94vh] w-full max-w-6xl overflow-auto rounded-3xl border p-4 text-white" style={modalChromeStyle}>
         <div className="mb-3 flex items-center justify-between border-b border-cyan-300/20 pb-3">
           <div>
             <p className="text-[11px] uppercase tracking-[0.24em] text-cyan-200">Background Studio</p>
@@ -205,8 +210,14 @@ export function BackgroundStudioModal({ open, onClose, config, onChange, onSave,
             <p className="text-xs text-cyan-100/85">Presets/Composição alteram MatchView. Paleta altera UI. Background da página altera apenas wallpaper global.</p>
           </div>
           <div className="flex gap-2">
-            <button onClick={onClose} className="rounded-xl border border-white/15 bg-slate-800/80 px-3 py-2 text-xs font-bold text-white">Fechar</button>
-            <button onClick={onSave} className="rounded-xl border px-3 py-2 text-xs font-bold shadow-[0_0_20px_rgba(34,211,238,0.25)]" style={primaryActionStyle}>Salvar Background Studio</button>
+            <button
+              onClick={onClose}
+              className="rounded-xl border px-3 py-2 text-xs font-bold text-white transition-all duration-200 hover:scale-[1.03] hover:shadow-[0_0_25px_rgba(34,197,94,0.35)]"
+              style={getMetallicStyle()}
+            >
+              Fechar
+            </button>
+            <button onClick={onSave} className="rounded-xl border px-3 py-2 text-xs font-bold transition-all duration-200 hover:scale-[1.03] hover:shadow-[0_0_25px_rgba(34,197,94,0.35)]" style={primaryActionStyle}>Salvar Background Studio</button>
           </div>
         </div>
 
@@ -370,6 +381,7 @@ export function BackgroundStudioModal({ open, onClose, config, onChange, onSave,
 
           <section className="rounded-2xl border border-cyan-300/30 bg-slate-900/70 p-3">
             <p className="text-sm font-black text-cyan-100">6) Preview em tempo real</p>
+            <p className="mt-1 text-xs text-cyan-100/85">Preview em tempo real: SquadView, Match shell, Next Match e chrome principal atualizam instantaneamente.</p>
             <p className="mt-1 text-[11px] text-cyan-100/80">Skin ativa: <span className="font-semibold">{config.matchVisual.skinMode === "scores-metallic-premium" ? "SCORES Metallic Premium" : "Default"}</span></p>
             <div className="mt-2 space-y-3">
               <div className="rounded-xl border border-white/15 p-3" style={{ backgroundImage: previewBackground, filter: `contrast(${config.matchVisual.contrast}%) blur(${Math.max(0, config.matchVisual.blurStrength - 12)}px)` }}>

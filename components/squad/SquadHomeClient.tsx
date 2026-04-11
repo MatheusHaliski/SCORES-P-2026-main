@@ -20,7 +20,8 @@ import { ClubVisualService } from "@/services/ClubVisualService";
 import { ClubUniformAssets, defaultTacticalPreset, defaultUniformAssets, resolveUniformUrl, TacticalPreset, UniformSlot } from "@/types/tactical";
 import { writeClubUniforms, writePreMatchTactic } from "@/lib/tacticalState";
 import { ClubIdentityTheme, createDefaultClubIdentityTheme, normalizeClubIdentityTheme } from "@/types/clubIdentityTheme";
-import { BackgroundStudioConfig, buildShellBackgroundStyle, createDefaultStudioConfig, normalizeBackgroundStudioConfig } from "@/types/backgroundStudio";
+import { BackgroundStudioChangeDetail, BackgroundStudioConfig, buildMatchVisualOverlay, buildShellBackgroundStyle, createDefaultStudioConfig, normalizeBackgroundStudioConfig } from "@/types/backgroundStudio";
+import { getMetallicGradient, getMetallicStyle } from "@/styles/metallicTheme";
 
 type InboxMessage = {
   id: string;
@@ -92,10 +93,24 @@ const playerEffectiveScore = (player: Player) => {
 function modalShell(title: string, onClose: () => void, content: ReactNode) {
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/80 p-4">
-      <div className="premium-surface max-h-[92vh] w-full max-w-6xl overflow-auto p-4">
+      <div
+        className="premium-surface max-h-[92vh] w-full max-w-6xl overflow-auto p-4 text-white"
+        style={{
+          ...getMetallicStyle(),
+          borderRadius: "16px",
+          boxShadow: "inset 0 0 25px rgba(255,255,255,0.1), 0 10px 40px rgba(0,0,0,0.6)",
+          backgroundImage: `${getMetallicGradient()}, repeating-linear-gradient(0deg, rgba(255,255,255,0.02) 0px, rgba(255,255,255,0.02) 1px, transparent 1px, transparent 3px)`,
+        }}
+      >
         <div className="mb-3 flex items-center justify-between">
           <h2 className="text-xl font-black text-white">{title}</h2>
-          <button className="premium-control px-3 py-1 text-xs" onClick={onClose}>Fechar</button>
+          <button
+            className="premium-control rounded-[10px] px-3 py-1 text-xs transition-all duration-200 hover:scale-[1.03] hover:shadow-[0_0_25px_rgba(34,197,94,0.35)]"
+            onClick={onClose}
+            style={getMetallicStyle()}
+          >
+            Fechar
+          </button>
         </div>
         {content}
       </div>
@@ -483,7 +498,7 @@ export function SquadHomeClient({
   });
 
   useEffect(() => {
-    const syncBackgroundStudio = () => {
+    const syncBackgroundStudioFromStorage = () => {
       const raw = window.localStorage.getItem(`scores:background-studio:${payload.save.id}`);
       if (!raw) {
         setBackgroundStudio(createDefaultStudioConfig());
@@ -496,12 +511,24 @@ export function SquadHomeClient({
       }
     };
 
-    syncBackgroundStudio();
-    window.addEventListener("storage", syncBackgroundStudio);
-    window.addEventListener("scores-shell-background-change", syncBackgroundStudio);
+    const handleBackgroundStudioChange = (event: Event) => {
+      const customEvent = event as CustomEvent<BackgroundStudioChangeDetail>;
+      const detail = customEvent.detail;
+
+      if (detail?.saveId === payload.save.id && detail?.config) {
+        setBackgroundStudio(normalizeBackgroundStudioConfig(detail.config));
+        return;
+      }
+
+      syncBackgroundStudioFromStorage();
+    };
+
+    syncBackgroundStudioFromStorage();
+    window.addEventListener("storage", syncBackgroundStudioFromStorage);
+    window.addEventListener("scores-shell-background-change", handleBackgroundStudioChange as EventListener);
     return () => {
-      window.removeEventListener("storage", syncBackgroundStudio);
-      window.removeEventListener("scores-shell-background-change", syncBackgroundStudio);
+      window.removeEventListener("storage", syncBackgroundStudioFromStorage);
+      window.removeEventListener("scores-shell-background-change", handleBackgroundStudioChange as EventListener);
     };
   }, [payload.save.id]);
 
@@ -909,16 +936,40 @@ export function SquadHomeClient({
     rivalry: payload.nextFixture ? 1.05 : 0.98,
     matchImportance: payload.nextFixture ? 1.08 : 0.95,
   });
+  const matchVisualOverlay = useMemo(() => buildMatchVisualOverlay(backgroundStudio), [backgroundStudio]);
+  const studioPanelStyle = useMemo(() => ({
+    ...getMetallicStyle(),
+    borderColor: `${backgroundStudio.uiPalette.highlight}66`,
+    backgroundImage: `${getMetallicGradient()}, linear-gradient(145deg, ${backgroundStudio.uiPalette.primary}99, ${backgroundStudio.uiPalette.secondary}66)`,
+    boxShadow: `0 0 ${Math.max(18, backgroundStudio.matchVisual.glowIntensity / 2)}px ${backgroundStudio.uiPalette.highlight}22`,
+    color: "#ffffff",
+  }), [backgroundStudio]);
+  const studioControlStyle = useMemo(() => ({
+    ...getMetallicStyle(),
+    borderColor: `${backgroundStudio.uiPalette.highlight}66`,
+    backgroundImage: `${getMetallicGradient()}, linear-gradient(120deg, ${backgroundStudio.uiPalette.primary}88, ${backgroundStudio.uiPalette.secondary}66)`,
+    color: identityTheme.textColor,
+    borderRadius: "10px",
+    padding: "8px 14px",
+  }), [backgroundStudio, identityTheme.textColor]);
   return (
     <main
-      className="min-h-screen p-6"
+      className="relative min-h-screen overflow-hidden p-6"
       style={{
         ...buildShellBackgroundStyle(backgroundStudio),
         color: identityTheme.textColor,
       }}
     >
-      <div className="mx-auto max-w-7xl space-y-4">
-        <header className="premium-surface flex flex-wrap gap-2 p-3" style={{ borderColor: identityTheme.borderColor, boxShadow: `0 0 30px ${identityTheme.glowColor}40` }}>
+      <div className="pointer-events-none absolute inset-0" style={matchVisualOverlay} />
+      <div className="relative z-[1] mx-auto max-w-7xl space-y-4">
+        <header
+          className="premium-surface flex flex-wrap gap-2 rounded-xl p-3"
+          style={{
+            ...studioPanelStyle,
+            borderColor: identityTheme.borderColor || studioPanelStyle.borderColor,
+            boxShadow: `0 0 30px ${identityTheme.glowColor}40, ${studioPanelStyle.boxShadow}`,
+          }}
+        >
           {topActions.map((action) => (
             <button
               key={action}
@@ -931,8 +982,12 @@ export function SquadHomeClient({
                 }
                 setOpenModal(action);
               }}
-              className="premium-control px-3 py-1 text-xs font-semibold"
-              style={{ borderColor: identityTheme.borderColor, color: identityTheme.textColor }}
+              className="premium-control px-3 py-1 text-xs font-semibold transition-all duration-200 hover:scale-[1.03] hover:shadow-[0_0_25px_rgba(34,197,94,0.35)]"
+              style={{
+                ...studioControlStyle,
+                borderColor: identityTheme.borderColor || studioControlStyle.borderColor,
+                color: identityTheme.textColor,
+              }}
             >
               {action} {action === "Email" && unreadCount > 0 && <span className="ml-1 rounded-full bg-red-500 px-1.5 py-0.5 text-[10px]">{unreadCount}</span>}
             </button>
@@ -973,13 +1028,17 @@ export function SquadHomeClient({
               />
             ) : null}
             {payload.save.employmentStatus !== "employed" && <SpectatorModeBanner />}
-            <div className="rounded-xl border border-emerald-400/50 bg-emerald-500/10 p-3 text-xs text-emerald-100">
+            <div className="rounded-xl border p-3 text-xs text-emerald-100" style={studioPanelStyle}>
               <p>Caixa: ${state.budget.toLocaleString()}</p>
               <p>Folha salarial: ${payroll.toLocaleString()}/rodada</p>
               <p>Atletas listados: {listedPlayers.length}</p>
             </div>
             {payload.nextFixture && (
-              <button onClick={() => setOpenModal("Next Match Setup")} className="block w-full rounded-xl border border-cyan-300/60 bg-cyan-500/20 px-4 py-3 text-center text-sm font-bold text-cyan-100 transition hover:-translate-y-0.5 hover:shadow-[0_0_22px_rgba(34,211,238,.42)]">
+              <button
+                onClick={() => setOpenModal("Next Match Setup")}
+                className="block w-full rounded-xl border px-4 py-3 text-center text-sm font-bold text-cyan-100 transition-all duration-200 hover:scale-[1.03] hover:shadow-[0_0_25px_rgba(34,197,94,0.35)]"
+                style={studioControlStyle}
+              >
                 {payload.save.employmentStatus === "employed" ? "Configurar tática e iniciar jogo" : "Configurar e acompanhar rodada"}
               </button>
             )}
