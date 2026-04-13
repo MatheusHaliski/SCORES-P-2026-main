@@ -1,5 +1,6 @@
 "use client";
 
+import { useMemo, useState } from "react";
 import Image from "next/image";
 import { Team } from "@/types/game";
 import { SeasonCalendar } from "@/types/season";
@@ -7,12 +8,13 @@ import { SeasonCalendar } from "@/types/season";
 type CalendarFixtureBadge = {
   fixtureId: string;
   date: string;
-  opponentCode: string;
-  opponentLogoUrl?: string;
-  homeAway: "home" | "away";
+  homeTeamCode: string;
+  awayTeamCode: string;
+  homeTeamLogoUrl?: string;
+  awayTeamLogoUrl?: string;
   isNextMatch: boolean;
   round: number;
-  status: "scheduled" | "live" | "finished";
+  status: "scheduled" | "live" | "halftime" | "finished";
   homeScore: number;
   awayScore: number;
 };
@@ -30,47 +32,60 @@ const formatDateKey = (date: Date) =>
 export function MonthlyScheduleCalendar({
   calendar,
   teamsById,
-  userTeamId,
   currentDate,
   nextFixtureId,
 }: {
   calendar: SeasonCalendar;
   teamsById: Record<string, Team>;
-  userTeamId: string;
   currentDate: string;
   nextFixtureId?: string | null;
 }) {
   const referenceDate = toDateOnly(currentDate);
-  const monthStart = new Date(referenceDate.getFullYear(), referenceDate.getMonth(), 1);
-  const monthEnd = new Date(referenceDate.getFullYear(), referenceDate.getMonth() + 1, 0);
+  const [monthCursor, setMonthCursor] = useState(() => new Date(referenceDate.getFullYear(), referenceDate.getMonth(), 1));
+  const monthStart = new Date(monthCursor.getFullYear(), monthCursor.getMonth(), 1);
+  const monthEnd = new Date(monthCursor.getFullYear(), monthCursor.getMonth() + 1, 0);
   const startOffset = monthStart.getDay();
   const totalCells = Math.ceil((startOffset + monthEnd.getDate()) / 7) * 7;
 
-  const badgesByDay = calendar.entries.reduce<Record<string, CalendarFixtureBadge[]>>((acc, entry) => {
-    const isHome = entry.homeTeamId === userTeamId;
-    const opponentId = isHome ? entry.awayTeamId : entry.homeTeamId;
-    const opponent = teamsById[opponentId];
-    const key = entry.date.split("T")[0];
-    const badge: CalendarFixtureBadge = {
-      fixtureId: entry.fixtureId,
-      date: entry.date,
-      opponentCode: opponent?.shortName ?? "OPP",
-      opponentLogoUrl: opponent?.logoUrl,
-      homeAway: isHome ? "home" : "away",
-      isNextMatch: entry.fixtureId === nextFixtureId,
-      round: entry.round,
-      status: entry.status,
-      homeScore: entry.homeScore,
-      awayScore: entry.awayScore,
-    };
-    if (!acc[key]) acc[key] = [];
-    acc[key].push(badge);
-    return acc;
-  }, {});
+  const badgesByDay = useMemo(() => (
+    calendar.entries.reduce<Record<string, CalendarFixtureBadge[]>>((acc, entry) => {
+      const homeTeam = teamsById[entry.homeTeamId];
+      const awayTeam = teamsById[entry.awayTeamId];
+      const key = entry.date.split("T")[0];
+      const badge: CalendarFixtureBadge = {
+        fixtureId: entry.fixtureId,
+        date: entry.date,
+        homeTeamCode: homeTeam?.shortName ?? "HOME",
+        awayTeamCode: awayTeam?.shortName ?? "AWAY",
+        homeTeamLogoUrl: homeTeam?.logoUrl,
+        awayTeamLogoUrl: awayTeam?.logoUrl,
+        isNextMatch: entry.fixtureId === nextFixtureId,
+        round: entry.round,
+        status: entry.status,
+        homeScore: entry.homeScore,
+        awayScore: entry.awayScore,
+      };
+      if (!acc[key]) acc[key] = [];
+      acc[key].push(badge);
+      return acc;
+    }, {})
+  ), [calendar.entries, nextFixtureId, teamsById]);
+
+  const goToPreviousMonth = () => {
+    setMonthCursor((prev) => new Date(prev.getFullYear(), prev.getMonth() - 1, 1));
+  };
+
+  const goToNextMonth = () => {
+    setMonthCursor((prev) => new Date(prev.getFullYear(), prev.getMonth() + 1, 1));
+  };
 
   return (
     <div className="space-y-3">
-      <p className="text-sm font-bold text-cyan-200">{monthStart.toLocaleString("en-US", { month: "long", year: "numeric" })}</p>
+      <div className="flex items-center justify-between gap-3">
+        <button type="button" onClick={goToPreviousMonth} className="rounded border border-white/20 px-2 py-1 text-xs font-bold text-slate-100 hover:bg-white/10">← Prev</button>
+        <p className="text-sm font-bold text-cyan-200">{monthStart.toLocaleString("en-US", { month: "long", year: "numeric" })}</p>
+        <button type="button" onClick={goToNextMonth} className="rounded border border-white/20 px-2 py-1 text-xs font-bold text-slate-100 hover:bg-white/10">Next →</button>
+      </div>
       <div className="grid grid-cols-7 gap-2 text-center text-[11px] uppercase tracking-wider text-slate-300">
         {weekDays.map((day) => <p key={day}>{day}</p>)}
       </div>
@@ -88,11 +103,18 @@ export function MonthlyScheduleCalendar({
                 <>
                   <p className={`text-xs font-bold ${isToday ? "text-amber-200" : "text-slate-200"}`}>{dayNumber}</p>
                   <div className="mt-1 space-y-1">
-                    {fixtures.slice(0, 2).map((fixture) => (
+                    {fixtures.map((fixture) => (
                       <div key={fixture.fixtureId} className={`rounded border px-1 py-0.5 text-[10px] ${fixture.isNextMatch ? "border-cyan-300 bg-cyan-500/20 text-cyan-100" : fixture.status === "finished" ? "border-emerald-300/40 bg-emerald-500/15 text-emerald-100" : "border-white/15 bg-slate-800/80 text-slate-200"}`}>
-                        <div className="flex items-center gap-1">
-                          {fixture.opponentLogoUrl ? <Image src={fixture.opponentLogoUrl} alt={fixture.opponentCode} width={12} height={12} className="h-3 w-3 rounded-full object-cover" /> : <span>🏀</span>}
-                          <span>{fixture.homeAway === "home" ? "vs" : "@"} {fixture.opponentCode}</span>
+                        <div className="flex items-center justify-between gap-1">
+                          <span className="flex items-center gap-1">
+                            {fixture.homeTeamLogoUrl ? <Image src={fixture.homeTeamLogoUrl} alt={fixture.homeTeamCode} width={12} height={12} className="h-3 w-3 rounded-full object-cover" /> : <span>🏀</span>}
+                            <span>{fixture.homeTeamCode}</span>
+                          </span>
+                          <span className="text-[9px] text-slate-300">vs</span>
+                          <span className="flex items-center gap-1">
+                            <span>{fixture.awayTeamCode}</span>
+                            {fixture.awayTeamLogoUrl ? <Image src={fixture.awayTeamLogoUrl} alt={fixture.awayTeamCode} width={12} height={12} className="h-3 w-3 rounded-full object-cover" /> : <span>🏀</span>}
+                          </span>
                         </div>
                         <p className="text-[9px]">
                           R{fixture.round}
@@ -104,7 +126,6 @@ export function MonthlyScheduleCalendar({
                         </p>
                       </div>
                     ))}
-                    {fixtures.length > 2 && <p className="text-[10px] text-slate-400">+{fixtures.length - 2} games</p>}
                   </div>
                 </>
               )}

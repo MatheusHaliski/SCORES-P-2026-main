@@ -1679,7 +1679,6 @@ export function SquadHomeClient({
           <MonthlyScheduleCalendar
             calendar={payload.seasonCalendar}
             teamsById={teamsMap}
-            userTeamId={payload.team.id}
             currentDate={payload.seasonCalendar.currentDate}
             nextFixtureId={payload.nextFixture?.id}
           />
