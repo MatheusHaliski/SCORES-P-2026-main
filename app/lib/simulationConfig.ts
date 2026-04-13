@@ -9,6 +9,13 @@ export type SimulationSpeedOption = {
   quarterDuration: number;
 };
 
+export type SimulationPaceProfile = {
+  tickRateMultiplier: number;
+  eventCadenceMultiplier: number;
+  scoringCadenceMultiplier: number;
+  possessionResolutionMultiplier: number;
+};
+
 export const SIMULATION_SPEED_OPTIONS: SimulationSpeedOption[] = [
   {
     id: "normal",
@@ -24,7 +31,7 @@ export const SIMULATION_SPEED_OPTIONS: SimulationSpeedOption[] = [
     description: "Quarter mais ágil, sem perder leitura do jogo.",
     tickIntervalMs: 350,
     simulatedSecondsPerTick: 4,
-    quarterDuration: 150,
+    quarterDuration: 180,
   },
   {
     id: "turbo",
@@ -32,9 +39,33 @@ export const SIMULATION_SPEED_OPTIONS: SimulationSpeedOption[] = [
     description: "Máxima fluidez para avançar partidas rapidamente.",
     tickIntervalMs: 250,
     simulatedSecondsPerTick: 6,
-    quarterDuration: 120,
+    quarterDuration: 180,
   },
 ];
 
+export const SIMULATION_SPEED_PROFILE: Record<SimulationSpeedOption["id"], SimulationPaceProfile> = {
+  normal: {
+    tickRateMultiplier: 1,
+    eventCadenceMultiplier: 1,
+    scoringCadenceMultiplier: 1,
+    possessionResolutionMultiplier: 1,
+  },
+  fast: {
+    tickRateMultiplier: 1.6,
+    eventCadenceMultiplier: 1.45,
+    scoringCadenceMultiplier: 1.4,
+    possessionResolutionMultiplier: 1.45,
+  },
+  turbo: {
+    tickRateMultiplier: 2.25,
+    eventCadenceMultiplier: 2,
+    scoringCadenceMultiplier: 1.9,
+    possessionResolutionMultiplier: 2,
+  },
+};
+
 export const getSimulationSpeedOption = (speedId?: string | null) =>
   SIMULATION_SPEED_OPTIONS.find((option) => option.id === speedId) ?? SIMULATION_SPEED_OPTIONS[0];
+
+export const getSimulationPaceProfile = (speedId?: string | null): SimulationPaceProfile =>
+  SIMULATION_SPEED_PROFILE[getSimulationSpeedOption(speedId).id];

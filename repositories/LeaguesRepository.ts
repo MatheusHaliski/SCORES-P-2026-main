@@ -1,6 +1,6 @@
-import { mockLeagues } from "@/mocks/gameData";
 import { League } from "@/types/game";
 import { firestoreDb, shouldUseFirebase } from "@/lib/firebase/config";
+import { readGlobalDb } from "@/lib/globalDb";
 
 export class LeaguesRepository {
   async getLeagues(): Promise<League[]> {
@@ -8,7 +8,7 @@ export class LeaguesRepository {
       // TODO: replace with Firestore query to `leagues` collection.
       // Keep fallback during initial Firebase setup.
     }
-    return mockLeagues;
+    return readGlobalDb().leagues;
   }
 
   async getLeagueById(id: string): Promise<League | undefined> {

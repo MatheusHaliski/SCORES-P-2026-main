@@ -22,6 +22,7 @@ type Params = {
   tickIntervalMs?: number;
   simulatedSecondsPerTick?: number;
   quarterDuration?: number;
+  simulationSpeed?: "normal" | "fast" | "turbo";
 };
 
 export function useLiveRoundSimulation(params: Params) {
@@ -79,7 +80,7 @@ export function useLiveRoundSimulation(params: Params) {
 
       tickInFlightRef.current = true;
       service
-        .tick(current, params.simulatedSecondsPerTick ?? 3, Math.random)
+        .tick(current, params.simulatedSecondsPerTick ?? 3, Math.random, params.simulationSpeed ?? "normal")
         .then((next) => {
           sessionRef.current = next;
           setSession(next);
@@ -90,7 +91,7 @@ export function useLiveRoundSimulation(params: Params) {
     }, params.tickIntervalMs ?? 500);
 
     return () => window.clearInterval(interval);
-  }, [params.simulatedSecondsPerTick, params.tickIntervalMs, service, session]);
+  }, [params.simulatedSecondsPerTick, params.tickIntervalMs, params.simulationSpeed, service, session]);
 
   useEffect(() => {
     if (!session) return;

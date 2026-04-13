@@ -4,6 +4,7 @@ import { normalizeTeamTacticId } from "@/services/match/TacticImpactEngine";
 import { doc, getDoc, setDoc } from "firebase/firestore";
 
 const COLLECTION = "matches_live_state";
+const FIREBASE_READ_TIMEOUT_MS = 3500;
 
 const localKey = (saveId: string, fixtureId: string) => `scores:match_session:${saveId}:${fixtureId}`;
 const legacyLocalKey = (saveId: string) => `scores:match_session:${saveId}`;
@@ -26,21 +27,35 @@ const normalizeSessionTactics = (session: MatchSession): MatchSession => ({
 export class MatchSessionRepository {
   async getBySaveId(saveId: string, fixtureId?: string): Promise<MatchSession | null> {
     if (shouldUseFirebase && firestoreDb) {
-      const ref = doc(firestoreDb, COLLECTION, fixtureId ? `${saveId}:${fixtureId}` : saveId);
-      const snap = await getDoc(ref);
-      if (snap.exists()) return normalizeSessionTactics(snap.data() as MatchSession);
+      try {
+        const ref = doc(firestoreDb, COLLECTION, fixtureId ? `${saveId}:${fixtureId}` : saveId);
+        const snap = await Promise.race([
+          getDoc(ref),
+          new Promise<null>((resolve) => {
+            setTimeout(() => resolve(null), FIREBASE_READ_TIMEOUT_MS);
+          }),
+        ]);
+        if (!snap) throw new Error("firebase-read-timeout");
+        if (snap.exists()) return normalizeSessionTactics(snap.data() as MatchSession);
+      } catch {
+        // Fallback para localStorage em caso de indisponibilidade de rede/permissão.
+      }
     }
 
     if (typeof window === "undefined") return null;
     const raw = fixtureId
       ? window.localStorage.getItem(localKey(saveId, fixtureId))
       : window.localStorage.getItem(legacyLocalKey(saveId));
-    const prefixedKey = !raw && !fixtureId
+    const prefixedKey = !raw
       ? Object.keys(window.localStorage)
         .find((key) => key.startsWith(`scores:match_session:${saveId}:`))
       : null;
     const fallbackRaw = !raw
-      ? (fixtureId ? window.localStorage.getItem(legacyLocalKey(saveId)) : (prefixedKey ? window.localStorage.getItem(prefixedKey) : null))
+      ? (
+        fixtureId
+          ? (window.localStorage.getItem(legacyLocalKey(saveId)) ?? (prefixedKey ? window.localStorage.getItem(prefixedKey) : null))
+          : (prefixedKey ? window.localStorage.getItem(prefixedKey) : null)
+      )
       : null;
     if (!raw && !fallbackRaw) return null;
     try {

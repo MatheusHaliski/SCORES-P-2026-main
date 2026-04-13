@@ -62,6 +62,7 @@ export function MatchBoardLiveClient({
     quarterDuration: simulationSpeed.quarterDuration,
     tickIntervalMs: simulationSpeed.tickIntervalMs,
     simulatedSecondsPerTick: simulationSpeed.simulatedSecondsPerTick,
+    simulationSpeed: simulationSpeed.id,
   });
 
   if (!session) {
