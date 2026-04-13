@@ -12,7 +12,7 @@ type CalendarFixtureBadge = {
   homeAway: "home" | "away";
   isNextMatch: boolean;
   round: number;
-  status: "scheduled" | "live" | "finished";
+  status: "scheduled" | "live" | "halftime" | "finished";
   homeScore: number;
   awayScore: number;
 };
