@@ -68,6 +68,9 @@ export function MatchBoardLiveClient({
     return <main className="mx-auto min-h-screen max-w-6xl p-6 text-white">Carregando partida...</main>;
   }
 
+  const sharedClock = `${String(Math.floor(session.timeRemaining / 60)).padStart(2, "0")}:${String(Math.floor(session.timeRemaining % 60)).padStart(2, "0")}`;
+  const sharedPeriod = `Q${session.quarter}`;
+
   return (
     <main className="mx-auto min-h-screen max-w-6xl p-6">
       {employmentStatus !== "employed" && (
@@ -87,6 +90,8 @@ export function MatchBoardLiveClient({
             fixtures={session.fixtures}
             events={session.eventFeed}
             userTeamId={userTeamId}
+            sharedClock={sharedClock}
+            sharedPeriod={sharedPeriod}
             onOpenTacticalBoard={() => router.push(`/ht-manager?saveId=${saveId}&fixtureId=${session.fixtureId}`)}
           />
         </SectionCard>

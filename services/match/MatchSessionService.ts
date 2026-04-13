@@ -4,7 +4,7 @@ import { QuarterFlowEngine } from "@/services/match/QuarterFlowEngine";
 import { MatchEvent } from "@/types/liveMatch";
 import { CreateMatchSessionPayload, LineupPlayer, MatchSession, TeamTactic } from "@/types/matchSession";
 import { StadiumRevenueService } from "@/services/StadiumRevenueService";
-import { defaultTacticalPreset, defaultUniformAssets, TacticalPreset } from "@/types/tactical";
+import { defaultTacticalPreset, defaultUniformAssets, normalizeTacticalPreset, TacticalPreset } from "@/types/tactical";
 import { readClubUniforms, readPreMatchTactic } from "@/lib/tacticalState";
 
 const toLineupPlayer = (player: {
@@ -96,7 +96,7 @@ export class MatchSessionService {
       opponentTeamId,
       userTeamTactic: "balanced",
       opponentTeamTactic: "balanced",
-      userTacticalPreset: typeof window !== "undefined" ? readPreMatchTactic(payload.saveId) : defaultTacticalPreset,
+      userTacticalPreset: typeof window !== "undefined" ? normalizeTacticalPreset(readPreMatchTactic(payload.saveId)) : defaultTacticalPreset,
       opponentTacticalPreset: defaultTacticalPreset,
       clubUniformAssets: typeof window !== "undefined" ? readClubUniforms(payload.saveId) : defaultUniformAssets,
       userLineup,
@@ -128,6 +128,8 @@ export class MatchSessionService {
         homeLastScorer: undefined,
         awayLastScorer: undefined,
         isUserMatch: fixture.id === payload.userFixture.id,
+        homeFouls: 0,
+        awayFouls: 0,
         status: fixture.id === payload.userFixture.id ? "live" : "scheduled",
       })),
       eventFeed: [],
@@ -177,7 +179,7 @@ export class MatchSessionService {
     const next = {
       ...session,
       userTeamTactic: tactic,
-      userTacticalPreset: preset ? { ...session.userTacticalPreset, ...preset, style: tactic } : { ...session.userTacticalPreset, style: tactic },
+      userTacticalPreset: normalizeTacticalPreset(preset ? { ...session.userTacticalPreset, ...preset, style: tactic } : { ...session.userTacticalPreset, style: tactic }),
       clubUniformAssets: typeof window !== "undefined" ? readClubUniforms(session.saveId) : session.clubUniformAssets,
       updatedAt: new Date().toISOString(),
     };

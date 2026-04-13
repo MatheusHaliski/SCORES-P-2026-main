@@ -80,6 +80,8 @@ export type LiveFixtureState = {
     minute: string;
   };
   isUserMatch: boolean;
+  homeFouls: number;
+  awayFouls: number;
   status: "scheduled" | "live" | "break" | "finished";
 };
 

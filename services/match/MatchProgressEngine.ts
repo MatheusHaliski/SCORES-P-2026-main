@@ -83,8 +83,8 @@ export class MatchProgressEngine {
 
       const shootingLineupSkill = scoringTeamIsUser ? userSkill : oppSkill;
       const defendingLineupSkill = scoringTeamIsUser ? oppSkill : userSkill;
-      const shot3Chance = (scoringTactic === "wing_play" ? 0.5 : scoringTactic === "fast_transition" ? 0.34 : 0.29) + (shootingLineupSkill.contestShooting - 0.5) * 0.18;
-      const paint2Chance = (scoringTactic === "counter_attack" ? 0.74 : 0.56) + (shootingLineupSkill.offenseCreation - defendingLineupSkill.defensivePressure) * 0.2;
+      const shot3Chance = (scoringTactic === "five_out" ? 0.5 : scoringTactic === "perimeter_creation" ? 0.42 : 0.3) + (shootingLineupSkill.contestShooting - 0.5) * 0.18;
+      const paint2Chance = (scoringTactic === "post_centric" ? 0.74 : scoringTactic === "pick_roll_heavy" ? 0.67 : 0.56) + (shootingLineupSkill.offenseCreation - defendingLineupSkill.defensivePressure) * 0.2;
 
       const isThreeAttempt = random() < shot3Chance;
       const isLateClock = nextTimeRemaining < 24 || random() < 0.12;
@@ -206,7 +206,9 @@ export class MatchProgressEngine {
           ? "finished"
           : "break"
         : "live";
-      return { ...nextFixture, status };
+      const homeFoulDelta = random() < 0.13 ? 1 : 0;
+      const awayFoulDelta = random() < 0.13 ? 1 : 0;
+      return { ...nextFixture, status, homeFouls: Math.min(9, (nextFixture.homeFouls ?? 0) + homeFoulDelta), awayFouls: Math.min(9, (nextFixture.awayFouls ?? 0) + awayFoulDelta) };
     });
 
     const userFixtureAfter = updatedFixtures.find((fixture) => fixture.isUserMatch);

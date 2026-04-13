@@ -65,7 +65,7 @@ type CareerState = {
 
 const STORAGE_PREFIX = "scores:career-state:";
 
-const topActions = ["Calendário", "Classificações", "Campeões", "Comprar Jogador", "Salvar Jogo", "Sair", "Buscar", "Empréstimo", "Orçamento", "Estádio", "Email", "Consumíveis", "Identidade do Clube", "Editar Clubes/Ligas/Jogadores"] as const;
+const topActions = ["Calendário", "Classificações", "Campeões", "Comprar Jogador", "Salvar Jogo", "Sair", "Buscar", "Empréstimo", "Orçamento", "Estádio", "Email", "Consumíveis", "Identidade do Clube"] as const;
 const moraleService = new PlayerMoraleService();
 const injuryService = new PlayerInjuryService();
 const playstyleInventoryService = new PlaystyleInventoryService();
@@ -417,6 +417,18 @@ export function SquadHomeClient({
   const [editableTeams, setEditableTeams] = useState<Team[]>(allTeams);
   const [editablePlayers, setEditablePlayers] = useState<Player[]>(allPlayers);
   const [editorTab, setEditorTab] = useState<EditableTab>("Ligas");
+  useEffect(() => {
+    const snapshotKey = `scores:save-db-snapshot:${payload.save.id}`;
+    if (typeof window === "undefined") return;
+    if (window.localStorage.getItem(snapshotKey)) return;
+    window.localStorage.setItem(snapshotKey, JSON.stringify({
+      createdAt: new Date().toISOString(),
+      leagues: editableLeagues,
+      teams: editableTeams,
+      players: editablePlayers,
+    }));
+  }, [editableLeagues, editablePlayers, editableTeams, payload.save.id]);
+
   const [newTeamDraft, setNewTeamDraft] = useState({
     leagueId: leagues[0]?.id ?? payload.team.leagueId,
     name: "",
@@ -1502,89 +1514,6 @@ export function SquadHomeClient({
         </div>
       ))}
 
-      {openModal === "Editar Clubes/Ligas/Jogadores" && modalShell("Editor Mestre de Dados", () => setOpenModal(null), (
-        <div className="space-y-4 text-sm text-slate-100">
-          <div className="flex flex-wrap gap-2">
-            {(["Ligas", "Clubes", "Jogadores", "Novo Time"] as const).map((tab) => (
-              <button key={tab} onClick={() => setEditorTab(tab)} className={`premium-control px-3 py-1 text-xs ${editorTab === tab ? "border-fuchsia-400 bg-fuchsia-600/40" : ""}`}>{tab}</button>
-            ))}
-          </div>
-
-          {editorTab === "Ligas" && (
-            <div className="space-y-2">
-              {editableLeagues.map((league) => (
-                <div key={league.id} className="premium-surface grid gap-2 p-3 md:grid-cols-4">
-                  <input className="premium-control px-3 py-2 text-xs" value={league.name} onChange={(event) => setEditableLeagues((prev) => prev.map((item) => item.id === league.id ? { ...item, name: event.target.value } : item))} />
-                  <input className="premium-control px-3 py-2 text-xs" value={league.country} onChange={(event) => setEditableLeagues((prev) => prev.map((item) => item.id === league.id ? { ...item, country: event.target.value } : item))} />
-                  <input className="premium-control px-3 py-2 text-xs" value={league.format} onChange={(event) => setEditableLeagues((prev) => prev.map((item) => item.id === league.id ? { ...item, format: event.target.value } : item))} />
-                  <input className="premium-control px-3 py-2 text-xs" type="number" value={league.teamCount} onChange={(event) => setEditableLeagues((prev) => prev.map((item) => item.id === league.id ? { ...item, teamCount: Number(event.target.value) } : item))} />
-                </div>
-              ))}
-            </div>
-          )}
-
-          {editorTab === "Clubes" && (
-            <div className="space-y-2">
-              {editableTeams.map((team) => (
-                <div key={team.id} className="premium-surface grid gap-2 p-3 md:grid-cols-5">
-                  <input className="premium-control px-3 py-2 text-xs" value={team.name} onChange={(event) => setEditableTeams((prev) => prev.map((item) => item.id === team.id ? { ...item, name: event.target.value } : item))} />
-                  <input className="premium-control px-3 py-2 text-xs" value={team.shortName} onChange={(event) => setEditableTeams((prev) => prev.map((item) => item.id === team.id ? { ...item, shortName: event.target.value } : item))} />
-                  <input className="premium-control px-3 py-2 text-xs" type="number" value={team.overall} onChange={(event) => setEditableTeams((prev) => prev.map((item) => item.id === team.id ? { ...item, overall: Number(event.target.value) } : item))} />
-                  <input className="premium-control h-9 px-2 py-1 text-xs" type="color" value={team.primaryColor} onChange={(event) => setEditableTeams((prev) => prev.map((item) => item.id === team.id ? { ...item, primaryColor: event.target.value } : item))} />
-                  <input className="premium-control h-9 px-2 py-1 text-xs" type="color" value={team.secondaryColor} onChange={(event) => setEditableTeams((prev) => prev.map((item) => item.id === team.id ? { ...item, secondaryColor: event.target.value } : item))} />
-                </div>
-              ))}
-            </div>
-          )}
-
-          {editorTab === "Jogadores" && (
-            <div className="space-y-2">
-              {editablePlayers.slice(0, 60).map((player) => (
-                <div key={player.id} className="premium-surface grid gap-2 p-3 md:grid-cols-6">
-                  <input className="premium-control px-3 py-2 text-xs" value={player.name} onChange={(event) => setEditablePlayers((prev) => prev.map((item) => item.id === player.id ? { ...item, name: event.target.value } : item))} />
-                  <input className="premium-control px-3 py-2 text-xs" value={player.photoUrl ?? ""} placeholder="URL da foto" onChange={(event) => setEditablePlayers((prev) => prev.map((item) => item.id === player.id ? { ...item, photoUrl: event.target.value } : item))} />
-                  <select className="premium-control px-3 py-2 text-xs" value={player.position} onChange={(event) => setEditablePlayers((prev) => prev.map((item) => item.id === player.id ? { ...item, position: event.target.value as Player["position"] } : item))}>
-                    {(["PG", "SG", "SF", "PF", "C"] as const).map((position) => <option key={position} value={position}>{position}</option>)}
-                  </select>
-                  <input className="premium-control px-3 py-2 text-xs" type="number" value={player.overall} onChange={(event) => setEditablePlayers((prev) => prev.map((item) => item.id === player.id ? { ...item, overall: Number(event.target.value) } : item))} />
-                  <input className="premium-control px-3 py-2 text-xs" type="number" value={player.age} onChange={(event) => setEditablePlayers((prev) => prev.map((item) => item.id === player.id ? { ...item, age: Number(event.target.value) } : item))} />
-                  <input className="premium-control px-3 py-2 text-xs" type="number" value={player.marketValue} onChange={(event) => setEditablePlayers((prev) => prev.map((item) => item.id === player.id ? { ...item, marketValue: Number(event.target.value) } : item))} />
-                </div>
-              ))}
-            </div>
-          )}
-
-          {editorTab === "Novo Time" && (
-            <div className="premium-surface space-y-3 p-3">
-              <p className="font-semibold text-cyan-300">Adicionar novo time customizado</p>
-              <div className="grid gap-2 md:grid-cols-3">
-                <select className="premium-control px-3 py-2 text-xs" value={newTeamDraft.leagueId} onChange={(event) => setNewTeamDraft((prev) => ({ ...prev, leagueId: event.target.value }))}>
-                  {editableLeagues.map((league) => <option key={league.id} value={league.id}>{league.name}</option>)}
-                </select>
-                <input className="premium-control px-3 py-2 text-xs" placeholder="Nome do time" value={newTeamDraft.name} onChange={(event) => setNewTeamDraft((prev) => ({ ...prev, name: event.target.value }))} />
-                <input className="premium-control px-3 py-2 text-xs" placeholder="Sigla" value={newTeamDraft.shortName} onChange={(event) => setNewTeamDraft((prev) => ({ ...prev, shortName: event.target.value }))} />
-              </div>
-              <div className="grid gap-2 md:grid-cols-2">
-                <label className="premium-label">Cor primária<input className="premium-control ml-2 h-9 w-full px-2 py-1" type="color" value={newTeamDraft.primaryColor} onChange={(event) => setNewTeamDraft((prev) => ({ ...prev, primaryColor: event.target.value }))} /></label>
-                <label className="premium-label">Cor secundária<input className="premium-control ml-2 h-9 w-full px-2 py-1" type="color" value={newTeamDraft.secondaryColor} onChange={(event) => setNewTeamDraft((prev) => ({ ...prev, secondaryColor: event.target.value }))} /></label>
-              </div>
-              <div className="space-y-2">
-                {newTeamDraft.players.map((player, idx) => (
-                  <div key={`${idx}-${player.position}`} className="grid gap-2 md:grid-cols-3">
-                    <input className="premium-control px-3 py-2 text-xs" value={player.name} onChange={(event) => setNewTeamDraft((prev) => ({ ...prev, players: prev.players.map((entry, entryIdx) => entryIdx === idx ? { ...entry, name: event.target.value } : entry) }))} />
-                    <select className="premium-control px-3 py-2 text-xs" value={player.position} onChange={(event) => setNewTeamDraft((prev) => ({ ...prev, players: prev.players.map((entry, entryIdx) => entryIdx === idx ? { ...entry, position: event.target.value as Player["position"] } : entry) }))}>
-                      {(["PG", "SG", "SF", "PF", "C"] as const).map((position) => <option key={position} value={position}>{position}</option>)}
-                    </select>
-                    <input className="premium-control px-3 py-2 text-xs" type="number" value={player.overall} onChange={(event) => setNewTeamDraft((prev) => ({ ...prev, players: prev.players.map((entry, entryIdx) => entryIdx === idx ? { ...entry, overall: Number(event.target.value) } : entry) }))} />
-                  </div>
-                ))}
-              </div>
-              <button onClick={addCustomTeam} className="premium-control bg-cyan-500/40 px-4 py-2 text-xs font-bold">Adicionar time</button>
-            </div>
-          )}
-        </div>
-      ))}
-
       {openModal === "Identidade do Clube" && modalShell("Identidade do Clube • Tema interno da UI", () => setOpenModal(null), (
         <div className="space-y-4 text-sm text-slate-100">
           <div className="rounded-xl border border-cyan-300/35 bg-cyan-500/10 p-3">
@@ -1674,24 +1603,27 @@ export function SquadHomeClient({
             <label className="space-y-1">
               <span className="premium-label">Formação</span>
               <select value={state.preMatchTactic.formation} onChange={(event) => updateState((prev) => ({ ...prev, preMatchTactic: { ...prev.preMatchTactic, formation: event.target.value as TacticalPreset["formation"] } }))} className="w-full rounded-xl border border-cyan-300/30 bg-slate-900/70 px-3 py-2">
-                {(["4-4-2", "4-3-3", "3-5-2", "5-3-2", "4-2-3-1", "4-1-4-1"] as const).map((formation) => <option key={formation} value={formation}>{formation}</option>)}
+                {(["balanced", "pace_space", "five_out", "pick_roll_heavy", "post_centric", "motion_offense", "isolation_heavy", "perimeter_creation"] as const).map((formation) => <option key={formation} value={formation}>{formation.replaceAll("_", " ")}</option>)}
               </select>
             </label>
             <label className="space-y-1">
               <span className="premium-label">Estilo tático</span>
               <select value={state.preMatchTactic.style} onChange={(event) => updateState((prev) => ({ ...prev, preMatchTactic: { ...prev.preMatchTactic, style: event.target.value as TacticalPreset["style"] } }))} className="w-full rounded-xl border border-cyan-300/30 bg-slate-900/70 px-3 py-2">
-                {(["balanced", "offensive_press", "defensive_block", "counter_attack", "possession_control", "fast_transition", "wing_play"] as const).map((style) => <option key={style} value={style}>{style.replaceAll("_", " ")}</option>)}
+                {(["balanced", "pace_space", "five_out", "pick_roll_heavy", "post_centric", "motion_offense", "isolation_heavy", "perimeter_creation"] as const).map((style) => <option key={style} value={style}>{style.replaceAll("_", " ")}</option>)}
               </select>
             </label>
           </div>
           <div className="grid gap-2 md:grid-cols-3">
             {[
-              { key: "pressure", values: ["low", "medium", "high"] },
-              { key: "buildUp", values: ["direct", "mixed", "possession"] },
-              { key: "defensiveLine", values: ["deep", "standard", "high"] },
-              { key: "transitionSpeed", values: ["slow", "balanced", "quick"] },
-              { key: "width", values: ["narrow", "balanced", "wide"] },
-              { key: "tempo", values: ["calm", "normal", "high"] },
+              { key: "defensiveScheme", values: ["man_to_man", "zone_2_3", "zone_3_2", "zone_1_3_1", "full_court_press", "half_court_pressure", "drop_coverage", "switch_everything"] },
+              { key: "tempo", values: ["controlled", "balanced", "high"] },
+              { key: "shotSelection", values: ["rim_and_kickout", "balanced", "shot_hunting"] },
+              { key: "threePointFrequency", values: ["low", "balanced", "high"] },
+              { key: "paintAttackFrequency", values: ["low", "balanced", "high"] },
+              { key: "defensivePressure", values: ["low", "balanced", "high"] },
+              { key: "reboundingEmphasis", values: ["guard_balance", "balanced", "crash_glass"] },
+              { key: "transitionAggression", values: ["low", "balanced", "high"] },
+              { key: "rotationDepth", values: ["tight_8", "balanced_10", "deep_12"] },
             ].map((entry) => (
               <label key={entry.key} className="space-y-1">
                 <span className="premium-label">{entry.key}</span>
