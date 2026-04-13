@@ -31,6 +31,9 @@ export function MiniNextMatchCard({
 }) {
   const isHome = fixture.homeTeamId === userTeam.id;
   const opponent = isHome ? awayTeam : homeTeam;
+  const matchupLine = isHome
+    ? `${userTeam.shortName} vs ${opponent?.shortName ?? "OPP"}`
+    : `${opponent?.shortName ?? "OPP"} vs ${userTeam.shortName}`;
 
   return (
     <div
@@ -55,7 +58,7 @@ export function MiniNextMatchCard({
 
       <div className="relative mt-3 flex items-center justify-between">
         <div>
-          <p className="text-lg font-black text-white">{userTeam.shortName} vs {opponent?.shortName ?? "OPP"}</p>
+          <p className="text-lg font-black text-white">{matchupLine}</p>
           <p className="text-xs text-slate-100">Rodada {fixture.round} • {formatDate(fixture.date)}</p>
           <p className="mt-2 text-xs text-slate-100">Venue: <span className="font-semibold" style={{ color: identityTheme.accentColor }}>{venue}</span></p>
           <p className="text-xs text-slate-200">{isHome ? "Mando do seu clube" : "Partida fora de casa"}</p>

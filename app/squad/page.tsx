@@ -20,8 +20,7 @@ export default async function SquadHomeView({ searchParams }: { searchParams: Pr
   const authToken = cookieStore.get(AUTH_COOKIE_NAME)?.value ?? "";
   const session = authToken ? verifySessionToken(authToken) : null;
 
-  const [standings, champions, leagues, allTeams, allPlayers, stadium] = await Promise.all([
-    new StandingsRepository().getStandingsByLeague(payload.league.id, saveId),
+  const [champions, leagues, allTeams, allPlayers, stadium] = await Promise.all([
     new StandingsRepository().getChampionsByLeague(payload.league.id),
     new LeaguesRepository().getLeagues(),
     new TeamsRepository().getTeamsByLeague(payload.league.id),
@@ -49,7 +48,7 @@ export default async function SquadHomeView({ searchParams }: { searchParams: Pr
       />
       <SquadHomeClient
         payload={payload}
-        standings={standings}
+        standings={payload.standings}
         champions={champions}
         leagues={leagues}
         allTeams={allTeams}

@@ -12,6 +12,9 @@ type CalendarFixtureBadge = {
   homeAway: "home" | "away";
   isNextMatch: boolean;
   round: number;
+  status: "scheduled" | "live" | "finished";
+  homeScore: number;
+  awayScore: number;
 };
 
 const weekDays = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
@@ -56,6 +59,9 @@ export function MonthlyScheduleCalendar({
       homeAway: isHome ? "home" : "away",
       isNextMatch: entry.fixtureId === nextFixtureId,
       round: entry.round,
+      status: entry.status,
+      homeScore: entry.homeScore,
+      awayScore: entry.awayScore,
     };
     if (!acc[key]) acc[key] = [];
     acc[key].push(badge);
@@ -83,12 +89,19 @@ export function MonthlyScheduleCalendar({
                   <p className={`text-xs font-bold ${isToday ? "text-amber-200" : "text-slate-200"}`}>{dayNumber}</p>
                   <div className="mt-1 space-y-1">
                     {fixtures.slice(0, 2).map((fixture) => (
-                      <div key={fixture.fixtureId} className={`rounded border px-1 py-0.5 text-[10px] ${fixture.isNextMatch ? "border-cyan-300 bg-cyan-500/20 text-cyan-100" : "border-white/15 bg-slate-800/80 text-slate-200"}`}>
+                      <div key={fixture.fixtureId} className={`rounded border px-1 py-0.5 text-[10px] ${fixture.isNextMatch ? "border-cyan-300 bg-cyan-500/20 text-cyan-100" : fixture.status === "finished" ? "border-emerald-300/40 bg-emerald-500/15 text-emerald-100" : "border-white/15 bg-slate-800/80 text-slate-200"}`}>
                         <div className="flex items-center gap-1">
                           {fixture.opponentLogoUrl ? <Image src={fixture.opponentLogoUrl} alt={fixture.opponentCode} width={12} height={12} className="h-3 w-3 rounded-full object-cover" /> : <span>🏀</span>}
                           <span>{fixture.homeAway === "home" ? "vs" : "@"} {fixture.opponentCode}</span>
                         </div>
-                        <p className="text-[9px]">R{fixture.round} {fixture.isNextMatch ? "• NEXT" : ""}</p>
+                        <p className="text-[9px]">
+                          R{fixture.round}
+                          {fixture.status === "finished"
+                            ? ` • ${fixture.homeScore}-${fixture.awayScore}`
+                            : fixture.isNextMatch
+                              ? " • NEXT"
+                              : ""}
+                        </p>
                       </div>
                     ))}
                     {fixtures.length > 2 && <p className="text-[10px] text-slate-400">+{fixtures.length - 2} games</p>}
