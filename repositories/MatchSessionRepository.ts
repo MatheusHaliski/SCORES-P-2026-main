@@ -4,6 +4,7 @@ import { normalizeTeamTacticId } from "@/services/match/TacticImpactEngine";
 import { doc, getDoc, setDoc } from "firebase/firestore";
 
 const COLLECTION = "matches_live_state";
+const FIREBASE_READ_TIMEOUT_MS = 3500;
 
 const localKey = (saveId: string, fixtureId: string) => `scores:match_session:${saveId}:${fixtureId}`;
 const legacyLocalKey = (saveId: string) => `scores:match_session:${saveId}`;
@@ -28,7 +29,13 @@ export class MatchSessionRepository {
     if (shouldUseFirebase && firestoreDb) {
       try {
         const ref = doc(firestoreDb, COLLECTION, fixtureId ? `${saveId}:${fixtureId}` : saveId);
-        const snap = await getDoc(ref);
+        const snap = await Promise.race([
+          getDoc(ref),
+          new Promise<null>((resolve) => {
+            setTimeout(() => resolve(null), FIREBASE_READ_TIMEOUT_MS);
+          }),
+        ]);
+        if (!snap) throw new Error("firebase-read-timeout");
         if (snap.exists()) return normalizeSessionTactics(snap.data() as MatchSession);
       } catch {
         // Fallback para localStorage em caso de indisponibilidade de rede/permissão.
