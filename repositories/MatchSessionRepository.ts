@@ -4,6 +4,7 @@ import { normalizeTeamTacticId } from "@/services/match/TacticImpactEngine";
 import { doc, getDoc, setDoc } from "firebase/firestore";
 
 const COLLECTION = "matches_live_state";
+const FIREBASE_READ_TIMEOUT_MS = 3500;
 
 const localKey = (saveId: string, fixtureId: string) => `scores:match_session:${saveId}:${fixtureId}`;
 const legacyLocalKey = (saveId: string) => `scores:match_session:${saveId}`;
@@ -24,18 +25,9 @@ const normalizeSessionTactics = (session: MatchSession): MatchSession => ({
 });
 
 export class MatchSessionRepository {
-  async getBySaveId(saveId: string, fixtureId?: string): Promise<MatchSession | null> {
-    if (shouldUseFirebase && firestoreDb) {
-      try {
-        const ref = doc(firestoreDb, COLLECTION, fixtureId ? `${saveId}:${fixtureId}` : saveId);
-        const snap = await getDoc(ref);
-        if (snap.exists()) return normalizeSessionTactics(snap.data() as MatchSession);
-      } catch {
-        // Fallback para localStorage em caso de indisponibilidade de rede/permissão.
-      }
-    }
-
+  private readFromLocalStorage(saveId: string, fixtureId?: string): MatchSession | null {
     if (typeof window === "undefined") return null;
+
     const raw = fixtureId
       ? window.localStorage.getItem(localKey(saveId, fixtureId))
       : window.localStorage.getItem(legacyLocalKey(saveId));
@@ -56,6 +48,36 @@ export class MatchSessionRepository {
     } catch {
       return null;
     }
+  }
+
+  async getBySaveId(saveId: string, fixtureId?: string): Promise<MatchSession | null> {
+    if (shouldUseFirebase && firestoreDb) {
+      try {
+        const ref = doc(firestoreDb, COLLECTION, fixtureId ? `${saveId}:${fixtureId}` : saveId);
+        const firebaseRead = getDoc(ref);
+        const raceResult = await Promise.race([
+          firebaseRead,
+          new Promise<"timed_out">((resolve) => {
+            setTimeout(() => resolve("timed_out"), FIREBASE_READ_TIMEOUT_MS);
+          }),
+        ]);
+
+        if (raceResult === "timed_out") {
+          const localFallback = this.readFromLocalStorage(saveId, fixtureId);
+          if (localFallback) return localFallback;
+          const snap = await firebaseRead;
+          if (snap.exists()) return normalizeSessionTactics(snap.data() as MatchSession);
+          return null;
+        }
+
+        const snap = raceResult;
+        if (snap.exists()) return normalizeSessionTactics(snap.data() as MatchSession);
+      } catch {
+        // Fallback para localStorage em caso de indisponibilidade de rede/permissão.
+      }
+    }
+
+    return this.readFromLocalStorage(saveId, fixtureId);
   }
 
   async upsert(session: MatchSession): Promise<void> {
