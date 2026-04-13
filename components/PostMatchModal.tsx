@@ -136,37 +136,39 @@ export function PostMatchModal({
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/80 p-4">
-      <div className="premium-surface w-full max-w-3xl p-5">
+      <div className="premium-surface flex max-h-[90vh] w-full max-w-3xl flex-col overflow-hidden p-5">
         <h2 className="text-2xl font-black text-white">Pós-jogo</h2>
-        {!showStandings ? (
-          <div className="mt-3 flex gap-2">
-            <button onClick={finalizeAndContinue} disabled={isFinishing} className="premium-control bg-emerald-600/70 px-4 py-2 text-sm font-bold text-white disabled:opacity-60">{isFinishing ? "Processando..." : "Continuar"}</button>
-            <button onClick={() => setShowStandings(true)} className="premium-control bg-cyan-500/70 px-4 py-2 text-sm font-bold text-slate-950">Visualizar classificação do campeonato</button>
-          </div>
-        ) : (
-          <div className="mt-3 space-y-3">
-            {completion?.seasonFinished && (
-              <div className="rounded-lg border border-amber-400/50 bg-amber-500/10 p-3 text-sm text-amber-100">
-                <p className="font-bold">Temporada encerrada!</p>
-                <p>Campeão: <strong>{completion.championTeamId ? teamsById[completion.championTeamId]?.name ?? completion.championTeamId : "N/A"}</strong></p>
-                <p>Classificados para playoffs ({completion.playoffSpots}): {completion.playoffTeamIds.map((teamId) => teamsById[teamId]?.shortName ?? teamId).join(", ")}</p>
-              </div>
-            )}
-            <StandingsTable rows={rows} teamsById={teamsById} playoffSpots={completion?.playoffSpots ?? 8} dangerSpots={3} highlightTeamId={userTeamId} />
-            {pendingOffer && (
-              <JobOfferCard
-                offer={pendingOffer}
-                busy={isHandlingOffer}
-                onAccept={() => respondToOffer("accept")}
-                onReject={() => respondToOffer("reject")}
-              />
-            )}
-            <div className="flex gap-2">
-              <button onClick={() => setShowStandings(false)} className="premium-control px-3 py-2 text-xs font-bold text-white">Voltar</button>
-              {completion?.seasonFinished && <button onClick={() => router.push(`/squad?saveId=${saveId}`)} className="premium-control bg-emerald-600/70 px-3 py-2 text-xs font-bold text-white">Ir ao Squad</button>}
+        <div className="mt-3 flex-1 overflow-y-auto pr-1">
+          {!showStandings ? (
+            <div className="flex flex-wrap gap-2">
+              <button onClick={finalizeAndContinue} disabled={isFinishing} className="premium-control bg-emerald-600/70 px-4 py-2 text-sm font-bold text-white disabled:opacity-60">{isFinishing ? "Processando..." : "Continuar"}</button>
+              <button onClick={() => setShowStandings(true)} className="premium-control bg-cyan-500/70 px-4 py-2 text-sm font-bold text-slate-950">Visualizar classificação do campeonato</button>
             </div>
-          </div>
-        )}
+          ) : (
+            <div className="space-y-3">
+              {completion?.seasonFinished && (
+                <div className="rounded-lg border border-amber-400/50 bg-amber-500/10 p-3 text-sm text-amber-100">
+                  <p className="font-bold">Temporada encerrada!</p>
+                  <p>Campeão: <strong>{completion.championTeamId ? teamsById[completion.championTeamId]?.name ?? completion.championTeamId : "N/A"}</strong></p>
+                  <p>Classificados para playoffs ({completion.playoffSpots}): {completion.playoffTeamIds.map((teamId) => teamsById[teamId]?.shortName ?? teamId).join(", ")}</p>
+                </div>
+              )}
+              <StandingsTable rows={rows} teamsById={teamsById} playoffSpots={completion?.playoffSpots ?? 8} dangerSpots={3} highlightTeamId={userTeamId} />
+              {pendingOffer && (
+                <JobOfferCard
+                  offer={pendingOffer}
+                  busy={isHandlingOffer}
+                  onAccept={() => respondToOffer("accept")}
+                  onReject={() => respondToOffer("reject")}
+                />
+              )}
+              <div className="flex gap-2">
+                <button onClick={() => setShowStandings(false)} className="premium-control px-3 py-2 text-xs font-bold text-white">Voltar</button>
+                {completion?.seasonFinished && <button onClick={() => router.push(`/squad?saveId=${saveId}`)} className="premium-control bg-emerald-600/70 px-3 py-2 text-xs font-bold text-white">Ir ao Squad</button>}
+              </div>
+            </div>
+          )}
+        </div>
         {error && <p className="mt-3 text-sm text-rose-300">{error}</p>}
       </div>
       {showDismissalModal && completion?.career.dismissed && (
