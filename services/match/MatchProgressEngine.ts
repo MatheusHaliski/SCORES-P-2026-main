@@ -297,9 +297,8 @@ export class MatchProgressEngine {
           ? "finished"
           : "break"
         : "live";
-      const foulSamplingChance = clamp(0.13 * paceProfile.eventCadenceMultiplier * Math.sqrt(tickTempoScale), 0.1, 0.45);
-      const homeFoulDelta = random() < foulSamplingChance ? 1 : 0;
-      const awayFoulDelta = random() < foulSamplingChance ? 1 : 0;
+      const homeFoulDelta = random() < 0.13 ? 1 : 0;
+      const awayFoulDelta = random() < 0.13 ? 1 : 0;
       return { ...nextFixture, status, homeFouls: Math.min(9, (nextFixture.homeFouls ?? 0) + homeFoulDelta), awayFouls: Math.min(9, (nextFixture.awayFouls ?? 0) + awayFoulDelta) };
     });
 

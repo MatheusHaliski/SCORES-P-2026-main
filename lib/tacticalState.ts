@@ -1,4 +1,4 @@
-import { ClubUniformAssets, defaultTacticalPreset, defaultUniformAssets, TacticalPreset } from "@/types/tactical";
+import { ClubUniformAssets, defaultTacticalPreset, defaultUniformAssets, normalizeTacticalPreset, TacticalPreset } from "@/types/tactical";
 
 const uniformKey = (saveId: string) => `scores:club_uniforms:${saveId}`;
 const preMatchTacticKey = (saveId: string) => `scores:pre_match_tactic:${saveId}`;
@@ -28,7 +28,8 @@ export function readPreMatchTactic(saveId: string): TacticalPreset {
   const raw = window.localStorage.getItem(preMatchTacticKey(saveId));
   if (!raw) return defaultTacticalPreset;
   try {
-    return { ...defaultTacticalPreset, ...(JSON.parse(raw) as Partial<TacticalPreset>) };
+    const parsed = JSON.parse(raw) as Partial<TacticalPreset>;
+    return normalizeTacticalPreset(parsed);
   } catch {
     return defaultTacticalPreset;
   }

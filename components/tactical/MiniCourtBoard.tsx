@@ -1,4 +1,4 @@
-import { formationLayouts, resolveUniformUrl, TacticalPreset } from "@/types/tactical";
+import { formationLayouts, normalizeFormationId, resolveUniformUrl, TacticalPreset } from "@/types/tactical";
 import { LineupPlayer } from "@/types/matchSession";
 import { ClubUniformAssets } from "@/types/tactical";
 import { PlayerPhotoNode } from "@/components/tactical/PlayerPhotoNode";
@@ -15,7 +15,7 @@ function styleToOverlayTone(style: TacticalPreset["style"]) {
 }
 
 export function MiniCourtBoard({ lineup, tactic, uniforms }: { lineup: LineupPlayer[]; tactic: TacticalPreset; uniforms: ClubUniformAssets }) {
-  const layout = formationLayouts[tactic.formation];
+  const layout = formationLayouts[normalizeFormationId(tactic.formation)];
   const uniformUrl = resolveUniformUrl(uniforms);
   const players = Array.from({ length: 5 }).map((_, idx) => lineup[idx] ?? {
     playerId: `placeholder-${idx}`,

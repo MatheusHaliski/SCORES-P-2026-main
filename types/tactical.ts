@@ -134,3 +134,79 @@ export function resolveUniformUrl(uniforms: ClubUniformAssets): string {
   if (uniforms.active_uniform_slot === "alternate") return uniforms.alternate_uniform_2d_url || uniforms.home_uniform_2d_url;
   return uniforms.home_uniform_2d_url || uniforms.away_uniform_2d_url || uniforms.alternate_uniform_2d_url || "";
 }
+
+const legacyFormationMap: Record<string, FormationId> = {
+  "4-4-2": "balanced",
+  "4-3-3": "pace_space",
+  "3-5-2": "motion_offense",
+  "5-3-2": "post_centric",
+  "4-2-3-1": "pick_roll_heavy",
+  "4-1-4-1": "perimeter_creation",
+};
+
+const legacyStyleMap: Record<string, TacticalStyle> = {
+  offensive_press: "pace_space",
+  defensive_block: "post_centric",
+  counter_attack: "pick_roll_heavy",
+  possession_control: "motion_offense",
+  fast_transition: "pace_space",
+  wing_play: "perimeter_creation",
+  fast_pace: "pace_space",
+  defensive: "post_centric",
+  three_point_focus: "five_out",
+  paint_attack: "post_centric",
+  aggressive_press: "pace_space",
+};
+
+const offensiveArchetypes = new Set<FormationId>([
+  "balanced",
+  "pace_space",
+  "five_out",
+  "pick_roll_heavy",
+  "post_centric",
+  "motion_offense",
+  "isolation_heavy",
+  "perimeter_creation",
+]);
+
+const defensiveSchemes = new Set<DefensiveScheme>([
+  "man_to_man",
+  "zone_2_3",
+  "zone_3_2",
+  "zone_1_3_1",
+  "full_court_press",
+  "half_court_pressure",
+  "drop_coverage",
+  "switch_everything",
+]);
+
+export function normalizeFormationId(value: string | null | undefined): FormationId {
+  if (!value) return defaultTacticalPreset.formation;
+  const trimmed = value.trim().toLowerCase();
+  if (trimmed in legacyFormationMap) return legacyFormationMap[trimmed];
+  return offensiveArchetypes.has(trimmed as FormationId) ? (trimmed as FormationId) : defaultTacticalPreset.formation;
+}
+
+export function normalizeTacticalStyle(value: string | null | undefined): TacticalStyle {
+  if (!value) return defaultTacticalPreset.style;
+  const trimmed = value.trim().toLowerCase();
+  if (trimmed in legacyStyleMap) return legacyStyleMap[trimmed];
+  if (trimmed in legacyFormationMap) return legacyFormationMap[trimmed];
+  return offensiveArchetypes.has(trimmed as TacticalStyle) ? (trimmed as TacticalStyle) : defaultTacticalPreset.style;
+}
+
+export function normalizeDefensiveScheme(value: string | null | undefined): DefensiveScheme {
+  if (!value) return defaultTacticalPreset.defensiveScheme;
+  const trimmed = value.trim().toLowerCase();
+  return defensiveSchemes.has(trimmed as DefensiveScheme) ? (trimmed as DefensiveScheme) : defaultTacticalPreset.defensiveScheme;
+}
+
+export function normalizeTacticalPreset(input?: Partial<TacticalPreset> | null): TacticalPreset {
+  const merged = { ...defaultTacticalPreset, ...(input ?? {}) } as TacticalPreset;
+  return {
+    ...merged,
+    formation: normalizeFormationId(input?.formation ?? merged.formation),
+    style: normalizeTacticalStyle(input?.style ?? merged.style),
+    defensiveScheme: normalizeDefensiveScheme(input?.defensiveScheme ?? merged.defensiveScheme),
+  };
+}
