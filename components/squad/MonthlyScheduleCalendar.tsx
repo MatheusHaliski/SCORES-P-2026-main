@@ -1,7 +1,7 @@
 "use client";
 
 import Image from "next/image";
-import { Team } from "@/types/game";
+import { FixtureStatus, Team } from "@/types/game";
 import { SeasonCalendar } from "@/types/season";
 
 type CalendarFixtureBadge = {
@@ -12,6 +12,7 @@ type CalendarFixtureBadge = {
   homeAway: "home" | "away";
   isNextMatch: boolean;
   round: number;
+  status: FixtureStatus;
 };
 
 const weekDays = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
@@ -56,6 +57,7 @@ export function MonthlyScheduleCalendar({
       homeAway: isHome ? "home" : "away",
       isNextMatch: entry.fixtureId === nextFixtureId,
       round: entry.round,
+      status: entry.status,
     };
     if (!acc[key]) acc[key] = [];
     acc[key].push(badge);
@@ -88,7 +90,11 @@ export function MonthlyScheduleCalendar({
                           {fixture.opponentLogoUrl ? <Image src={fixture.opponentLogoUrl} alt={fixture.opponentCode} width={12} height={12} className="h-3 w-3 rounded-full object-cover" /> : <span>🏀</span>}
                           <span>{fixture.homeAway === "home" ? "vs" : "@"} {fixture.opponentCode}</span>
                         </div>
-                        <p className="text-[9px]">R{fixture.round} {fixture.isNextMatch ? "• NEXT" : ""}</p>
+                        <p className="text-[9px]">
+                          R{fixture.round}
+                          {fixture.status === "halftime" ? " • HT" : ""}
+                          {fixture.isNextMatch ? " • NEXT" : ""}
+                        </p>
                       </div>
                     ))}
                     {fixtures.length > 2 && <p className="text-[10px] text-slate-400">+{fixtures.length - 2} games</p>}
