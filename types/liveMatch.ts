@@ -32,6 +32,7 @@ export type MatchEventType =
   | "MISS"
   | "TURNOVER"
   | "FOUL"
+  | "VIOLATION"
   | "STEAL"
   | "BLOCK"
   | "OFF_REBOUND"
@@ -42,6 +43,7 @@ export type MatchEventType =
   | "TIMEOUT"
   | "SUBSTITUTION"
   | "INJURY"
+  | "EJECTION"
   | "DEFENSIVE_STOP"
   | "INFO";
 

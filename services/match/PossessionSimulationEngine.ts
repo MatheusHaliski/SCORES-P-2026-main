@@ -1,5 +1,6 @@
 import { MatchEvent } from "@/types/liveMatch";
-import { LineupPlayer, MatchSession, PendingFreeThrow, ScoreEvent, TeamTactics } from "@/types/matchSession";
+import { InterruptionEvent, InterruptionType, LineupPlayer, MatchSession, PendingFreeThrow, ScoreEvent, TeamTactics } from "@/types/matchSession";
+import { canIssueFreeThrows, flowReducer, getInterruptionProfile, shouldTriggerFoul } from "@/services/match/InterruptionEngine";
 
 type PossessionAction = "pick-and-roll" | "isolation" | "drive" | "catch-and-shoot" | "post-up" | "turnover" | "foul";
 
@@ -16,6 +17,7 @@ export type PossessionResult = {
   events: MatchEvent[];
   scoreEvents: ScoreEvent[];
   pendingFreeThrow?: PendingFreeThrow | null;
+  interruptionEvents: InterruptionEvent[];
   updatedOffense: LineupPlayer[];
   updatedDefense: LineupPlayer[];
 };
@@ -65,6 +67,7 @@ export const runPossession = (params: {
   random: () => number;
   elapsedSeconds: number;
   quarterClock: number;
+  quarterFreeThrowAttempts: number;
 }): PossessionResult => {
   const { session, offensiveTeamId, random } = params;
   const defensiveTeamId = offensiveTeamId === session.userTeamId ? session.opponentTeamId : session.userTeamId;
@@ -81,7 +84,7 @@ export const runPossession = (params: {
 
   const contestPenalty = (params.defenseTactics.defenseType === "zone" ? 0.02 : 0) + params.defenseTactics.pressure * 0.03;
   const turnoverRisk = clamp(0.09 + (defense.defense - offense.passing) / 300 + params.defenseTactics.pressure * 0.08 + pressureLoad * 0.07, 0.05, 0.34);
-  const foulRisk = clamp(0.08 + params.defenseTactics.pressure * 0.04, 0.04, 0.18);
+  const frequencyProfile = getInterruptionProfile(session);
 
   let pointsScored = 0;
   let turnover = false;
@@ -90,6 +93,7 @@ export const runPossession = (params: {
   const events: MatchEvent[] = [];
   const scoreEvents: ScoreEvent[] = [];
   let pendingFreeThrow: PendingFreeThrow | null = null;
+  const interruptionEvents: InterruptionEvent[] = [];
 
   const pickAssister = () => {
     const options = params.offenseLineup.filter((player) => player.playerId !== scorer.playerId);
@@ -151,17 +155,46 @@ export const runPossession = (params: {
       });
     }
 
-    if (action === "foul" || random() < foulRisk) {
+    const defender = pickRandom(params.defenseLineup, random);
+    const foulCheck = shouldTriggerFoul({
+      random,
+      baseRate: frequencyProfile.foulBaseRate,
+      defensivePressure: clamp(0.88 + params.defenseTactics.pressure * 0.55, 0.86, 1.4),
+      defenderSkill: clamp(defender.macroRatings.defending_rating / 100, 0.4, 1),
+      offensiveAggression: clamp(1 + (action === "drive" || action === "post-up" ? 0.18 : action === "isolation" ? 0.12 : 0.02), 0.95, 1.25),
+      fatigueFactor: clamp(1 + ((100 - defender.stamina) / 100) * 0.26, 0.94, 1.24),
+      momentumFactor: clamp(1 + Math.abs(session.emotion.momentum) / 800, 1, 1.12),
+      clutchFactor: session.quarter === 4 && params.quarterClock <= 120 ? 1.16 : 1,
+      flowReducer: flowReducer(session.interruptionControl, session),
+    });
+
+    if (action === "foul" || foulCheck.committed) {
       foulCommitted = true;
-      const defender = pickRandom(params.defenseLineup, random);
       defender.fouls += 1;
+      const timestamp = session.quarterDuration - params.quarterClock;
       events.push({ id: `ev-foul-${Date.now()}-${Math.floor(random() * 99999)}`, fixtureId: session.fixtureId, second: params.elapsedSeconds, teamId: defensiveTeamId, playerName: defender.playerName, type: "FOUL", text: `${defender.playerName} commits a defensive foul.` });
-      if (!pointsScored) {
-        const attempts: 1 | 2 | 3 = action === "catch-and-shoot" ? 3 : 2;
+      interruptionEvents.push({ type: "foul", teamId: defensiveTeamId, playerId: defender.playerId, severity: foulCheck.probability, timestamp, message: "Foul — Defensive reach-in" });
+
+      const isShootingAction = action === "drive" || action === "post-up" || action === "isolation" || action === "catch-and-shoot";
+      const freeThrowsAllowed = canIssueFreeThrows(params.quarterFreeThrowAttempts, session);
+      if (freeThrowsAllowed && isShootingAction && !pointsScored && random() < (action === "catch-and-shoot" ? 0.35 : 0.68)) {
+        const attempts: 1 | 2 | 3 = action === "catch-and-shoot" && random() < 0.45 ? 3 : 2;
         pendingFreeThrow = { teamId: offensiveTeamId, attempts, foulType: "shooting", drawnByPlayerId: scorer.playerId };
-      } else if (pointsScored === 2 && random() < 0.32) {
+        interruptionEvents.push({ type: "free_throw", teamId: offensiveTeamId, playerId: scorer.playerId, severity: attempts / 3, timestamp, message: `Shooting foul — ${attempts} Free Throws` });
+      } else if (freeThrowsAllowed && pointsScored === 2 && isShootingAction && random() < 0.24) {
         pendingFreeThrow = { teamId: offensiveTeamId, attempts: 1, foulType: "and_one", drawnByPlayerId: scorer.playerId };
+        interruptionEvents.push({ type: "free_throw", teamId: offensiveTeamId, playerId: scorer.playerId, severity: 0.5, timestamp, message: "And-one foul — 1 Free Throw" });
+      } else if (random() < 0.12) {
+        interruptionEvents.push({ type: "violation", teamId: defensiveTeamId, severity: 0.24, timestamp, message: "Violation — Illegal contact" });
       }
+    } else if (params.quarterClock <= 8 && random() < 0.2) {
+      interruptionEvents.push({
+        type: "violation" as InterruptionType,
+        teamId: offensiveTeamId,
+        severity: 0.35,
+        timestamp: session.quarterDuration - params.quarterClock,
+        message: "Violation — Shot clock",
+      });
     }
   }
 
@@ -181,6 +214,7 @@ export const runPossession = (params: {
     events,
     scoreEvents,
     pendingFreeThrow,
+    interruptionEvents,
     updatedOffense: params.offenseLineup.map((player) => ({ ...player, stamina: clamp(player.stamina - timeConsumed * 0.11, 42, 100) })),
     updatedDefense: params.defenseLineup.map((player) => ({ ...player, stamina: clamp(player.stamina - timeConsumed * 0.09, 42, 100) })),
   };

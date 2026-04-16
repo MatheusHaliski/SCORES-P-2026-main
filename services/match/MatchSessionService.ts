@@ -6,6 +6,7 @@ import { CreateMatchSessionPayload, LineupPlayer, MatchSession, ScoreBreakdown, 
 import { StadiumRevenueService } from "@/services/StadiumRevenueService";
 import { defaultTacticalPreset, defaultUniformAssets, normalizeTacticalPreset, TacticalPreset } from "@/types/tactical";
 import { readClubUniforms, readPreMatchTactic } from "@/lib/tacticalState";
+import { makeInitialInterruptionControl } from "@/services/match/InterruptionEngine";
 
 const toLineupPlayer = (player: {
   id: string;
@@ -152,10 +153,22 @@ export class MatchSessionService {
       },
       scoreEvents: [],
       pendingFreeThrow: null,
+      freeThrowState: {
+        attempts: 0,
+        shooterPlayerId: undefined,
+        isActive: false,
+        quarterAttempts: 0,
+      },
+      interruptionControl: makeInitialInterruptionControl(),
+      interruptionQueue: [],
+      gameFlowState: "live",
+      ejectedPlayerIds: [],
       homeBreakdown: emptyBreakdown(),
       awayBreakdown: emptyBreakdown(),
       scoringSettings: {
         freeThrowShooterMode: "auto",
+        interruptionFrequency: "balanced",
+        showInterruptionAlerts: true,
         scoringEventCallouts: true,
         detailedScoreBreakdown: true,
         showShotTypeLabels: true,
@@ -228,6 +241,7 @@ export class MatchSessionService {
     const next = {
       ...session,
       pendingFreeThrow: { ...session.pendingFreeThrow, selectedShooterPlayerId: playerId },
+      freeThrowState: { ...session.freeThrowState, shooterPlayerId: playerId },
       updatedAt: new Date().toISOString(),
     };
     await this.repository.upsert(next);
@@ -318,11 +332,23 @@ export class MatchSessionService {
       awayBreakdown: session.awayBreakdown ?? emptyBreakdown(),
       scoringSettings: session.scoringSettings ?? {
         freeThrowShooterMode: "auto",
+        interruptionFrequency: "balanced",
+        showInterruptionAlerts: true,
         scoringEventCallouts: true,
         detailedScoreBreakdown: true,
         showShotTypeLabels: true,
         showScorerAssetBadge: true,
       },
+      freeThrowState: session.freeThrowState ?? {
+        attempts: 0,
+        shooterPlayerId: undefined,
+        isActive: false,
+        quarterAttempts: 0,
+      },
+      interruptionControl: session.interruptionControl ?? makeInitialInterruptionControl(),
+      interruptionQueue: session.interruptionQueue ?? [],
+      gameFlowState: session.gameFlowState ?? "live",
+      ejectedPlayerIds: session.ejectedPlayerIds ?? [],
     };
   }
 }
