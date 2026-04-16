@@ -117,7 +117,7 @@ export function MatchBoardLiveClient({
   if (!session) {
     return (
       <main
-        className="mx-auto min-h-screen max-w-6xl bg-cover bg-center bg-no-repeat p-6 text-white"
+        className="min-h-screen w-full bg-cover bg-center bg-no-repeat p-6 text-white"
         style={{ backgroundImage: "linear-gradient(180deg, rgba(2,6,23,0.72), rgba(2,6,23,0.9)), url('/Captura%20de%20tela%202026-04-16%20114540.jpg')" }}
       >
         Carregando partida...
@@ -144,7 +144,7 @@ export function MatchBoardLiveClient({
 
   return (
     <main
-      className="mx-auto min-h-screen max-w-6xl bg-cover bg-center bg-no-repeat p-6"
+      className="min-h-screen w-full bg-cover bg-center bg-no-repeat p-6"
       style={{
         backgroundImage: "linear-gradient(180deg, rgba(2,6,23,0), rgba(2,6,23,0)), url('/Captura%20de%20tela%202026-04-16%20114540.jpg')",
         transform: `translateY(${(feedback?.cameraShake ?? 0) * -0.5}px)`,
