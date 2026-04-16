@@ -7,6 +7,8 @@ import { MatchSession } from "@/types/matchSession";
 import { QuarterFlowEngine } from "@/services/match/QuarterFlowEngine";
 import { Fixture, Player, Team } from "@/types/game";
 import { HalftimeSnapshot } from "@/types/liveMatch";
+import { FeedbackSnapshot } from "@/types/feedback";
+import { buildFeedbackSnapshot } from "@/services/feedback/FeedbackEngine";
 
 type Params = {
   saveId: string;
@@ -30,6 +32,7 @@ export function useLiveRoundSimulation(params: Params) {
   const router = useRouter();
   const service = useMemo(() => new MatchSessionService(), []);
   const [session, setSession] = useState<MatchSession | null>(null);
+  const [feedback, setFeedback] = useState<FeedbackSnapshot | null>(null);
   const navigatingRef = useRef(false);
   const sessionRef = useRef<MatchSession | null>(null);
   const tickInFlightRef = useRef(false);
@@ -56,7 +59,15 @@ export function useLiveRoundSimulation(params: Params) {
       opponentPlayers: params.opponentPlayers,
       teamsById: params.teamsById,
       quarterDuration: params.quarterDuration ?? 180,
-    }).then(setSession);
+    }).then((nextSession) => {
+      setSession(nextSession);
+      setFeedback(buildFeedbackSnapshot({
+        session: nextSession,
+        userTeamId: params.userTeamId,
+        recentEvents: nextSession.eventFeed.slice(-8),
+        tactics: nextSession.userTeamConfig,
+      }));
+    });
   }, [
     params.fixtureId,
     params.fixtures,
@@ -78,6 +89,7 @@ export function useLiveRoundSimulation(params: Params) {
     const interval = window.setInterval(() => {
       const current = sessionRef.current;
       if (!current || !QuarterFlowEngine.isLivePhase(current.phase) || tickInFlightRef.current) return;
+      if (current.pendingFreeThrow && (current.scoringSettings?.freeThrowShooterMode ?? "auto") === "manual" && !current.pendingFreeThrow.selectedShooterPlayerId) return;
 
       tickInFlightRef.current = true;
       service
@@ -85,6 +97,12 @@ export function useLiveRoundSimulation(params: Params) {
         .then((next) => {
           sessionRef.current = next;
           setSession(next);
+          setFeedback(buildFeedbackSnapshot({
+            session: next,
+            userTeamId: params.userTeamId,
+            recentEvents: next.eventFeed.slice(-8),
+            tactics: next.userTeamConfig,
+          }));
         })
         .finally(() => {
           tickInFlightRef.current = false;
@@ -92,7 +110,7 @@ export function useLiveRoundSimulation(params: Params) {
     }, params.tickIntervalMs ?? 500);
 
     return () => window.clearInterval(interval);
-  }, [params.simulatedSecondsPerTick, params.tickIntervalMs, params.simulationSpeed, service, session]);
+  }, [params.simulatedSecondsPerTick, params.tickIntervalMs, params.simulationSpeed, params.userTeamId, service, session]);
 
   useEffect(() => {
     if (!session) return;
@@ -111,7 +129,7 @@ export function useLiveRoundSimulation(params: Params) {
 
   }, [params.enableAutoBreakNavigation, params.saveId, router, session]);
 
-  return { session, setSession };
+  return { session, setSession, feedback };
 }
 
 

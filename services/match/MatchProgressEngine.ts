@@ -1,5 +1,5 @@
 import { MatchEvent } from "@/types/liveMatch";
-import { LineupPlayer, MatchSession } from "@/types/matchSession";
+import { LineupPlayer, MatchSession, PendingFreeThrow, ScoreBreakdown, ScoreEvent } from "@/types/matchSession";
 import { QuarterFlowEngine } from "@/services/match/QuarterFlowEngine";
 import { getSimulationPaceProfile, SimulationSpeedOption } from "@/app/lib/simulationConfig";
 import { QuarterRecapEngine } from "@/services/match/QuarterRecapEngine";
@@ -11,6 +11,73 @@ const formatClock = (seconds: number) => {
   const mins = Math.floor(seconds / 60).toString().padStart(2, "0");
   const secs = Math.floor(seconds % 60).toString().padStart(2, "0");
   return `${mins}:${secs}`;
+};
+
+const applyScoreBreakdown = (
+  base: ScoreBreakdown,
+  scoreEvent: ScoreEvent,
+  lineup: LineupPlayer[],
+) => {
+  const scoringPlayer = lineup.find((player) => player.playerId === scoreEvent.playerId);
+  return {
+    ...base,
+    onePointMade: base.onePointMade + (scoreEvent.points === 1 ? 1 : 0),
+    twoPointMade: base.twoPointMade + (scoreEvent.points === 2 ? 1 : 0),
+    threePointMade: base.threePointMade + (scoreEvent.points === 3 ? 1 : 0),
+    paintPoints: base.paintPoints + (scoreEvent.shotType === "layup" || scoreEvent.shotType === "dunk" || scoreEvent.shotType === "putback" ? scoreEvent.points : 0),
+    fastBreakPoints: base.fastBreakPoints + (scoreEvent.possessionContext === "fast-break" ? scoreEvent.points : 0),
+    secondChancePoints: base.secondChancePoints + (scoreEvent.possessionContext === "second-chance" ? scoreEvent.points : 0),
+    benchPoints: base.benchPoints + (scoringPlayer && !scoringPlayer.isStarter ? scoreEvent.points : 0),
+  };
+};
+
+const resolvePendingFreeThrows = (
+  session: MatchSession,
+  pending: PendingFreeThrow,
+  random: () => number,
+) => {
+  const isUserTeam = pending.teamId === session.userTeamId;
+  const lineup = isUserTeam ? session.userLineup : session.opponentLineup;
+  const drawnBy = lineup.find((player) => player.playerId === pending.drawnByPlayerId);
+  const selected = lineup.find((player) => player.playerId === pending.selectedShooterPlayerId);
+  const bestShooter = [...lineup].sort((a, b) => (b.attributes.shooting.free_throw + b.stamina * 0.2) - (a.attributes.shooting.free_throw + a.stamina * 0.2))[0];
+  const shooter = selected ?? drawnBy ?? bestShooter ?? lineup[0];
+  if (!shooter) return { points: 0, scoreEvents: [] as ScoreEvent[], events: [] as MatchEvent[] };
+
+  const scoreEvents: ScoreEvent[] = [];
+  const events: MatchEvent[] = [];
+  let points = 0;
+  for (let attempt = 0; attempt < pending.attempts; attempt += 1) {
+    const makeChance = clamp(0.58 + (shooter.attributes.shooting.free_throw - 50) / 180 + (shooter.stamina - 60) / 600, 0.45, 0.94);
+    const made = random() < makeChance;
+    events.push({
+      id: `ev-ft-${Date.now()}-${attempt}`,
+      fixtureId: session.fixtureId,
+      second: session.quarterDuration - session.timeRemaining,
+      teamId: pending.teamId,
+      playerName: shooter.playerName,
+      type: made ? "FREE_THROW_MADE" : "FREE_THROW_MISS",
+      text: made ? `${shooter.playerName} knocks down the free throw.` : `${shooter.playerName} misses the free throw.`,
+    });
+    if (!made) continue;
+    points += 1;
+    scoreEvents.push({
+      id: `score-ft-${Date.now()}-${attempt}`,
+      teamId: pending.teamId,
+      playerId: shooter.playerId,
+      playerName: shooter.playerName,
+      points: 1,
+      shotType: "free_throw",
+      assisted: false,
+      foulDrawn: true,
+      clock: session.timeRemaining,
+      quarter: session.quarter,
+      momentumDelta: 1,
+      tacticTag: "free_throw_sequence",
+      possessionContext: "half-court",
+    });
+  }
+  return { points, scoreEvents, events };
 };
 
 const withAutoSubstitutions = (lineup: LineupPlayer[], bench: LineupPlayer[], quarter: number) => {
@@ -65,6 +132,28 @@ export class MatchProgressEngine {
     let homeQuarterFouls = session.teamRuntime.home.foulsThisQuarter;
     let awayQuarterFouls = session.teamRuntime.away.foulsThisQuarter;
     const newEvents: MatchEvent[] = [];
+    const scoreEvents: ScoreEvent[] = [];
+    let pendingFreeThrow: PendingFreeThrow | null = session.pendingFreeThrow ?? null;
+    const priorScoreEvents = session.scoreEvents ?? [];
+    const priorHomeBreakdown = session.homeBreakdown ?? { onePointMade: 0, twoPointMade: 0, threePointMade: 0, paintPoints: 0, fastBreakPoints: 0, secondChancePoints: 0, benchPoints: 0 };
+    const priorAwayBreakdown = session.awayBreakdown ?? { onePointMade: 0, twoPointMade: 0, threePointMade: 0, paintPoints: 0, fastBreakPoints: 0, secondChancePoints: 0, benchPoints: 0 };
+
+    const freeThrowMode = session.scoringSettings?.freeThrowShooterMode ?? "auto";
+    if (pendingFreeThrow && (freeThrowMode === "auto" || pendingFreeThrow.selectedShooterPlayerId)) {
+      const resolved = resolvePendingFreeThrows(session, pendingFreeThrow, random);
+      newEvents.push(...resolved.events);
+      scoreEvents.push(...resolved.scoreEvents);
+      if (resolved.points > 0) {
+        const userIsHomeFt = userFixture.homeTeamId === session.userTeamId;
+        const pointsForUser = pendingFreeThrow.teamId === session.userTeamId;
+        if (pointsForUser) {
+          if (userIsHomeFt) homeDelta += resolved.points;
+          else awayDelta += resolved.points;
+        } else if (userIsHomeFt) awayDelta += resolved.points;
+        else homeDelta += resolved.points;
+      }
+      pendingFreeThrow = null;
+    }
 
     const possessionBudget = Math.max(1, Math.round((simulatedSecondsPerTick / 3) * pace.possessionResolutionMultiplier));
 
@@ -100,17 +189,22 @@ export class MatchProgressEngine {
         else homeQuarterFouls += 1;
       }
 
-      if (result.pointsScored > 0 && result.scoringTeamId) {
+      if (result.scoreEvents.length) {
         const userIsHome = userFixture.homeTeamId === session.userTeamId;
-        const scorerIsUser = result.scoringTeamId === session.userTeamId;
-        if (scorerIsUser) {
-          if (userIsHome) homeDelta += result.pointsScored;
-          else awayDelta += result.pointsScored;
-        } else if (userIsHome) awayDelta += result.pointsScored;
-        else homeDelta += result.pointsScored;
+        const userPoints = result.scoreEvents.filter((event) => event.teamId === session.userTeamId).reduce((sum, event) => sum + event.points, 0);
+        const opponentPoints = result.scoreEvents.reduce((sum, event) => sum + event.points, 0) - userPoints;
+        if (userIsHome) {
+          homeDelta += userPoints;
+          awayDelta += opponentPoints;
+        } else {
+          awayDelta += userPoints;
+          homeDelta += opponentPoints;
+        }
       }
 
       newEvents.push(...result.events);
+      scoreEvents.push(...result.scoreEvents);
+      if (!pendingFreeThrow && result.pendingFreeThrow) pendingFreeThrow = result.pendingFreeThrow;
       possessionTeamId = result.nextPossessionTeamId;
       shotClockRemaining = result.shotClockRemaining;
     }
@@ -155,6 +249,20 @@ export class MatchProgressEngine {
     const nextCrowd = clamp(session.emotion.crowdIntensity * 0.82 + Math.abs(userRunDelta) * 4 + clutchPlays * 6 + homeEdge, 20, 100);
     const tacticalDiscipline = clamp(62 + Math.round((session.userTeamConfig.pressure + session.userTeamConfig.reboundingFocus) * 12), 40, 99);
     const managerMorale = clamp(50 + Math.round((nextMomentum + (userFixtureAfter ? (userIsHome ? userFixtureAfter.homeScore - userFixtureAfter.awayScore : userFixtureAfter.awayScore - userFixtureAfter.homeScore) : 0)) * 0.4), 20, 98);
+    const userMargin = userFixtureAfter ? (userIsHome ? userFixtureAfter.homeScore - userFixtureAfter.awayScore : userFixtureAfter.awayScore - userFixtureAfter.homeScore) : 0;
+    const closeGamePressure = Math.abs(userMargin) <= 5 ? 12 : Math.abs(userMargin) <= 10 ? 6 : 2;
+    const seasonPressure = session.round >= 10 ? 8 : 3;
+    const underPerformancePressure = userMargin < 0 ? Math.min(14, Math.abs(userMargin) * 1.2) : 0;
+    const turnoverStress = Math.min(8, newEvents.filter((event) => event.type === "TURNOVER" && event.teamId === session.userTeamId).length * 3);
+    const pressureMeter = clamp(
+      ((session.userTeamConfig.pressure + session.opponentTeamConfig.pressure) / 2) * 100
+      + closeGamePressure
+      + seasonPressure
+      + underPerformancePressure
+      + turnoverStress,
+      0,
+      100,
+    );
 
     const storyBanners: string[] = [];
     if (Math.abs(userRunDelta) >= 8) storyBanners.push(`${Math.abs(userRunDelta)}-0 run`);
@@ -171,6 +279,13 @@ export class MatchProgressEngine {
         })
       : session.quarterRecap ?? [];
 
+    const homeBreakdown = scoreEvents
+      .filter((event) => event.teamId === userFixture.homeTeamId)
+      .reduce((acc, event) => applyScoreBreakdown(acc, event, event.teamId === session.userTeamId ? userLineup : oppLineup), priorHomeBreakdown);
+    const awayBreakdown = scoreEvents
+      .filter((event) => event.teamId === userFixture.awayTeamId)
+      .reduce((acc, event) => applyScoreBreakdown(acc, event, event.teamId === session.userTeamId ? userLineup : oppLineup), priorAwayBreakdown);
+
     return {
       ...session,
       quarter: nextQuarter,
@@ -183,6 +298,10 @@ export class MatchProgressEngine {
         user: userIsHome ? (userFixtureAfter?.homeScore ?? session.score.user) : (userFixtureAfter?.awayScore ?? session.score.user),
         opponent: userIsHome ? (userFixtureAfter?.awayScore ?? session.score.opponent) : (userFixtureAfter?.homeScore ?? session.score.opponent),
       },
+      scoreEvents: [...priorScoreEvents, ...scoreEvents].slice(-120),
+      pendingFreeThrow,
+      homeBreakdown,
+      awayBreakdown,
       userLineup,
       userBench,
       opponentLineup: oppLineup,
@@ -209,7 +328,7 @@ export class MatchProgressEngine {
         crowdIntensity: nextCrowd,
         managerMorale,
         tacticalDiscipline,
-        pressure: clamp((session.userTeamConfig.pressure + session.opponentTeamConfig.pressure) / 2 * 100, 0, 100),
+        pressure: pressureMeter,
       },
       storyBanners: storyBanners.slice(0, 3),
       recentEventTypes: [...session.recentEventTypes, ...newEvents.map((event) => event.type)].slice(-12),

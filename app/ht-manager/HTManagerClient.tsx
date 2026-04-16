@@ -9,8 +9,8 @@ import { MiniCourtBoard } from "@/components/tactical/MiniCourtBoard";
 import { TacticSelector } from "@/components/tactical/TacticSelector";
 import { BenchStrip } from "@/components/tactical/BenchStrip";
 import { defaultTacticalPreset, defaultUniformAssets, TacticalPreset } from "@/types/tactical";
-import { QuarterFlowEngine } from "@/services/match/QuarterFlowEngine";
 import { getElectronicScoreDisplayStyle, getElectronicScoreShellStyle, getHalftimeBoardStyle, getMatchInfoBarStyle, getMatchPanelStyle } from "@/styles/metallicTheme";
+import { buildFeedbackSnapshot } from "@/services/feedback/FeedbackEngine";
 
 export function HTManagerClient({ saveId, fixtureId }: { saveId: string; fixtureId: string }) {
   const router = useRouter();
@@ -36,6 +36,12 @@ export function HTManagerClient({ saveId, fixtureId }: { saveId: string; fixture
 
   const tacticPreset: TacticalPreset = session.userTacticalPreset ?? { ...defaultTacticalPreset, style: session.userTeamTactic ?? "balanced" };
   const uniforms = session.clubUniformAssets ?? defaultUniformAssets;
+  const feedback = buildFeedbackSnapshot({
+    session,
+    userTeamId: session.userTeamId,
+    recentEvents: session.eventFeed.slice(-8),
+    tactics: session.userTeamConfig,
+  });
 
   return (
     <div className="space-y-4">
@@ -47,7 +53,7 @@ export function HTManagerClient({ saveId, fixtureId }: { saveId: string; fixture
           </div>
         )}
         <div className="grid gap-4 lg:grid-cols-[1.5fr,1fr]">
-          <MiniCourtBoard lineup={session.userLineup} tactic={tacticPreset} uniforms={uniforms} />
+          <MiniCourtBoard lineup={session.userLineup} tactic={tacticPreset} uniforms={uniforms} feedback={feedback} recentEvents={session.eventFeed.slice(-16)} />
           <div className="space-y-3">
             <div className="sa-premium-gradient-surface rounded-2xl p-3 text-xs text-slate-100" style={getMatchInfoBarStyle()}>
               <p>Público: <strong>{(session.attendance ?? 0).toLocaleString()}</strong></p>

@@ -2,7 +2,7 @@ import { MatchSessionRepository } from "@/repositories/MatchSessionRepository";
 import { MatchProgressEngine } from "@/services/match/MatchProgressEngine";
 import { QuarterFlowEngine } from "@/services/match/QuarterFlowEngine";
 import { MatchEvent } from "@/types/liveMatch";
-import { CreateMatchSessionPayload, LineupPlayer, MatchSession, TeamTactic } from "@/types/matchSession";
+import { CreateMatchSessionPayload, LineupPlayer, MatchSession, ScoreBreakdown, TeamTactic } from "@/types/matchSession";
 import { StadiumRevenueService } from "@/services/StadiumRevenueService";
 import { defaultTacticalPreset, defaultUniformAssets, normalizeTacticalPreset, TacticalPreset } from "@/types/tactical";
 import { readClubUniforms, readPreMatchTactic } from "@/lib/tacticalState";
@@ -35,6 +35,16 @@ const toLineupPlayer = (player: {
   fouls: 0,
 });
 
+const emptyBreakdown = (): ScoreBreakdown => ({
+  onePointMade: 0,
+  twoPointMade: 0,
+  threePointMade: 0,
+  paintPoints: 0,
+  fastBreakPoints: 0,
+  secondChancePoints: 0,
+  benchPoints: 0,
+});
+
 export class MatchSessionService {
   constructor(
     private repository = new MatchSessionRepository(),
@@ -44,7 +54,7 @@ export class MatchSessionService {
 
   async loadOrCreate(payload: CreateMatchSessionPayload): Promise<MatchSession> {
     const existing = await this.repository.getBySaveId(payload.saveId, payload.fixtureId);
-    if (existing && existing.round === payload.round) return existing;
+    if (existing && existing.round === payload.round) return this.normalizeLegacySession(existing);
     if (existing && existing.round !== payload.round) await this.repository.clear(payload.saveId, payload.fixtureId);
     return this.createFreshSession(payload);
   }
@@ -140,6 +150,17 @@ export class MatchSessionService {
         user: userIsHome ? payload.userFixture.homeScore : payload.userFixture.awayScore,
         opponent: userIsHome ? payload.userFixture.awayScore : payload.userFixture.homeScore,
       },
+      scoreEvents: [],
+      pendingFreeThrow: null,
+      homeBreakdown: emptyBreakdown(),
+      awayBreakdown: emptyBreakdown(),
+      scoringSettings: {
+        freeThrowShooterMode: "auto",
+        scoringEventCallouts: true,
+        detailedScoreBreakdown: true,
+        showShotTypeLabels: true,
+        showScorerAssetBadge: true,
+      },
       possessionTeamId: payload.userFixture.homeTeamId,
       shotClockRemaining: 24,
       bonusFoulLimit: 5,
@@ -177,7 +198,8 @@ export class MatchSessionService {
   }
 
   async getSession(saveId: string, fixtureId: string): Promise<MatchSession | null> {
-    return this.repository.getBySaveId(saveId, fixtureId);
+    const session = await this.repository.getBySaveId(saveId, fixtureId);
+    return session ? this.normalizeLegacySession(session) : null;
   }
 
   async tick(
@@ -187,6 +209,27 @@ export class MatchSessionService {
     simulationSpeed: "normal" | "fast" | "turbo" = "normal",
   ): Promise<MatchSession> {
     const next = this.progressEngine.tick(session, simulatedSecondsPerTick, random, simulationSpeed);
+    await this.repository.upsert(next);
+    return next;
+  }
+
+  async updateScoringSettings(session: MatchSession, patch: Partial<MatchSession["scoringSettings"]>): Promise<MatchSession> {
+    const next = {
+      ...session,
+      scoringSettings: { ...session.scoringSettings, ...patch },
+      updatedAt: new Date().toISOString(),
+    };
+    await this.repository.upsert(next);
+    return next;
+  }
+
+  async selectFreeThrowShooter(session: MatchSession, playerId: string): Promise<MatchSession> {
+    if (!session.pendingFreeThrow) return session;
+    const next = {
+      ...session,
+      pendingFreeThrow: { ...session.pendingFreeThrow, selectedShooterPlayerId: playerId },
+      updatedAt: new Date().toISOString(),
+    };
     await this.repository.upsert(next);
     return next;
   }
@@ -264,5 +307,22 @@ export class MatchSessionService {
 
     await this.repository.upsert(next);
     return next;
+  }
+
+  private normalizeLegacySession(session: MatchSession): MatchSession {
+    return {
+      ...session,
+      scoreEvents: session.scoreEvents ?? [],
+      pendingFreeThrow: session.pendingFreeThrow ?? null,
+      homeBreakdown: session.homeBreakdown ?? emptyBreakdown(),
+      awayBreakdown: session.awayBreakdown ?? emptyBreakdown(),
+      scoringSettings: session.scoringSettings ?? {
+        freeThrowShooterMode: "auto",
+        scoringEventCallouts: true,
+        detailedScoreBreakdown: true,
+        showShotTypeLabels: true,
+        showScorerAssetBadge: true,
+      },
+    };
   }
 }

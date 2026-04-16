@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import { SectionCard } from "@/components/SectionCard";
 import { useLiveRoundSimulation } from "@/hooks/useLiveRoundSimulation";
@@ -15,6 +15,10 @@ import { getMatchInfoBarStyle, getMatchPanelStyle } from "@/styles/metallicTheme
 import { BroadcastScoreBug } from "@/components/match/BroadcastScoreBug";
 import { QuarterTransitionOverlay } from "@/components/match/PeriodTransitionOverlay";
 import { QuarterRecapCards } from "@/components/match/QuarterRecapCards";
+import { FreeThrowShooterModal } from "@/components/FreeThrowShooterModal";
+import { ScoringEventCallout } from "@/components/ScoringEventCallout";
+import { ScoreBreakdownPanel } from "@/components/ScoreBreakdownPanel";
+import { MatchSessionService } from "@/services/match/MatchSessionService";
 
 export function MatchBoardLiveClient({
   saveId,
@@ -51,7 +55,7 @@ export function MatchBoardLiveClient({
 
   const simulationSpeed = getSimulationSpeedOption(simulationSpeedId);
 
-  const { session } = useLiveRoundSimulation({
+  const { session, feedback, setSession } = useLiveRoundSimulation({
     saveId,
     fixtureId,
     forceFresh,
@@ -69,6 +73,8 @@ export function MatchBoardLiveClient({
     enableAutoBreakNavigation: false,
   });
   const [transitionVisible, setTransitionVisible] = useState(false);
+  const [calloutIndex, setCalloutIndex] = useState(0);
+  const matchSessionService = useMemo(() => new MatchSessionService(), []);
 
   useEffect(() => {
     if (!session) return;
@@ -78,6 +84,15 @@ export function MatchBoardLiveClient({
     const timeout = window.setTimeout(() => setTransitionVisible(false), 2200);
     return () => window.clearTimeout(timeout);
   }, [session]);
+
+  useEffect(() => {
+    if (!session?.scoringSettings.scoringEventCallouts) return;
+    if (!session.scoreEvents.length) return;
+    const timer = window.setTimeout(() => {
+      setCalloutIndex((prev) => (prev + 1) % Math.max(1, session.scoreEvents.length));
+    }, 1400);
+    return () => window.clearTimeout(timer);
+  }, [session?.scoreEvents, session?.scoringSettings.scoringEventCallouts]);
 
   if (!session) {
     return (
@@ -95,13 +110,27 @@ export function MatchBoardLiveClient({
   const userFixture = session.fixtures.find((fixture) => fixture.isUserMatch);
   const userIsHome = userFixture?.homeTeamId === userTeamId;
   const contextualBanners = session.storyBanners;
+  const activeCallout = session.scoreEvents.length ? session.scoreEvents[Math.min(calloutIndex, session.scoreEvents.length - 1)] : null;
+  const pendingFTForUser = session.pendingFreeThrow?.teamId === session.userTeamId ? session.pendingFreeThrow : null;
+  const scoringSettings = session.scoringSettings ?? {
+    freeThrowShooterMode: "auto" as const,
+    scoringEventCallouts: true,
+    detailedScoreBreakdown: true,
+    showShotTypeLabels: true,
+    showScorerAssetBadge: true,
+  };
 
   return (
     <main
       className="mx-auto min-h-screen max-w-6xl bg-cover bg-center bg-no-repeat p-6"
-      style={{ backgroundImage: "linear-gradient(180deg, rgba(2,6,23,0.7), rgba(2,6,23,0.92)), url('/Captura%20de%20tela%202026-04-16%20114540.jpg')" }}
+      style={{
+        backgroundImage: "linear-gradient(180deg, rgba(2,6,23,0.7), rgba(2,6,23,0.92)), url('/Captura%20de%20tela%202026-04-16%20114540.jpg')",
+        transform: `translateY(${(feedback?.cameraShake ?? 0) * -0.5}px)`,
+        transitionDuration: `${Math.max(120, Math.round(300 / (feedback?.transitionSpeedMultiplier ?? 1)))}ms`,
+      }}
     >
-      <BroadcastScoreBug session={session} userIsHome={!!userIsHome} />
+      <BroadcastScoreBug session={session} userIsHome={!!userIsHome} feedback={feedback} />
+      <ScoringEventCallout event={scoringSettings.scoringEventCallouts ? activeCallout : null} showAssetBadge={scoringSettings.showScorerAssetBadge} showShotType={scoringSettings.showShotTypeLabels} />
       <QuarterTransitionOverlay phase={session.phase} visible={transitionVisible} />
       {employmentStatus !== "employed" && (
         <div className="mb-3">
@@ -116,6 +145,13 @@ export function MatchBoardLiveClient({
           ))}
         </div>
       )}
+      {!!feedback?.eventCallouts.length && (
+        <div className="mt-2 flex flex-wrap gap-2">
+          {feedback.eventCallouts.map((callout) => (
+            <span key={callout} className="rounded-full border border-fuchsia-300/45 bg-fuchsia-500/20 px-2 py-1 text-[11px] font-bold uppercase tracking-[0.12em] text-fuchsia-100">{callout}</span>
+          ))}
+        </div>
+      )}
       <div className="sa-premium-gradient-surface mt-3 rounded-2xl p-3 text-xs text-slate-100" style={getMatchInfoBarStyle()}>
         <p>Venue: <strong>{session.venueName ?? "Arena principal"}</strong></p>
         <p>Público: <strong>{(session.attendance ?? 0).toLocaleString()}</strong> • Receita estimada: <strong>${(session.ticketRevenueEstimate ?? 0).toLocaleString()}</strong></p>
@@ -125,6 +161,33 @@ export function MatchBoardLiveClient({
         <p className="rounded-xl border border-amber-300/30 bg-amber-900/20 px-3 py-2 text-xs text-amber-100">Tactical discipline: <strong>{Math.round(session.telemetry.tacticalDiscipline)}</strong></p>
         <p className="rounded-xl border border-rose-300/30 bg-rose-900/20 px-3 py-2 text-xs text-rose-100">Pressure: <strong>{Math.round(session.telemetry.pressure)}</strong></p>
       </div>
+      <section className="mt-3 rounded-2xl border border-cyan-300/30 bg-slate-900/70 p-3">
+        <p className="mb-2 text-xs font-black uppercase tracking-[0.2em] text-cyan-100">NextMatchView • Scoring Controls</p>
+        <div className="grid gap-2 md:grid-cols-2 lg:grid-cols-5">
+          <label className="text-xs">FT Shooter Mode
+            <select className="mt-1 w-full rounded-lg border border-white/15 bg-slate-800 p-2" value={scoringSettings.freeThrowShooterMode} onChange={(event) => {
+              matchSessionService.updateScoringSettings(session, { freeThrowShooterMode: event.target.value as "auto" | "manual" }).then(setSession);
+            }}>
+              <option value="auto">Auto</option>
+              <option value="manual">Manual</option>
+            </select>
+          </label>
+          {[
+            { label: "Scoring Callouts", key: "scoringEventCallouts" as const },
+            { label: "Detailed Breakdown", key: "detailedScoreBreakdown" as const },
+            { label: "Shot Type Labels", key: "showShotTypeLabels" as const },
+            { label: "Scorer Asset Badge", key: "showScorerAssetBadge" as const },
+          ].map((item) => (
+            <label key={item.key} className="inline-flex items-center gap-2 rounded-lg border border-white/10 bg-slate-800/70 px-2 py-1 text-xs">
+              <input type="checkbox" checked={scoringSettings[item.key]} onChange={(event) => {
+                matchSessionService.updateScoringSettings(session, { [item.key]: event.target.checked }).then(setSession);
+              }} />
+              {item.label}
+            </label>
+          ))}
+        </div>
+      </section>
+      {scoringSettings.detailedScoreBreakdown && <div className="mt-3"><ScoreBreakdownPanel session={session} /></div>}
       <QuarterRecapCards session={session} />
 
       <div className="mt-4">
@@ -148,6 +211,16 @@ export function MatchBoardLiveClient({
       )}
 
       {session.phase === "POST_MATCH" && <PostMatchModal saveId={saveId} standings={standings} teamsById={teamsById} userTeamId={userTeamId} round={round} fixtures={session.fixtures} leagueId={leagueId} />}
+      <FreeThrowShooterModal
+        open={!!pendingFTForUser && scoringSettings.freeThrowShooterMode === "manual" && !pendingFTForUser.selectedShooterPlayerId}
+        session={session}
+        attempts={pendingFTForUser?.attempts ?? 1}
+        candidates={session.userLineup}
+        onSelect={async (playerId) => {
+          const next = await matchSessionService.selectFreeThrowShooter(session, playerId);
+          setSession(next);
+        }}
+      />
       {session.pendingInjury && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/80 p-4">
           <div className="sa-premium-gradient-surface w-full max-w-xl rounded-2xl border-rose-300/50 p-4 text-sm text-slate-100" style={getMatchPanelStyle()}>
