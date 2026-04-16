@@ -128,6 +128,27 @@ export type MatchSession = {
     user: number;
     opponent: number;
   };
+  possessionTeamId: string;
+  shotClockRemaining: number;
+  bonusFoulLimit: number;
+  teamRuntime: {
+    home: { timeoutsRemaining: number; foulsThisQuarter: number };
+    away: { timeoutsRemaining: number; foulsThisQuarter: number };
+  };
+  momentum: {
+    value: number;
+    currentRun: { teamId: string; points: number };
+  };
+  crowd: {
+    intensity: number;
+  };
+  quarterRecap?: Array<{
+    id: string;
+    quarter: number;
+    title: string;
+    description: string;
+    delta: number;
+  }>;
   quarterBreakSnapshot?: QuarterBreakSnapshot | null;
   createdAt: string;
   updatedAt: string;

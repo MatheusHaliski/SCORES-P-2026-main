@@ -10,6 +10,11 @@
   --scores-metallic-texture: 0.45;
   --scores-metallic-gloss: 0.42;
   --scores-metallic-polish: 0.5;
+  --motion-micro: 150ms;
+  --motion-panel: 300ms;
+  --ease-premium-in-out: cubic-bezier(0.22, 0.61, 0.36, 1);
+  --ease-broadcast-slide: cubic-bezier(0.16, 1, 0.3, 1);
+  --ease-stat-pop: cubic-bezier(0.2, 0.9, 0.3, 1.15);
 }
 
 body {
@@ -135,6 +140,15 @@ body {
   outline: none;
   border-color: rgba(34, 211, 238, 0.7);
   box-shadow: 0 0 0 2px rgba(34, 211, 238, 0.22);
+}
+
+.sa-broadcast-scorebug {
+  border: 1px solid rgba(232, 208, 149, 0.5);
+  background:
+    linear-gradient(150deg, rgba(12, 44, 38, 0.96), rgba(8, 25, 22, 0.94)),
+    linear-gradient(90deg, rgba(218, 190, 118, 0.14), transparent 28%, transparent 72%, rgba(213, 225, 234, 0.12));
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.2), 0 12px 28px rgba(0, 0, 0, 0.35);
+  transition: all var(--motion-micro) var(--ease-premium-in-out);
 }
 
 .premium-label {
