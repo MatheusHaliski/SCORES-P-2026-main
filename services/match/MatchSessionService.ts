@@ -137,6 +137,21 @@ export class MatchSessionService {
         user: userIsHome ? payload.userFixture.homeScore : payload.userFixture.awayScore,
         opponent: userIsHome ? payload.userFixture.awayScore : payload.userFixture.homeScore,
       },
+      possessionTeamId: payload.userFixture.homeTeamId,
+      shotClockRemaining: 24,
+      bonusFoulLimit: 5,
+      teamRuntime: {
+        home: { timeoutsRemaining: 7, foulsThisQuarter: 0 },
+        away: { timeoutsRemaining: 7, foulsThisQuarter: 0 },
+      },
+      momentum: {
+        value: 0,
+        currentRun: { teamId: payload.userFixture.homeTeamId, points: 0 },
+      },
+      crowd: {
+        intensity: 42,
+      },
+      quarterRecap: [],
       quarterBreakSnapshot: null,
       createdAt: now,
       updatedAt: now,

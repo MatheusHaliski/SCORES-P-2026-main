@@ -23,6 +23,7 @@ type Params = {
   simulatedSecondsPerTick?: number;
   quarterDuration?: number;
   simulationSpeed?: "normal" | "fast" | "turbo";
+  enableAutoBreakNavigation?: boolean;
 };
 
 export function useLiveRoundSimulation(params: Params) {
@@ -102,13 +103,13 @@ export function useLiveRoundSimulation(params: Params) {
 
     if (navigatingRef.current) return;
 
-    if (QuarterFlowEngine.isBreakPhase(session.phase)) {
+    if (params.enableAutoBreakNavigation !== false && QuarterFlowEngine.isBreakPhase(session.phase)) {
       navigatingRef.current = true;
       router.push(`/ht-manager?saveId=${params.saveId}&fixtureId=${session.fixtureId}`);
       return;
     }
 
-  }, [params.saveId, router, session]);
+  }, [params.enableAutoBreakNavigation, params.saveId, router, session]);
 
   return { session, setSession };
 }

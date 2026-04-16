@@ -4,6 +4,7 @@ import { LineupImpactEngine } from "@/services/match/LineupImpactEngine";
 import { TacticImpactEngine } from "@/services/match/TacticImpactEngine";
 import { QuarterFlowEngine } from "@/services/match/QuarterFlowEngine";
 import { getSimulationPaceProfile, SimulationSpeedOption } from "@/app/lib/simulationConfig";
+import { QuarterRecapEngine } from "@/services/match/QuarterRecapEngine";
 
 const clamp = (value: number, min: number, max: number) => Math.min(max, Math.max(min, value));
 
@@ -78,6 +79,11 @@ export class MatchProgressEngine {
     let homeDelta = 0;
     let awayDelta = 0;
     const newEvents: MatchEvent[] = [];
+    const userIsHome = userFixture.homeTeamId === session.userTeamId;
+    let possessionTeamId = session.possessionTeamId || userFixture.homeTeamId;
+    let shotClockRemaining = clamp(session.shotClockRemaining - simulatedSecondsPerTick, 0, 24);
+    let homeQuarterFouls = session.teamRuntime?.home.foulsThisQuarter ?? userFixture.homeFouls;
+    let awayQuarterFouls = session.teamRuntime?.away.foulsThisQuarter ?? userFixture.awayFouls;
     const userFixtureScore = session.fixtures.find((fixture) => fixture.id === userFixture.id);
     const userIsHomeForExpectation = userFixture.homeTeamId === session.userTeamId;
     let currentUserPoints = userIsHomeForExpectation ? (userFixtureScore?.homeScore ?? session.score.user) : (userFixtureScore?.awayScore ?? session.score.user);
@@ -98,7 +104,8 @@ export class MatchProgressEngine {
 
     for (let possessionWindow = 0; possessionWindow < totalWindows; possessionWindow += 1) {
       if (random() >= possessionRoll) continue;
-      const userIsHome = userFixture.homeTeamId === session.userTeamId;
+      const offensiveTeamId = possessionTeamId;
+      const offensiveIsUser = offensiveTeamId === session.userTeamId;
       const attackStrength = userLineupImpact.attack * userTacticImpact.attack * userLineupImpact.staminaPenalty * (0.45 + userSkill.offenseCreation * 0.3 + userSkill.passingControl * 0.25);
       const defenseResistance = oppLineupImpact.defense * oppTacticImpact.defense * oppLineupImpact.staminaPenalty * (0.55 + oppSkill.defensivePressure * 0.45);
       const clutchWindow = nextTimeRemaining < 180 ? (userSkill.clutchAndIq - oppSkill.clutchAndIq) * 0.08 : 0;
@@ -108,7 +115,8 @@ export class MatchProgressEngine {
       const scoringWindowBalance = clamp((userWindowDelta - oppWindowDelta) * 0.005, -0.05, 0.05);
       const userChanceToScore = clamp(0.37 + (attackStrength - defenseResistance) * 0.78 + clutchWindow + momentumNoise + scoringWindowBalance, 0.2, 0.78);
 
-      const scoringTeamIsUser = random() < userChanceToScore;
+      const offenseBase = offensiveIsUser ? userChanceToScore : (1 - userChanceToScore);
+      const scoringTeamIsUser = random() < clamp(offenseBase + 0.08, 0.2, 0.82);
       const scoringTactic = scoringTeamIsUser ? session.userTeamTactic : session.opponentTeamTactic;
       const variance = scoringTeamIsUser ? userTacticImpact.variance : oppTacticImpact.variance;
       const scoringLineup = scoringTeamIsUser ? session.userLineup : session.opponentLineup;
@@ -184,6 +192,8 @@ export class MatchProgressEngine {
       );
       const turnoverHappened = points === 0 && random() < turnoverChance;
       if (turnoverHappened) {
+        possessionTeamId = scoringTeamIsUser ? session.opponentTeamId : session.userTeamId;
+        shotClockRemaining = 24;
         newEvents.push({
           id: `ev-tov-${Date.now()}-${Math.floor(random() * 99999)}`,
           fixtureId: userFixture.id,
@@ -194,6 +204,7 @@ export class MatchProgressEngine {
           text: `${scorer?.playerName ?? "Jogador"} perde a posse sob pressão defensiva.`,
         });
       } else if (points === 0 && random() < offReboundChance) {
+        shotClockRemaining = 14;
         newEvents.push({
           id: `ev-oreb-${Date.now()}-${Math.floor(random() * 99999)}`,
           fixtureId: userFixture.id,
@@ -204,6 +215,8 @@ export class MatchProgressEngine {
           text: `${scorer?.playerName ?? "Jogador"} garante rebote ofensivo e mantém a posse.`,
         });
       } else if (points === 0) {
+        possessionTeamId = scoringTeamIsUser ? session.opponentTeamId : session.userTeamId;
+        shotClockRemaining = 24;
         newEvents.push({
           id: `ev-dreb-${Date.now()}-${Math.floor(random() * 99999)}`,
           fixtureId: userFixture.id,
@@ -226,6 +239,11 @@ export class MatchProgressEngine {
           : `${scorer?.playerName ?? "Jogador"} força arremesso ${isThreeAttempt ? "de 3" : "de 2"} e erra.`,
       });
       if (isShootingFoul && (points === 0 || andOne)) {
+        if (scoringTeamIsUser) {
+          if (userIsHome) awayQuarterFouls += 1;
+          else homeQuarterFouls += 1;
+        } else if (userIsHome) homeQuarterFouls += 1;
+        else awayQuarterFouls += 1;
         newEvents.push({
           id: `ev-ft-${Date.now()}-${Math.floor(random() * 99999)}`,
           fixtureId: userFixture.id,
@@ -236,6 +254,23 @@ export class MatchProgressEngine {
           text: `${scorer?.playerName ?? "Jogador"} sofre falta de arremesso, vai para a linha e ${ftText}`,
         });
       }
+      if (points > 0) {
+        possessionTeamId = scoringTeamIsUser ? session.opponentTeamId : session.userTeamId;
+        shotClockRemaining = 24;
+      }
+    }
+
+    if (shotClockRemaining <= 0) {
+      newEvents.push({
+        id: `ev-scv-${Date.now()}-${Math.floor(random() * 99999)}`,
+        fixtureId: userFixture.id,
+        second: elapsed,
+        teamId: possessionTeamId,
+        type: "TURNOVER",
+        text: "Shot clock violation. Possession changes.",
+      });
+      possessionTeamId = possessionTeamId === session.userTeamId ? session.opponentTeamId : session.userTeamId;
+      shotClockRemaining = 24;
     }
 
     const canTriggerInjury = session.injuryCooldownTicks <= 0;
@@ -297,13 +332,18 @@ export class MatchProgressEngine {
           ? "finished"
           : "break"
         : "live";
-      const homeFoulDelta = random() < 0.13 ? 1 : 0;
-      const awayFoulDelta = random() < 0.13 ? 1 : 0;
-      return { ...nextFixture, status, homeFouls: Math.min(9, (nextFixture.homeFouls ?? 0) + homeFoulDelta), awayFouls: Math.min(9, (nextFixture.awayFouls ?? 0) + awayFoulDelta) };
+      if (fixture.id === userFixture.id) {
+        return {
+          ...nextFixture,
+          status,
+          homeFouls: quarterEnded ? 0 : clamp(homeQuarterFouls, 0, 9),
+          awayFouls: quarterEnded ? 0 : clamp(awayQuarterFouls, 0, 9),
+        };
+      }
+      return nextFixture;
     });
 
     const userFixtureAfter = updatedFixtures.find((fixture) => fixture.isUserMatch);
-    const userIsHome = userFixture.homeTeamId === session.userTeamId;
 
     const drainedUserLineup = session.userLineup.map((player) => ({
       ...player,
@@ -350,6 +390,26 @@ export class MatchProgressEngine {
           generatedAt: new Date().toISOString(),
         }
       : session.quarterBreakSnapshot ?? null;
+    const userNetRun = userIsHome ? homeDelta - awayDelta : awayDelta - homeDelta;
+    const previousMomentum = session.momentum?.value ?? 0;
+    const momentumDelta = clamp(
+      userNetRun * 6
+      + newEvents.filter((event) => event.type === "TURNOVER" && event.teamId === session.opponentTeamId).length * 3
+      + newEvents.filter((event) => event.type === "OFF_REBOUND" && event.teamId === session.userTeamId).length * 2,
+      -18,
+      18,
+    );
+    const momentumValue = clamp(previousMomentum * 0.85 + momentumDelta, -100, 100);
+    const clutchBoost = session.quarter === 4 && nextTimeRemaining <= 120 ? 8 : 0;
+    const crowdIntensity = clamp((session.crowd?.intensity ?? 42) * 0.9 + Math.abs(momentumDelta) + clutchBoost, 25, 100);
+    const quarterRecap = quarterEnded
+      ? QuarterRecapEngine.generate({
+          quarter: session.quarter,
+          userNetRun,
+          events: newEvents,
+          prior: session.quarterRecap ?? [],
+        })
+      : session.quarterRecap ?? [];
 
     return {
       ...session,
@@ -369,6 +429,21 @@ export class MatchProgressEngine {
         user: userIsHome ? userFixtureAfter?.homeScore ?? session.score.user : userFixtureAfter?.awayScore ?? session.score.user,
         opponent: userIsHome ? userFixtureAfter?.awayScore ?? session.score.opponent : userFixtureAfter?.homeScore ?? session.score.opponent,
       },
+      possessionTeamId,
+      shotClockRemaining: quarterEnded && nextPhase !== "POST_MATCH" ? 24 : shotClockRemaining,
+      bonusFoulLimit: session.bonusFoulLimit ?? 5,
+      teamRuntime: {
+        home: { timeoutsRemaining: session.teamRuntime?.home.timeoutsRemaining ?? 7, foulsThisQuarter: quarterEnded ? 0 : clamp(homeQuarterFouls, 0, 9) },
+        away: { timeoutsRemaining: session.teamRuntime?.away.timeoutsRemaining ?? 7, foulsThisQuarter: quarterEnded ? 0 : clamp(awayQuarterFouls, 0, 9) },
+      },
+      momentum: {
+        value: momentumValue,
+        currentRun: { teamId: userNetRun >= 0 ? session.userTeamId : session.opponentTeamId, points: Math.min(18, Math.abs(userNetRun)) },
+      },
+      crowd: {
+        intensity: crowdIntensity,
+      },
+      quarterRecap,
       quarterBreakSnapshot,
       eventFeed: [...session.eventFeed, ...newEvents].slice(-60),
       updatedAt: new Date().toISOString(),
