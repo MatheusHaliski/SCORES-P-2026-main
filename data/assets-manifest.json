@@ -1,0 +1,32 @@
+[
+  {
+    "id": "team-default-logo",
+    "type": "logo",
+    "placeholder": "gradient-initials",
+    "futureSource": "cdn://clubs/{clubId}/logo-primary"
+  },
+  {
+    "id": "team-default-jersey-home",
+    "type": "jersey",
+    "placeholder": "solid-color-home",
+    "futureSource": "cdn://clubs/{clubId}/jersey/home"
+  },
+  {
+    "id": "team-default-jersey-away",
+    "type": "jersey",
+    "placeholder": "solid-color-away",
+    "futureSource": "cdn://clubs/{clubId}/jersey/away"
+  },
+  {
+    "id": "arena-default-bowl",
+    "type": "arena",
+    "placeholder": "neutral-gradient-bowl",
+    "futureSource": "cdn://venues/{venueId}/arena-shell"
+  },
+  {
+    "id": "fx-default-hype",
+    "type": "fx",
+    "placeholder": "typography-pulse",
+    "futureSource": "cdn://fx/match/hype-layer"
+  }
+]

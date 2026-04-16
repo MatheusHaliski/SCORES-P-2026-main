@@ -32,6 +32,7 @@ const toLineupPlayer = (player: {
   injuryStatus: player.injuryStatus ?? "Disponível",
   playstyles: player.playstyles ?? [],
   isStarter: player.isStarter,
+  fouls: 0,
 });
 
 export class MatchSessionService {
@@ -96,6 +97,8 @@ export class MatchSessionService {
       opponentTeamId,
       userTeamTactic: "balanced",
       opponentTeamTactic: "balanced",
+      userTeamConfig: { pace: "balanced", offenseFocus: "balanced", defenseType: "man", pressure: 0.52, reboundingFocus: 0.5 },
+      opponentTeamConfig: { pace: "balanced", offenseFocus: "balanced", defenseType: "man", pressure: 0.5, reboundingFocus: 0.5 },
       userTacticalPreset: typeof window !== "undefined" ? normalizeTacticalPreset(readPreMatchTactic(payload.saveId)) : defaultTacticalPreset,
       opponentTacticalPreset: defaultTacticalPreset,
       clubUniformAssets: typeof window !== "undefined" ? readClubUniforms(payload.saveId) : defaultUniformAssets,
@@ -144,6 +147,10 @@ export class MatchSessionService {
         home: { timeoutsRemaining: 7, foulsThisQuarter: 0 },
         away: { timeoutsRemaining: 7, foulsThisQuarter: 0 },
       },
+      emotion: {
+        momentum: 0,
+        crowdIntensity: 42,
+      },
       momentum: {
         value: 0,
         currentRun: { teamId: payload.userFixture.homeTeamId, points: 0 },
@@ -151,6 +158,14 @@ export class MatchSessionService {
       crowd: {
         intensity: 42,
       },
+      telemetry: {
+        momentum: 0,
+        crowdIntensity: 42,
+        managerMorale: 60,
+        tacticalDiscipline: 64,
+        pressure: 50,
+      },
+      storyBanners: [],
       quarterRecap: [],
       quarterBreakSnapshot: null,
       createdAt: now,
@@ -200,9 +215,18 @@ export class MatchSessionService {
   }
 
   async applyTactic(session: MatchSession, tactic: TeamTactic, preset?: TacticalPreset): Promise<MatchSession> {
+    const tacticalMap: MatchSession["userTeamConfig"] = tactic === "post_centric"
+      ? { pace: "slow", offenseFocus: "paint", defenseType: "man", pressure: 0.45, reboundingFocus: 0.66 }
+      : tactic === "five_out"
+        ? { pace: "fast", offenseFocus: "three", defenseType: "zone", pressure: 0.58, reboundingFocus: 0.44 }
+        : tactic === "isolation_heavy"
+          ? { pace: "balanced", offenseFocus: "mid", defenseType: "man", pressure: 0.62, reboundingFocus: 0.48 }
+          : { pace: "balanced", offenseFocus: "balanced", defenseType: "man", pressure: 0.52, reboundingFocus: 0.5 };
+
     const next = {
       ...session,
       userTeamTactic: tactic,
+      userTeamConfig: tacticalMap,
       userTacticalPreset: normalizeTacticalPreset(preset ? { ...session.userTacticalPreset, ...preset, style: tactic } : { ...session.userTacticalPreset, style: tactic }),
       clubUniformAssets: typeof window !== "undefined" ? readClubUniforms(session.saveId) : session.clubUniformAssets,
       updatedAt: new Date().toISOString(),
