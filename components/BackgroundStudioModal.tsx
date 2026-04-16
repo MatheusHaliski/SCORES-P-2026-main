@@ -30,6 +30,10 @@ const SHAPES = ["none", "orb", "diamond", "mesh", "shards", "court-lines", "hex-
 const PATTERNS = ["smooth", "broadcast", "gradient-wave", "high-contrast"] as const;
 const MOTIONS = ["none", "left-to-right", "right-to-left", "top-down", "center-pulse"] as const;
 const CATEGORIES: SoundtrackCategory[] = ["Hype", "Arena", "Calm Focus", "Playoffs", "Premium Lounge", "Retro Sports", "Urban Energy"];
+const NEXT_MATCH_BG_LIBRARY = [
+  { id: "fallback", label: "Usar fallback automático", url: null },
+  { id: "captura-2026-04-16", label: "Captura de tela 2026-04-16 114540", url: "/Captura%20de%20tela%202026-04-16%20114540.jpg" },
+] as const;
 
 export function BackgroundStudioModal({ open, onClose, config, onChange, onSave, clubPrimary, clubSecondary }: Props) {
   const [trackDraft, setTrackDraft] = useState({ name: "", category: "Hype" as SoundtrackCategory, fileName: "", fileDataUrl: "" });
@@ -72,6 +76,11 @@ export function BackgroundStudioModal({ open, onClose, config, onChange, onSave,
     }),
     [config.uiPalette.highlight, config.uiPalette.primary],
   );
+  const selectedNextMatchOption = useMemo(() => {
+    if (!config.matchVisual.nextMatchBackgroundUrl) return "fallback";
+    const builtInOption = NEXT_MATCH_BG_LIBRARY.find((option) => option.url === config.matchVisual.nextMatchBackgroundUrl);
+    return builtInOption ? builtInOption.id : "custom-upload";
+  }, [config.matchVisual.nextMatchBackgroundUrl]);
 
   useEffect(() => {
     if (!activeTrack?.fileDataUrl) return;
@@ -225,9 +234,25 @@ export function BackgroundStudioModal({ open, onClose, config, onChange, onSave,
             <section className="rounded-2xl border border-fuchsia-300/30 bg-fuchsia-500/5 p-3">
               <p className="mb-2 text-sm font-black text-fuchsia-100">4.5) Arte do card Next Match</p>
               <p className="mb-2 text-xs text-fuchsia-100/80">Faça upload de arte personalizada para o card decorativo da próxima partida.</p>
-              <div className="flex flex-wrap gap-2">
-                <button type="button" onClick={() => nextMatchImageInputRef.current?.click()} className="rounded-lg border border-white/15 bg-slate-800 px-2 py-1 text-xs text-white">Upload imagem do card</button>
-                <button type="button" onClick={() => onChange({ ...config, matchVisual: { ...config.matchVisual, nextMatchBackgroundUrl: null } })} className="rounded-lg border border-white/15 bg-slate-800 px-2 py-1 text-xs text-white">Usar fallback</button>
+              <div className="space-y-2">
+                <label className="block text-xs text-fuchsia-100">Selecionar arte do card
+                  <select
+                    className="mt-1 w-full rounded-lg border border-white/15 bg-slate-800 p-2 text-xs text-white"
+                    value={selectedNextMatchOption}
+                    onChange={(event) => {
+                      if (event.target.value === "custom-upload") return;
+                      const selected = NEXT_MATCH_BG_LIBRARY.find((option) => option.id === event.target.value);
+                      onChange({ ...config, matchVisual: { ...config.matchVisual, nextMatchBackgroundUrl: selected?.url ?? null } });
+                    }}
+                  >
+                    {NEXT_MATCH_BG_LIBRARY.map((option) => <option key={option.id} value={option.id}>{option.label}</option>)}
+                    {selectedNextMatchOption === "custom-upload" && <option value="custom-upload">Upload personalizado atual</option>}
+                  </select>
+                </label>
+                <div className="flex flex-wrap gap-2">
+                  <button type="button" onClick={() => nextMatchImageInputRef.current?.click()} className="rounded-lg border border-white/15 bg-slate-800 px-2 py-1 text-xs text-white">Upload imagem do card</button>
+                  <button type="button" onClick={() => onChange({ ...config, matchVisual: { ...config.matchVisual, nextMatchBackgroundUrl: null } })} className="rounded-lg border border-white/15 bg-slate-800 px-2 py-1 text-xs text-white">Usar fallback</button>
+                </div>
               </div>
               <input ref={nextMatchImageInputRef} type="file" accept="image/*" className="hidden" onChange={(event) => {
                 const file = event.target.files?.[0];
