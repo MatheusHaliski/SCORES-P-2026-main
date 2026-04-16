@@ -14,7 +14,10 @@ export default async function HTManagerBoardView({ searchParams }: { searchParam
   }
 
   return (
-    <main className="mx-auto min-h-screen max-w-7xl p-6">
+    <main
+      className="mx-auto min-h-screen max-w-7xl bg-cover bg-center bg-no-repeat p-6"
+      style={{ backgroundImage: "linear-gradient(180deg, rgba(2,6,23,0.7), rgba(2,6,23,0.92)), url('/Captura%20de%20tela%202026-04-16%20114540.jpg')" }}
+    >
       <div className="rounded-2xl p-4" style={getMatchInfoBarStyle()}>
         <h1 className="text-3xl font-black text-white">HTManagerBoardView</h1>
         <p className="text-slate-300">Intervalo do quarter: substituições reais + troca tática com impacto no placar.</p>
