@@ -63,6 +63,51 @@ export type QuarterBreakSnapshot = {
 };
 
 export type TeamTactic = TacticalStyle;
+export type ShotType = "free_throw" | "layup" | "dunk" | "midrange" | "three_pointer" | "putback" | "and_one";
+
+export type ScoreEvent = {
+  id: string;
+  teamId: string;
+  playerId: string;
+  playerName: string;
+  points: 1 | 2 | 3;
+  shotType: ShotType;
+  assisted: boolean;
+  assisterPlayerId?: string;
+  assisterPlayerName?: string;
+  foulDrawn: boolean;
+  clock: number;
+  quarter: number;
+  momentumDelta: number;
+  tacticTag?: string;
+  possessionContext?: "half-court" | "fast-break" | "second-chance";
+};
+
+export type ScoreBreakdown = {
+  onePointMade: number;
+  twoPointMade: number;
+  threePointMade: number;
+  paintPoints: number;
+  fastBreakPoints: number;
+  secondChancePoints: number;
+  benchPoints: number;
+};
+
+export type PendingFreeThrow = {
+  teamId: string;
+  attempts: 1 | 2 | 3;
+  foulType: "shooting" | "and_one" | "technical";
+  selectedShooterPlayerId?: string;
+  drawnByPlayerId?: string;
+};
+
+export type ScoringPresentationSettings = {
+  freeThrowShooterMode: "auto" | "manual";
+  scoringEventCallouts: boolean;
+  detailedScoreBreakdown: boolean;
+  showShotTypeLabels: boolean;
+  showScorerAssetBadge: boolean;
+};
 
 export type LineupPlayer = {
   playerId: string;
@@ -152,6 +197,11 @@ export type MatchSession = {
     user: number;
     opponent: number;
   };
+  scoreEvents: ScoreEvent[];
+  pendingFreeThrow?: PendingFreeThrow | null;
+  homeBreakdown: ScoreBreakdown;
+  awayBreakdown: ScoreBreakdown;
+  scoringSettings: ScoringPresentationSettings;
   possessionTeamId: string;
   shotClockRemaining: number;
   bonusFoulLimit: number;

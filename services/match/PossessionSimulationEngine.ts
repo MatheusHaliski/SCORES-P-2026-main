@@ -1,5 +1,5 @@
 import { MatchEvent } from "@/types/liveMatch";
-import { LineupPlayer, MatchSession, TeamTactics } from "@/types/matchSession";
+import { LineupPlayer, MatchSession, PendingFreeThrow, ScoreEvent, TeamTactics } from "@/types/matchSession";
 
 type PossessionAction = "pick-and-roll" | "isolation" | "drive" | "catch-and-shoot" | "post-up" | "turnover" | "foul";
 
@@ -14,6 +14,8 @@ export type PossessionResult = {
   turnover: boolean;
   foulCommitted: boolean;
   events: MatchEvent[];
+  scoreEvents: ScoreEvent[];
+  pendingFreeThrow?: PendingFreeThrow | null;
   updatedOffense: LineupPlayer[];
   updatedDefense: LineupPlayer[];
 };
@@ -75,9 +77,10 @@ export const runPossession = (params: {
   const timeConsumed = clamp((8 + random() * 10) * paceScale, 5, 24);
   const clutchBoost = session.quarter === 4 && params.quarterClock <= 120 ? 0.04 : 0;
   const momentumBoost = clamp((session.emotion.momentum / 100) * (offensiveTeamId === session.userTeamId ? 1 : -1), -0.07, 0.07);
+  const pressureLoad = clamp(session.telemetry.pressure / 100 + (session.quarter === 4 && params.quarterClock <= 90 ? 0.12 : 0), 0, 1);
 
   const contestPenalty = (params.defenseTactics.defenseType === "zone" ? 0.02 : 0) + params.defenseTactics.pressure * 0.03;
-  const turnoverRisk = clamp(0.09 + (defense.defense - offense.passing) / 300 + params.defenseTactics.pressure * 0.08, 0.05, 0.26);
+  const turnoverRisk = clamp(0.09 + (defense.defense - offense.passing) / 300 + params.defenseTactics.pressure * 0.08 + pressureLoad * 0.07, 0.05, 0.34);
   const foulRisk = clamp(0.08 + params.defenseTactics.pressure * 0.04, 0.04, 0.18);
 
   let pointsScored = 0;
@@ -85,6 +88,13 @@ export const runPossession = (params: {
   let foulCommitted = false;
   let offensiveRebound = false;
   const events: MatchEvent[] = [];
+  const scoreEvents: ScoreEvent[] = [];
+  let pendingFreeThrow: PendingFreeThrow | null = null;
+
+  const pickAssister = () => {
+    const options = params.offenseLineup.filter((player) => player.playerId !== scorer.playerId);
+    return options.length ? pickRandom(options, random) : null;
+  };
 
   if (action === "turnover" || random() < turnoverRisk) {
     turnover = true;
@@ -94,12 +104,39 @@ export const runPossession = (params: {
     const baseMake = shotType === 3 ? 0.33 : 0.5;
     const skillMod = ((shotType === 3 ? offense.shooting : offense.finishing) - defense.defense) / 220;
     const fatigueMod = -offense.fatiguePenalty * 0.15;
-    const makeChance = clamp(baseMake + skillMod + fatigueMod - contestPenalty + clutchBoost + momentumBoost, 0.2, 0.78);
+    const forgivenessCompression = pressureLoad * 0.06;
+    const makeChance = clamp(baseMake + skillMod + fatigueMod - contestPenalty + clutchBoost + momentumBoost - forgivenessCompression, 0.2, 0.78);
     const made = random() < makeChance;
 
     if (made) {
       pointsScored = shotType;
+      const assisted = random() > 0.42;
+      const assister = assisted ? pickAssister() : null;
+      const shotTypeLabel: ScoreEvent["shotType"] = shotType === 3
+        ? "three_pointer"
+        : action === "post-up"
+          ? "putback"
+          : action === "drive"
+            ? "layup"
+            : "midrange";
       events.push({ id: `ev-made-${Date.now()}-${Math.floor(random() * 99999)}`, fixtureId: session.fixtureId, second: params.elapsedSeconds, teamId: offensiveTeamId, playerName: scorer.playerName, type: shotType === 3 ? "3PT_MADE" : "2PT_MADE", text: `${scorer.playerName} scores on ${action}.` });
+      scoreEvents.push({
+        id: `score-${Date.now()}-${Math.floor(random() * 99999)}`,
+        teamId: offensiveTeamId,
+        playerId: scorer.playerId,
+        playerName: scorer.playerName,
+        points: shotType as 2 | 3,
+        shotType: shotTypeLabel,
+        assisted,
+        assisterPlayerId: assister?.playerId,
+        assisterPlayerName: assister?.playerName,
+        foulDrawn: false,
+        clock: Math.round(params.quarterClock),
+        quarter: session.quarter,
+        momentumDelta: shotType === 3 ? 5 : 3,
+        tacticTag: params.offenseTactics.offenseFocus,
+        possessionContext: action === "drive" ? "fast-break" : offensiveRebound ? "second-chance" : "half-court",
+      });
     } else {
       events.push({ id: `ev-miss-${Date.now()}-${Math.floor(random() * 99999)}`, fixtureId: session.fixtureId, second: params.elapsedSeconds, teamId: offensiveTeamId, playerName: scorer.playerName, type: shotType === 3 ? "3PT_ATTEMPT_MISS" : "2PT_ATTEMPT_MISS", text: `${scorer.playerName} misses a ${shotType === 3 ? "three" : "two"}.` });
       const reboundChance = clamp(0.22 + (offense.rebounding - defense.rebounding) / 300 + params.offenseTactics.reboundingFocus * 0.08, 0.12, 0.42);
@@ -119,6 +156,12 @@ export const runPossession = (params: {
       const defender = pickRandom(params.defenseLineup, random);
       defender.fouls += 1;
       events.push({ id: `ev-foul-${Date.now()}-${Math.floor(random() * 99999)}`, fixtureId: session.fixtureId, second: params.elapsedSeconds, teamId: defensiveTeamId, playerName: defender.playerName, type: "FOUL", text: `${defender.playerName} commits a defensive foul.` });
+      if (!pointsScored) {
+        const attempts: 1 | 2 | 3 = action === "catch-and-shoot" ? 3 : 2;
+        pendingFreeThrow = { teamId: offensiveTeamId, attempts, foulType: "shooting", drawnByPlayerId: scorer.playerId };
+      } else if (pointsScored === 2 && random() < 0.32) {
+        pendingFreeThrow = { teamId: offensiveTeamId, attempts: 1, foulType: "and_one", drawnByPlayerId: scorer.playerId };
+      }
     }
   }
 
@@ -136,6 +179,8 @@ export const runPossession = (params: {
     turnover,
     foulCommitted,
     events,
+    scoreEvents,
+    pendingFreeThrow,
     updatedOffense: params.offenseLineup.map((player) => ({ ...player, stamina: clamp(player.stamina - timeConsumed * 0.11, 42, 100) })),
     updatedDefense: params.defenseLineup.map((player) => ({ ...player, stamina: clamp(player.stamina - timeConsumed * 0.09, 42, 100) })),
   };

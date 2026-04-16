@@ -23,6 +23,8 @@ export function FixtureScoreRow({
 }) {
   const scoredByUserClub = latestScoreEvent?.teamId === userTeamId;
   const hasScoreInfo = !!latestScoreEvent && SCORING_TYPES.has(latestScoreEvent.type);
+  const homeColor = fixture.homeColor || "#fcd34d";
+  const awayColor = fixture.awayColor || "#fcd34d";
 
   return (
     <button
@@ -39,12 +41,22 @@ export function FixtureScoreRow({
 
         <div className="rounded-xl border border-amber-200/25 bg-slate-900/90 px-3 py-2">
           <div className="grid grid-cols-[1fr_auto_1fr] items-center gap-2 text-center">
-            <div className="text-xl font-black text-amber-300 [text-shadow:0_0_10px_rgba(253,224,71,.35)]">{fixture.homeScore}</div>
+            <div
+              className="text-xl font-black [text-shadow:0_0_10px_rgba(255,255,255,.35)]"
+              style={{ color: homeColor }}
+            >
+              {fixture.homeScore}
+            </div>
             <div>
               <p className="text-[10px] font-bold tracking-[0.2em] text-cyan-200">{sharedPeriod}</p>
               <p className="font-mono text-lg font-black text-emerald-300 [text-shadow:0_0_12px_rgba(110,231,183,.5)]">{sharedClock}</p>
             </div>
-            <div className="text-xl font-black text-amber-300 [text-shadow:0_0_10px_rgba(253,224,71,.35)]">{fixture.awayScore}</div>
+            <div
+              className="text-xl font-black [text-shadow:0_0_10px_rgba(255,255,255,.35)]"
+              style={{ color: awayColor }}
+            >
+              {fixture.awayScore}
+            </div>
           </div>
           <div className="mt-2 grid grid-cols-2 gap-2 text-center text-[10px] uppercase tracking-widest text-slate-300">
             <p>Fouls: <span className="font-black text-rose-300">{fixture.homeFouls}</span></p>

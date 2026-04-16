@@ -1,10 +1,12 @@
 import { MatchSession } from "@/types/matchSession";
 import { motionTokens } from "@/lib/motion";
 import { buildTeamPlaceholderAsset } from "@/lib/assets";
+import { FeedbackSnapshot } from "@/types/feedback";
 
 type Props = {
   session: MatchSession;
   userIsHome: boolean;
+  feedback?: FeedbackSnapshot | null;
 };
 
 const toClock = (seconds: number) => `${Math.floor(seconds / 60).toString().padStart(2, "0")}:${Math.floor(seconds % 60).toString().padStart(2, "0")}`;
@@ -48,7 +50,7 @@ function CrowdIntensityMeter({ intensity }: { intensity: number }) {
   );
 }
 
-export function BroadcastScoreBug({ session, userIsHome }: Props) {
+export function BroadcastScoreBug({ session, userIsHome, feedback }: Props) {
   const fixture = session.fixtures.find((item) => item.isUserMatch);
   if (!fixture) return null;
 
@@ -60,8 +62,17 @@ export function BroadcastScoreBug({ session, userIsHome }: Props) {
   const homeAsset = buildTeamPlaceholderAsset(fixture.homeTeamName);
   const awayAsset = buildTeamPlaceholderAsset(fixture.awayTeamName);
 
+  const pressurePercent = Math.round((feedback?.state.pressure ?? 0) * 100);
+  const rivalryPercent = Math.round((feedback?.state.rivalryIntensity ?? 0) * 100);
+  const latestScoreEvent = session.scoreEvents?.at(-1);
+  const homePulse = latestScoreEvent?.teamId === fixture.homeTeamId;
+  const awayPulse = latestScoreEvent?.teamId === fixture.awayTeamId;
+
   return (
-    <header className="sa-broadcast-scorebug sticky top-2 z-30 rounded-2xl bg-gradient-to-r from-slate-900/95 via-slate-900/90 to-slate-950/95 px-3 py-2 text-white md:px-5">
+    <header
+      className="sa-broadcast-scorebug sticky top-2 z-30 rounded-2xl bg-gradient-to-r from-slate-900/95 via-slate-900/90 to-slate-950/95 px-3 py-2 text-white md:px-5"
+      style={{ boxShadow: `0 0 0 1px rgba(248,113,113,${(feedback?.anxietyTint ?? 0) * 0.35}), inset 0 0 28px rgba(248,113,113,${(feedback?.anxietyTint ?? 0) * 0.18})` }}
+    >
       <div className="grid grid-cols-[1fr_auto_1fr] items-center gap-3">
         <div className={`rounded-xl px-3 py-2 ${possessionHome ? "bg-emerald-400/20" : "bg-slate-700/35"}`}>
           <p className="text-[10px] uppercase tracking-[0.2em] text-slate-300">Home</p>
@@ -70,7 +81,7 @@ export function BroadcastScoreBug({ session, userIsHome }: Props) {
               <span className="inline-flex h-6 w-6 items-center justify-center rounded-full bg-gradient-to-br from-cyan-400/70 to-indigo-400/70 text-[10px] font-black">{homeAsset.fallback}</span>
               <p className="text-sm font-extrabold md:text-lg">{fixture.homeTeamName}</p>
             </div>
-            <p className="text-2xl font-black tabular-nums md:text-3xl">{fixture.homeScore}</p>
+            <p className={`text-2xl font-black tabular-nums md:text-3xl ${homePulse ? "animate-pulse text-amber-200" : ""}`}>{fixture.homeScore}</p>
           </div>
           <p className="text-[10px] text-slate-300">Fouls {homeTeamState?.foulsThisQuarter ?? fixture.homeFouls} • TO {homeTeamState?.timeoutsRemaining ?? 0} {homeBonus ? "• BONUS" : ""}</p>
         </div>
@@ -91,7 +102,7 @@ export function BroadcastScoreBug({ session, userIsHome }: Props) {
               <span className="inline-flex h-6 w-6 items-center justify-center rounded-full bg-gradient-to-br from-fuchsia-400/70 to-rose-400/70 text-[10px] font-black">{awayAsset.fallback}</span>
               <p className="text-sm font-extrabold md:text-lg">{fixture.awayTeamName}</p>
             </div>
-            <p className="text-2xl font-black tabular-nums md:text-3xl">{fixture.awayScore}</p>
+            <p className={`text-2xl font-black tabular-nums md:text-3xl ${awayPulse ? "animate-pulse text-amber-200" : ""}`}>{fixture.awayScore}</p>
           </div>
           <p className="text-[10px] text-slate-300">Fouls {awayTeamState?.foulsThisQuarter ?? fixture.awayFouls} • TO {awayTeamState?.timeoutsRemaining ?? 0} {awayBonus ? "• BONUS" : ""}</p>
         </div>
@@ -99,6 +110,21 @@ export function BroadcastScoreBug({ session, userIsHome }: Props) {
 
       <MomentumBar momentum={session.emotion.momentum} userIsHome={userIsHome} />
       <CrowdIntensityMeter intensity={session.emotion.crowdIntensity} />
+      <div className="mt-1 grid grid-cols-2 gap-2 text-[10px]">
+        <div>
+          <div className="mb-0.5 flex items-center justify-between text-rose-200">
+            <span>Pressure</span>
+            <span>{pressurePercent}%</span>
+          </div>
+          <div className="h-1.5 w-full overflow-hidden rounded-full bg-rose-950/45">
+            <div className="h-full bg-gradient-to-r from-rose-400 to-red-500" style={{ width: `${pressurePercent}%` }} />
+          </div>
+        </div>
+        <div className="flex items-end justify-end gap-2 text-fuchsia-100">
+          {rivalryPercent >= 70 && <span className="rounded-full border border-fuchsia-300/40 bg-fuchsia-500/20 px-2 py-0.5 font-bold uppercase tracking-[0.12em]">Rivalry</span>}
+          <span className="rounded bg-slate-800/70 px-2 py-0.5">Audio: {(feedback?.audioCues?.[0] ?? "crowd_bed")}</span>
+        </div>
+      </div>
     </header>
   );
 }
