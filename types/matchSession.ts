@@ -101,8 +101,48 @@ export type PendingFreeThrow = {
   drawnByPlayerId?: string;
 };
 
+export type InterruptionType =
+  | "foul"
+  | "free_throw"
+  | "ejection"
+  | "timeout"
+  | "violation";
+
+export type InterruptionEvent = {
+  type: InterruptionType;
+  playerId?: string;
+  teamId: string;
+  severity: number;
+  timestamp: number;
+  message?: string;
+};
+
+export type InterruptionControl = {
+  recentFouls: number;
+  recentStops: number;
+  lastInterruptionTime: number;
+  flowState: "fluid" | "moderate" | "stop_heavy";
+};
+
+export type FreeThrowState = {
+  attempts: number;
+  shooterPlayerId?: string;
+  isActive: boolean;
+  quarterAttempts: number;
+};
+
+export type InterruptionQueue = InterruptionEvent[];
+
+export type GameFlowState =
+  | "live"
+  | "interruption"
+  | "free_throw"
+  | "paused";
+
 export type ScoringPresentationSettings = {
   freeThrowShooterMode: "auto" | "manual";
+  interruptionFrequency: "low" | "balanced" | "realistic";
+  showInterruptionAlerts: boolean;
   scoringEventCallouts: boolean;
   detailedScoreBreakdown: boolean;
   showShotTypeLabels: boolean;
@@ -199,6 +239,11 @@ export type MatchSession = {
   };
   scoreEvents: ScoreEvent[];
   pendingFreeThrow?: PendingFreeThrow | null;
+  freeThrowState: FreeThrowState;
+  interruptionControl: InterruptionControl;
+  interruptionQueue: InterruptionQueue;
+  gameFlowState: GameFlowState;
+  ejectedPlayerIds: string[];
   homeBreakdown: ScoreBreakdown;
   awayBreakdown: ScoreBreakdown;
   scoringSettings: ScoringPresentationSettings;

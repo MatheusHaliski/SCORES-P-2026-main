@@ -19,6 +19,9 @@ import { FreeThrowShooterModal } from "@/components/FreeThrowShooterModal";
 import { ScoringEventCallout } from "@/components/ScoringEventCallout";
 import { ScoreBreakdownPanel } from "@/components/ScoreBreakdownPanel";
 import { MatchSessionService } from "@/services/match/MatchSessionService";
+import { EjectionAlert } from "@/components/EjectionAlert";
+import { InterruptionAlertToast } from "@/components/InterruptionAlertToast";
+import { interruptionAlertText } from "@/services/match/InterruptionEngine";
 
 export function MatchBoardLiveClient({
   saveId,
@@ -74,6 +77,8 @@ export function MatchBoardLiveClient({
   });
   const [transitionVisible, setTransitionVisible] = useState(false);
   const [calloutIndex, setCalloutIndex] = useState(0);
+  const [interruptionAlert, setInterruptionAlert] = useState<string | null>(null);
+  const [ejectionAlert, setEjectionAlert] = useState<string | null>(null);
   const matchSessionService = useMemo(() => new MatchSessionService(), []);
 
   useEffect(() => {
@@ -93,6 +98,21 @@ export function MatchBoardLiveClient({
     }, 1400);
     return () => window.clearTimeout(timer);
   }, [session?.scoreEvents, session?.scoringSettings.scoringEventCallouts]);
+
+  useEffect(() => {
+    if (!session?.scoringSettings.showInterruptionAlerts) return;
+    const topInterruption = session.interruptionQueue[0];
+    if (!topInterruption) return;
+    const message = interruptionAlertText(topInterruption);
+    if (topInterruption.type === "ejection") {
+      setEjectionAlert(message);
+      const timer = window.setTimeout(() => setEjectionAlert(null), 1800);
+      return () => window.clearTimeout(timer);
+    }
+    setInterruptionAlert(message);
+    const timer = window.setTimeout(() => setInterruptionAlert(null), 1300);
+    return () => window.clearTimeout(timer);
+  }, [session?.interruptionQueue, session?.scoringSettings.showInterruptionAlerts]);
 
   if (!session) {
     return (
@@ -114,6 +134,8 @@ export function MatchBoardLiveClient({
   const pendingFTForUser = session.pendingFreeThrow?.teamId === session.userTeamId ? session.pendingFreeThrow : null;
   const scoringSettings = session.scoringSettings ?? {
     freeThrowShooterMode: "auto" as const,
+    interruptionFrequency: "balanced" as const,
+    showInterruptionAlerts: true,
     scoringEventCallouts: true,
     detailedScoreBreakdown: true,
     showShotTypeLabels: true,
@@ -129,6 +151,8 @@ export function MatchBoardLiveClient({
         transitionDuration: `${Math.max(120, Math.round(300 / (feedback?.transitionSpeedMultiplier ?? 1)))}ms`,
       }}
     >
+      <EjectionAlert message={ejectionAlert} />
+      <InterruptionAlertToast text={interruptionAlert} />
       <BroadcastScoreBug session={session} userIsHome={!!userIsHome} feedback={feedback} />
       <ScoringEventCallout event={scoringSettings.scoringEventCallouts ? activeCallout : null} showAssetBadge={scoringSettings.showScorerAssetBadge} showShotType={scoringSettings.showShotTypeLabels} />
       <QuarterTransitionOverlay phase={session.phase} visible={transitionVisible} />
@@ -163,7 +187,7 @@ export function MatchBoardLiveClient({
       </div>
       <section className="mt-3 rounded-2xl border border-cyan-300/30 bg-slate-900/70 p-3">
         <p className="mb-2 text-xs font-black uppercase tracking-[0.2em] text-cyan-100">NextMatchView • Scoring Controls</p>
-        <div className="grid gap-2 md:grid-cols-2 lg:grid-cols-5">
+        <div className="grid gap-2 md:grid-cols-2 lg:grid-cols-6">
           <label className="text-xs">FT Shooter Mode
             <select className="mt-1 w-full rounded-lg border border-white/15 bg-slate-800 p-2" value={scoringSettings.freeThrowShooterMode} onChange={(event) => {
               matchSessionService.updateScoringSettings(session, { freeThrowShooterMode: event.target.value as "auto" | "manual" }).then(setSession);
@@ -172,7 +196,17 @@ export function MatchBoardLiveClient({
               <option value="manual">Manual</option>
             </select>
           </label>
+          <label className="text-xs">Interruption Frequency
+            <select className="mt-1 w-full rounded-lg border border-white/15 bg-slate-800 p-2" value={scoringSettings.interruptionFrequency} onChange={(event) => {
+              matchSessionService.updateScoringSettings(session, { interruptionFrequency: event.target.value as "low" | "balanced" | "realistic" }).then(setSession);
+            }}>
+              <option value="low">Low</option>
+              <option value="balanced">Balanced</option>
+              <option value="realistic">Realistic</option>
+            </select>
+          </label>
           {[
+            { label: "Show Alerts", key: "showInterruptionAlerts" as const },
             { label: "Scoring Callouts", key: "scoringEventCallouts" as const },
             { label: "Detailed Breakdown", key: "detailedScoreBreakdown" as const },
             { label: "Shot Type Labels", key: "showShotTypeLabels" as const },
@@ -212,7 +246,7 @@ export function MatchBoardLiveClient({
 
       {session.phase === "POST_MATCH" && <PostMatchModal saveId={saveId} standings={standings} teamsById={teamsById} userTeamId={userTeamId} round={round} fixtures={session.fixtures} leagueId={leagueId} />}
       <FreeThrowShooterModal
-        open={!!pendingFTForUser && scoringSettings.freeThrowShooterMode === "manual" && !pendingFTForUser.selectedShooterPlayerId}
+        open={!!pendingFTForUser && scoringSettings.freeThrowShooterMode === "manual" && !pendingFTForUser.selectedShooterPlayerId && !session.pendingInjury}
         session={session}
         attempts={pendingFTForUser?.attempts ?? 1}
         candidates={session.userLineup}
