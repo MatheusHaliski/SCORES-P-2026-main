@@ -97,7 +97,7 @@ export function MatchBoardLiveClient({
   if (!session) {
     return (
       <main
-        className="mx-auto min-h-screen max-w-6xl bg-cover bg-center bg-no-repeat p-6 text-white"
+        className="min-h-screen w-full bg-cover bg-center bg-no-repeat p-6 text-white"
         style={{ backgroundImage: "linear-gradient(180deg, rgba(2,6,23,0.72), rgba(2,6,23,0.9)), url('/Captura%20de%20tela%202026-04-16%20114540.jpg')" }}
       >
         Carregando partida...
@@ -122,7 +122,7 @@ export function MatchBoardLiveClient({
 
   return (
     <main
-      className="mx-auto min-h-screen max-w-6xl bg-cover bg-center bg-no-repeat p-6"
+      className="min-h-screen w-full bg-cover bg-center bg-no-repeat p-6"
       style={{
         backgroundImage: "linear-gradient(180deg, rgba(2,6,23,0), rgba(2,6,23,0)), url('/Captura%20de%20tela%202026-04-16%20114540.jpg')",
         transform: `translateY(${(feedback?.cameraShake ?? 0) * -0.5}px)`,
@@ -161,32 +161,6 @@ export function MatchBoardLiveClient({
         <p className="rounded-xl border border-amber-300/30 bg-amber-900/20 px-3 py-2 text-xs text-amber-100">Tactical discipline: <strong>{Math.round(session.telemetry.tacticalDiscipline)}</strong></p>
         <p className="rounded-xl border border-rose-300/30 bg-rose-900/20 px-3 py-2 text-xs text-rose-100">Pressure: <strong>{Math.round(session.telemetry.pressure)}</strong></p>
       </div>
-      <section className="mt-3 rounded-2xl border border-cyan-300/30 bg-slate-900/70 p-3">
-        <p className="mb-2 text-xs font-black uppercase tracking-[0.2em] text-cyan-100">NextMatchView • Scoring Controls</p>
-        <div className="grid gap-2 md:grid-cols-2 lg:grid-cols-5">
-          <label className="text-xs">FT Shooter Mode
-            <select className="mt-1 w-full rounded-lg border border-white/15 bg-slate-800 p-2" value={scoringSettings.freeThrowShooterMode} onChange={(event) => {
-              matchSessionService.updateScoringSettings(session, { freeThrowShooterMode: event.target.value as "auto" | "manual" }).then(setSession);
-            }}>
-              <option value="auto">Auto</option>
-              <option value="manual">Manual</option>
-            </select>
-          </label>
-          {[
-            { label: "Scoring Callouts", key: "scoringEventCallouts" as const },
-            { label: "Detailed Breakdown", key: "detailedScoreBreakdown" as const },
-            { label: "Shot Type Labels", key: "showShotTypeLabels" as const },
-            { label: "Scorer Asset Badge", key: "showScorerAssetBadge" as const },
-          ].map((item) => (
-            <label key={item.key} className="inline-flex items-center gap-2 rounded-lg border border-white/10 bg-slate-800/70 px-2 py-1 text-xs">
-              <input type="checkbox" checked={scoringSettings[item.key]} onChange={(event) => {
-                matchSessionService.updateScoringSettings(session, { [item.key]: event.target.checked }).then(setSession);
-              }} />
-              {item.label}
-            </label>
-          ))}
-        </div>
-      </section>
       {scoringSettings.detailedScoreBreakdown && <div className="mt-3"><ScoreBreakdownPanel session={session} /></div>}
       <QuarterRecapCards session={session} />
 
