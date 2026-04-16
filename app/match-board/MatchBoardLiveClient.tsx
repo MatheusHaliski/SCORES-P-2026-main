@@ -124,7 +124,7 @@ export function MatchBoardLiveClient({
     <main
       className="mx-auto min-h-screen max-w-6xl bg-cover bg-center bg-no-repeat p-6"
       style={{
-        backgroundImage: "linear-gradient(180deg, rgba(2,6,23,0.7), rgba(2,6,23,0.92)), url('/Captura%20de%20tela%202026-04-16%20114540.jpg')",
+        backgroundImage: "linear-gradient(180deg, rgba(2,6,23,0), rgba(2,6,23,0)), url('/Captura%20de%20tela%202026-04-16%20114540.jpg')",
         transform: `translateY(${(feedback?.cameraShake ?? 0) * -0.5}px)`,
         transitionDuration: `${Math.max(120, Math.round(300 / (feedback?.transitionSpeedMultiplier ?? 1)))}ms`,
       }}

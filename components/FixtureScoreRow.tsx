@@ -30,7 +30,10 @@ export function FixtureScoreRow({
     <button
       type="button"
       onClick={() => onOpenTacticalBoard?.(fixture.id)}
-      className="w-full rounded-2xl border border-slate-400/30 bg-gradient-to-b from-slate-700/80 to-slate-950/95 p-4 text-left shadow-[inset_0_0_30px_rgba(148,163,184,.15),0_8px_24px_rgba(0,0,0,.45)] transition hover:-translate-y-0.5"
+      className="w-full rounded-2xl border border-slate-300/40 p-4 text-left shadow-[inset_0_0_30px_rgba(148,163,184,.15),0_8px_24px_rgba(0,0,0,.45)] transition hover:-translate-y-0.5"
+      style={{
+        backgroundImage: `linear-gradient(90deg, ${homeColor} 0%, ${homeColor} 50%, ${awayColor} 50%, ${awayColor} 100%)`,
+      }}
     >
       <div className="grid grid-cols-[70px_1fr_70px] items-center gap-3">
         <div className="flex justify-center">
