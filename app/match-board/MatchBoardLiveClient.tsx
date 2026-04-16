@@ -80,7 +80,14 @@ export function MatchBoardLiveClient({
   }, [session]);
 
   if (!session) {
-    return <main className="mx-auto min-h-screen max-w-6xl p-6 text-white">Carregando partida...</main>;
+    return (
+      <main
+        className="mx-auto min-h-screen max-w-6xl bg-cover bg-center bg-no-repeat p-6 text-white"
+        style={{ backgroundImage: "linear-gradient(180deg, rgba(2,6,23,0.72), rgba(2,6,23,0.9)), url('/Captura%20de%20tela%202026-04-16%20114540.jpg')" }}
+      >
+        Carregando partida...
+      </main>
+    );
   }
 
   const sharedClock = `${String(Math.floor(session.timeRemaining / 60)).padStart(2, "0")}:${String(Math.floor(session.timeRemaining % 60)).padStart(2, "0")}`;
@@ -90,7 +97,10 @@ export function MatchBoardLiveClient({
   const contextualBanners = session.storyBanners;
 
   return (
-    <main className="mx-auto min-h-screen max-w-6xl p-6">
+    <main
+      className="mx-auto min-h-screen max-w-6xl bg-cover bg-center bg-no-repeat p-6"
+      style={{ backgroundImage: "linear-gradient(180deg, rgba(2,6,23,0.7), rgba(2,6,23,0.92)), url('/Captura%20de%20tela%202026-04-16%20114540.jpg')" }}
+    >
       <BroadcastScoreBug session={session} userIsHome={!!userIsHome} />
       <QuarterTransitionOverlay phase={session.phase} visible={transitionVisible} />
       {employmentStatus !== "employed" && (
