@@ -68,17 +68,21 @@ export class ScoringEngine {
     const attackMetrics = this.getDerivedMetrics(params.attacking);
     const defenseMetrics = this.getDerivedMetrics(params.defending);
 
+    const tacticalDiscipline = params.attacking.tacticalDiscipline ?? params.attacking.tactics.offenseRating;
+    const tacticalExecutionFactor = 0.94 + clamp(tacticalDiscipline / 100, 0, 1) * 0.12;
+
     const attackRating =
-      this.weights.attack.teamOverall * params.attacking.team.overall +
-      this.weights.attack.avgPlayerOverallOnCourt * attackMetrics.avgOverallOnCourt +
-      this.weights.attack.shooting * attackMetrics.shooting +
-      this.weights.attack.passing * attackMetrics.passing +
-      this.weights.attack.dribbling * attackMetrics.dribbling +
-      this.weights.attack.pace * attackMetrics.pace +
-      this.weights.attack.physicality * attackMetrics.physicality +
-      this.weights.attack.teamTacticsOffense * params.attacking.tactics.offenseRating +
-      this.weights.attack.playstyleSynergy * (100 * params.playstyle.offenseSynergy) +
-      this.weights.attack.starPower * attackMetrics.starPower;
+      (this.weights.attack.teamOverall * params.attacking.team.overall +
+        this.weights.attack.avgPlayerOverallOnCourt * attackMetrics.avgOverallOnCourt +
+        this.weights.attack.shooting * attackMetrics.shooting +
+        this.weights.attack.passing * attackMetrics.passing +
+        this.weights.attack.dribbling * attackMetrics.dribbling +
+        this.weights.attack.pace * attackMetrics.pace +
+        this.weights.attack.physicality * attackMetrics.physicality +
+        this.weights.attack.teamTacticsOffense * params.attacking.tactics.offenseRating +
+        this.weights.attack.playstyleSynergy * (100 * params.playstyle.offenseSynergy) +
+        this.weights.attack.starPower * attackMetrics.starPower) *
+      tacticalExecutionFactor;
 
     const defenseResistance =
       this.weights.defense.opponentTeamOverall * params.defending.team.overall +

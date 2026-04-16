@@ -88,6 +88,29 @@ This plan is focused on making the game feel premium, competitive, and culturall
 - +20% retention on users who complete first full game.
 - Higher NPS feedback on “visual quality” and “game feel.”
 
+## 10) Make Asset Feedback Match Score Engine Realism
+
+To make user choices feel meaningful, tie visual/audio assets directly to simulation variables:
+
+- **Tactics chosen by user** → show offensive spacing overlays and defensive shell overlays in real time.
+- **Player quality and fit** → card FX intensity scales with player macro ratings (shooting, passing, defense).
+- **Season position pressure** → UI pressure meter near scoreboard; if team is underperforming expectations, tighten timing windows and show anxious crowd animations.
+- **Team/manager morale** → bench and crowd body-language asset variants switch dynamically.
+- **Momentum** → camera shake, crowd roar layers, and HUD pulse when momentum shifts.
+- **Home vs away** → arena light scenes, referee whistle mix, and crowd hostility curves differ by venue.
+- **History/rivalry context** → pre-game cinematic stingers, rivalry badges, and higher-intensity callout assets.
+
+### Suggested telemetry bridge
+
+- Emit a per-tick payload from simulation with:
+  - `context.value`
+  - `momentum`
+  - `managerMorale`
+  - `tablePressureFactor`
+  - `historyEdge`
+  - `tacticalDiscipline`
+- Drive HUD/VFX/SFX states from these values so every user choice has visible match impact.
+
 ---
 
 If you want, this can be converted into a concrete implementation backlog mapped to this repository structure (`public/`, `app/`, `components/`, and `styles/`) with asset-by-asset priorities.

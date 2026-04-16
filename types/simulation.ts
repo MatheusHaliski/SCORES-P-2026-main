@@ -21,8 +21,14 @@ export type TeamMatchState = {
   morale: number; // 0-100
   possessionControl: number; // 0-100
   seasonForm: number; // 0-100
+  seasonPosition?: number; // 1..N (quanto menor, melhor)
+  expectedSeasonPosition?: number; // 1..N (expectativa da diretoria)
   foulTroubleCount: number; // titulares em risco
   disqualifiedCount: number; // jogadores fora por faltas
+  managerMorale?: number; // 0-100
+  momentum?: number; // -100..+100 (momento psicológico)
+  historyEdge?: number; // -100..+100 (histórico recente contra o rival)
+  tacticalDiscipline?: number; // 0-100 (execução do plano tático escolhido pelo usuário)
   tactics: TeamTactics;
   isHome: boolean;
 };
