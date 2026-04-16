@@ -13,7 +13,7 @@ import { getSimulationSpeedOption, SIMULATION_SPEED_KEY } from "@/app/lib/simula
 import { SpectatorModeBanner } from "@/components/SpectatorModeBanner";
 import { getMatchInfoBarStyle, getMatchPanelStyle } from "@/styles/metallicTheme";
 import { BroadcastScoreBug } from "@/components/match/BroadcastScoreBug";
-import { PeriodTransitionOverlay } from "@/components/match/PeriodTransitionOverlay";
+import { QuarterTransitionOverlay } from "@/components/match/PeriodTransitionOverlay";
 import { QuarterRecapCards } from "@/components/match/QuarterRecapCards";
 
 export function MatchBoardLiveClient({
@@ -87,22 +87,12 @@ export function MatchBoardLiveClient({
   const sharedPeriod = `Q${session.quarter}`;
   const userFixture = session.fixtures.find((fixture) => fixture.isUserMatch);
   const userIsHome = userFixture?.homeTeamId === userTeamId;
-  const contextualBanners = (() => {
-    const recent = session.eventFeed.slice(-8);
-    const turnoverRun = recent.filter((event) => event.type === "TURNOVER").length;
-    const scoringRun = recent.filter((event) => event.type === "2PT_MADE" || event.type === "3PT_MADE").length;
-    const banners: string[] = [];
-    if (turnoverRun >= 2) banners.push("Back-to-back turnovers shifting momentum");
-    if (scoringRun >= 3) banners.push("Scoring burst building pressure");
-    if (Math.abs(session.momentum.value) > 35) banners.push("Momentum swing in progress");
-    if (session.quarter === 4 && session.timeRemaining <= 120) banners.push("Clutch possessions live");
-    return banners.slice(0, 3);
-  })();
+  const contextualBanners = session.storyBanners;
 
   return (
     <main className="mx-auto min-h-screen max-w-6xl p-6">
       <BroadcastScoreBug session={session} userIsHome={!!userIsHome} />
-      <PeriodTransitionOverlay phase={session.phase} visible={transitionVisible} />
+      <QuarterTransitionOverlay phase={session.phase} visible={transitionVisible} />
       {employmentStatus !== "employed" && (
         <div className="mb-3">
           <SpectatorModeBanner />
@@ -119,6 +109,11 @@ export function MatchBoardLiveClient({
       <div className="sa-premium-gradient-surface mt-3 rounded-2xl p-3 text-xs text-slate-100" style={getMatchInfoBarStyle()}>
         <p>Venue: <strong>{session.venueName ?? "Arena principal"}</strong></p>
         <p>Público: <strong>{(session.attendance ?? 0).toLocaleString()}</strong> • Receita estimada: <strong>${(session.ticketRevenueEstimate ?? 0).toLocaleString()}</strong></p>
+      </div>
+      <div className="mt-3 grid gap-2 md:grid-cols-3">
+        <p className="rounded-xl border border-indigo-300/30 bg-indigo-900/20 px-3 py-2 text-xs text-indigo-100">Manager morale: <strong>{Math.round(session.telemetry.managerMorale)}</strong></p>
+        <p className="rounded-xl border border-amber-300/30 bg-amber-900/20 px-3 py-2 text-xs text-amber-100">Tactical discipline: <strong>{Math.round(session.telemetry.tacticalDiscipline)}</strong></p>
+        <p className="rounded-xl border border-rose-300/30 bg-rose-900/20 px-3 py-2 text-xs text-rose-100">Pressure: <strong>{Math.round(session.telemetry.pressure)}</strong></p>
       </div>
       <QuarterRecapCards session={session} />
 

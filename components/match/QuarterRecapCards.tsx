@@ -1,5 +1,5 @@
 import { MatchSession } from "@/types/matchSession";
-import { motionTokens } from "@/app/lib/motionTokens";
+import { motionTokens } from "@/lib/motion";
 
 export function QuarterRecapCards({ session }: { session: MatchSession }) {
   const cards = session.quarterRecap?.slice(-4) ?? [];
@@ -18,7 +18,7 @@ export function QuarterRecapCards({ session }: { session: MatchSession }) {
             <p className="text-[10px] uppercase tracking-[0.2em] text-slate-300">Q{card.quarter} Recap</p>
             <p className="mt-1 text-sm font-bold text-white">{card.title}</p>
             <p className="text-xs text-slate-300">{card.description}</p>
-            <p className={`mt-2 text-xs font-black ${positive ? "text-emerald-300" : "text-rose-300"}`}>{positive ? "▲" : "▼"} {Math.abs(card.delta)}</p>
+            <p className={`mt-2 text-xs font-black ${positive ? "text-emerald-300" : "text-rose-300"}`}>{positive ? "▲" : "▼"} {Math.abs(card.delta)} net impact</p>
           </article>
         );
       })}

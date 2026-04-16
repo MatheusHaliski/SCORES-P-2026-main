@@ -20,6 +20,27 @@ export type MatchPhaseState =
   | "halftime"
   | "final";
 
+export type TeamTactics = {
+  pace: "slow" | "balanced" | "fast";
+  offenseFocus: "paint" | "mid" | "three" | "balanced";
+  defenseType: "man" | "zone";
+  pressure: number;
+  reboundingFocus: number;
+};
+
+export type GameEmotionState = {
+  momentum: number;
+  crowdIntensity: number;
+};
+
+export type GameTickPayload = {
+  momentum: number;
+  crowdIntensity: number;
+  managerMorale: number;
+  tacticalDiscipline: number;
+  pressure: number;
+};
+
 export type PlayerMatchState = {
   playerId: string;
   playerName: string;
@@ -50,6 +71,7 @@ export type LineupPlayer = {
   position: string;
   overall: number;
   stamina: number;
+  fouls: number;
   attributes: PlayerAttributes;
   macroRatings: MacroRatings;
   morale: "Muito Feliz" | "Feliz" | "Contente" | "Insatisfeito" | "Muito Insatisfeito";
@@ -101,6 +123,8 @@ export type MatchSession = {
   opponentTeamId: string;
   userTeamTactic: TeamTactic;
   opponentTeamTactic: TeamTactic;
+  userTeamConfig: TeamTactics;
+  opponentTeamConfig: TeamTactics;
   userTacticalPreset: TacticalPreset;
   opponentTacticalPreset: TacticalPreset;
   clubUniformAssets: ClubUniformAssets;
@@ -135,6 +159,7 @@ export type MatchSession = {
     home: { timeoutsRemaining: number; foulsThisQuarter: number };
     away: { timeoutsRemaining: number; foulsThisQuarter: number };
   };
+  emotion: GameEmotionState;
   momentum: {
     value: number;
     currentRun: { teamId: string; points: number };
@@ -142,6 +167,8 @@ export type MatchSession = {
   crowd: {
     intensity: number;
   };
+  telemetry: GameTickPayload;
+  storyBanners: string[];
   quarterRecap?: Array<{
     id: string;
     quarter: number;
