@@ -112,6 +112,7 @@ export class GameSimulationEngine {
         const shotQuality = this.scoringEngine.getShotQuality(attacking, playstyle);
         const points = this.scoringEngine.resolvePoints(shotQuality, playstyle.threePointBonus, this.random);
         this.applyScore(state, attackingSide, points);
+        this.applyMomentumSwing(attacking, defending, points);
 
         const event: TickScoringEvent = {
           tick: state.tick,
@@ -131,6 +132,7 @@ export class GameSimulationEngine {
       else state.possessions.away += 1;
 
       this.applyFatigueTick(attacking, defending);
+      this.applyMomentumDecay(attacking, defending);
     }
   }
 
@@ -148,5 +150,26 @@ export class GameSimulationEngine {
   private applyFatigueTick(attacking: TeamMatchState, defending: TeamMatchState) {
     attacking.fatigue = Math.min(100, attacking.fatigue + 0.35);
     defending.fatigue = Math.min(100, defending.fatigue + 0.22);
+  }
+
+  private applyMomentumSwing(attacking: TeamMatchState, defending: TeamMatchState, points: 1 | 2 | 3) {
+    const swing = points === 3 ? 7 : points === 2 ? 5 : 3;
+    attacking.momentum = this.clampMomentum((attacking.momentum ?? 0) + swing);
+    defending.momentum = this.clampMomentum((defending.momentum ?? 0) - swing);
+  }
+
+  private applyMomentumDecay(attacking: TeamMatchState, defending: TeamMatchState) {
+    attacking.momentum = this.stepToZero(attacking.momentum ?? 0, 0.6);
+    defending.momentum = this.stepToZero(defending.momentum ?? 0, 0.6);
+  }
+
+  private clampMomentum(value: number) {
+    return Math.max(-100, Math.min(100, value));
+  }
+
+  private stepToZero(value: number, step: number) {
+    if (value > 0) return Math.max(0, value - step);
+    if (value < 0) return Math.min(0, value + step);
+    return 0;
   }
 }

@@ -113,6 +113,8 @@ Novo módulo com responsabilidades separadas:
 - `attack_rating` e `defense_resistance` seguindo os pesos solicitados (ajustáveis em `defaultSimulationWeights`).
 - `chance_to_score = attack / (attack + defense)`.
 - `score_rate = base_rate * possession_factor * (attack/defense) * context_factor`.
+- `context_factor` agora incorpora também pressão de tabela, moral do manager, momentum e histórico recente entre equipes.
+- `attack_rating` recebe multiplicador de execução tática (`tacticalDiscipline`) para refletir escolhas do usuário.
 
 ### Exemplo de quarter completo
 
