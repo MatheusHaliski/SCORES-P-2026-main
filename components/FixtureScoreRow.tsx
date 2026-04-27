@@ -1,15 +1,16 @@
 import { LiveFixtureState } from "@/types/matchSession";
 import { MatchEvent } from "@/types/liveMatch";
 import Image from "next/image";
+import { ScoreType, ScoreTypeIcon } from "@/components/ScoreTypeIcon";
 
 const isImageLogo = (logo: string) => logo.startsWith("/") || logo.startsWith("http") || logo.startsWith("data:");
 
 const SCORING_TYPES = new Set(["2PT_MADE", "3PT_MADE", "FREE_THROW_MADE"]);
 
-const badgeByEventType: Partial<Record<MatchEvent["type"], string>> = {
-  FREE_THROW_MADE: "/b1.png",
-  "2PT_MADE": "/b2.png",
-  "3PT_MADE": "/b3.png",
+const scoreTypeByEventType: Partial<Record<MatchEvent["type"], ScoreType>> = {
+  FREE_THROW_MADE: "1PT",
+  "2PT_MADE": "2PT",
+  "3PT_MADE": "3PT",
 };
 
 export function FixtureScoreRow({
@@ -29,7 +30,7 @@ export function FixtureScoreRow({
 }) {
   const scoredByUserClub = latestScoreEvent?.teamId === userTeamId;
   const hasScoreInfo = !!latestScoreEvent && SCORING_TYPES.has(latestScoreEvent.type);
-  const scoringBadge = latestScoreEvent ? badgeByEventType[latestScoreEvent.type] : undefined;
+  const scoringBadgeType = latestScoreEvent ? scoreTypeByEventType[latestScoreEvent.type] : undefined;
   const homeColor = fixture.homeColor || "#fcd34d";
   const awayColor = fixture.awayColor || "#fcd34d";
 
@@ -84,9 +85,7 @@ export function FixtureScoreRow({
       <div className={`mt-2 rounded-lg px-3 py-1.5 text-xs font-semibold ${hasScoreInfo && scoredByUserClub ? "bg-yellow-300/20 text-yellow-100" : "bg-white/5 text-slate-200"}`}>
         {hasScoreInfo ? (
           <div className="flex items-center justify-center gap-2">
-            {scoringBadge ? (
-              <Image src={scoringBadge} alt="Tipo da cesta" width={22} height={22} className="rounded-md border border-white/20 bg-slate-900/60 object-cover" />
-            ) : null}
+            {scoringBadgeType ? <ScoreTypeIcon type={scoringBadgeType} size={22} /> : null}
             <span>{`${latestScoreEvent?.playerName ?? "Jogador"} marcou agora`}</span>
           </div>
         ) : (
