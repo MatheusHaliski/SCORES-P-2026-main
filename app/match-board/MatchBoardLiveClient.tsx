@@ -16,7 +16,6 @@ import { BroadcastScoreBug } from "@/components/match/BroadcastScoreBug";
 import { QuarterTransitionOverlay } from "@/components/match/PeriodTransitionOverlay";
 import { QuarterRecapCards } from "@/components/match/QuarterRecapCards";
 import { FreeThrowShooterModal } from "@/components/FreeThrowShooterModal";
-import { ScoringEventCallout } from "@/components/ScoringEventCallout";
 import { ScoreBreakdownPanel } from "@/components/ScoreBreakdownPanel";
 import { MatchSessionService } from "@/services/match/MatchSessionService";
 import { EjectionAlert } from "@/components/EjectionAlert";
@@ -76,7 +75,6 @@ export function MatchBoardLiveClient({
     enableAutoBreakNavigation: false,
   });
   const [transitionVisible, setTransitionVisible] = useState(false);
-  const [calloutIndex, setCalloutIndex] = useState(0);
   const [interruptionAlert, setInterruptionAlert] = useState<string | null>(null);
   const [ejectionAlert, setEjectionAlert] = useState<string | null>(null);
   const matchSessionService = useMemo(() => new MatchSessionService(), []);
@@ -90,14 +88,6 @@ export function MatchBoardLiveClient({
     return () => window.clearTimeout(timeout);
   }, [session]);
 
-  useEffect(() => {
-    if (!session?.scoringSettings.scoringEventCallouts) return;
-    if (!session.scoreEvents.length) return;
-    const timer = window.setTimeout(() => {
-      setCalloutIndex((prev) => (prev + 1) % Math.max(1, session.scoreEvents.length));
-    }, 1400);
-    return () => window.clearTimeout(timer);
-  }, [session?.scoreEvents, session?.scoringSettings.scoringEventCallouts]);
 
   useEffect(() => {
     if (!session?.scoringSettings.showInterruptionAlerts) return;
@@ -130,7 +120,6 @@ export function MatchBoardLiveClient({
   const userFixture = session.fixtures.find((fixture) => fixture.isUserMatch);
   const userIsHome = userFixture?.homeTeamId === userTeamId;
   const contextualBanners = session.storyBanners;
-  const activeCallout = session.scoreEvents.length ? session.scoreEvents[Math.min(calloutIndex, session.scoreEvents.length - 1)] : null;
   const pendingFTForUser = session.pendingFreeThrow?.teamId === session.userTeamId ? session.pendingFreeThrow : null;
   const scoringSettings = session.scoringSettings ?? {
     freeThrowShooterMode: "auto" as const,
@@ -153,8 +142,7 @@ export function MatchBoardLiveClient({
     >
       <EjectionAlert message={ejectionAlert} />
       <InterruptionAlertToast text={interruptionAlert} />
-      <BroadcastScoreBug session={session} userIsHome={!!userIsHome} feedback={feedback} />
-      <ScoringEventCallout event={scoringSettings.scoringEventCallouts ? activeCallout : null} showAssetBadge={scoringSettings.showScorerAssetBadge} showShotType={scoringSettings.showShotTypeLabels} />
+      <BroadcastScoreBug session={session} userIsHome={!!userIsHome} feedback={feedback} showScoreEventBadge={scoringSettings.showScorerAssetBadge} showShotType={scoringSettings.showShotTypeLabels} />
       <QuarterTransitionOverlay phase={session.phase} visible={transitionVisible} />
       {employmentStatus !== "employed" && (
         <div className="mb-3">
