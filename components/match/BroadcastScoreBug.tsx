@@ -2,11 +2,14 @@ import { MatchSession } from "@/types/matchSession";
 import { motionTokens } from "@/lib/motion";
 import { buildTeamPlaceholderAsset } from "@/lib/assets";
 import { FeedbackSnapshot } from "@/types/feedback";
+import { ScoringEventCallout } from "@/components/ScoringEventCallout";
 
 type Props = {
   session: MatchSession;
   userIsHome: boolean;
   feedback?: FeedbackSnapshot | null;
+  showShotType?: boolean;
+  showScoreEventBadge?: boolean;
 };
 
 const toClock = (seconds: number) => `${Math.floor(seconds / 60).toString().padStart(2, "0")}:${Math.floor(seconds % 60).toString().padStart(2, "0")}`;
@@ -50,7 +53,7 @@ function CrowdIntensityMeter({ intensity }: { intensity: number }) {
   );
 }
 
-export function BroadcastScoreBug({ session, userIsHome, feedback }: Props) {
+export function BroadcastScoreBug({ session, userIsHome, feedback, showShotType = true, showScoreEventBadge = true }: Props) {
   const fixture = session.fixtures.find((item) => item.isUserMatch);
   if (!fixture) return null;
 
@@ -73,7 +76,8 @@ export function BroadcastScoreBug({ session, userIsHome, feedback }: Props) {
       className="sa-broadcast-scorebug sticky top-2 z-30 rounded-2xl bg-gradient-to-r from-slate-900/95 via-slate-900/90 to-slate-950/95 px-3 py-2 text-white md:px-5"
       style={{ boxShadow: `0 0 0 1px rgba(248,113,113,${(feedback?.anxietyTint ?? 0) * 0.35}), inset 0 0 28px rgba(248,113,113,${(feedback?.anxietyTint ?? 0) * 0.18})` }}
     >
-      <div className="grid grid-cols-[1fr_auto_1fr] items-center gap-3">
+      <div className="hud-top-row">
+        <div className="scoreboard flex-1">
         <div className={`rounded-xl px-3 py-2 ${possessionHome ? "bg-emerald-400/20" : "bg-slate-700/35"}`}>
           <p className="text-[10px] uppercase tracking-[0.2em] text-slate-300">Home</p>
           <div className="flex items-end justify-between gap-2">
@@ -106,6 +110,14 @@ export function BroadcastScoreBug({ session, userIsHome, feedback }: Props) {
           </div>
           <p className="text-[10px] text-slate-300">Fouls {awayTeamState?.foulsThisQuarter ?? fixture.awayFouls} • TO {awayTeamState?.timeoutsRemaining ?? 0} {awayBonus ? "• BONUS" : ""}</p>
         </div>
+        </div>
+
+        <ScoringEventCallout
+          event={session.scoreEvents?.at(-1) ?? null}
+          showShotType={showShotType}
+          showAssetBadge={showScoreEventBadge}
+          className="score-event--inline"
+        />
       </div>
 
       <MomentumBar momentum={session.emotion.momentum} userIsHome={userIsHome} />

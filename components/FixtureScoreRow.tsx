@@ -7,9 +7,9 @@ const isImageLogo = (logo: string) => logo.startsWith("/") || logo.startsWith("h
 const SCORING_TYPES = new Set(["2PT_MADE", "3PT_MADE", "FREE_THROW_MADE"]);
 
 const badgeByEventType: Partial<Record<MatchEvent["type"], string>> = {
-  FREE_THROW_MADE: "/b1.png",
+  FREE_THROW_MADE: "/b3.png",
   "2PT_MADE": "/b2.png",
-  "3PT_MADE": "/b3.png",
+  "3PT_MADE": "/b1.png",
 };
 
 export function FixtureScoreRow({
@@ -85,7 +85,7 @@ export function FixtureScoreRow({
         {hasScoreInfo ? (
           <div className="flex items-center justify-center gap-2">
             {scoringBadge ? (
-              <Image src={scoringBadge} alt="Tipo da cesta" width={22} height={22} className="rounded-md border border-white/20 bg-slate-900/60 object-cover" />
+              <Image src={scoringBadge} alt="Tipo da cesta" width={22} height={22} className="score-icon" onError={(e) => { console.error("Score icon failed to load", e); }} />
             ) : null}
             <span>{`${latestScoreEvent?.playerName ?? "Jogador"} marcou agora`}</span>
           </div>
