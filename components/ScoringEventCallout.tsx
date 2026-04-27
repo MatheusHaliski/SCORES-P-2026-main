@@ -1,10 +1,10 @@
-import Image from "next/image";
 import { ScoreEvent } from "@/types/matchSession";
+import { ScoreType, ScoreTypeIcon } from "@/components/ScoreTypeIcon";
 
-const iconByPoints: Record<ScoreEvent["points"], string> = {
-  1: "b3.png",
-  2: "b2.png",
-  3: "b1.png",
+const scoreTypeByPoints: Record<ScoreEvent["points"], ScoreType> = {
+  1: "1PT",
+  2: "2PT",
+  3: "3PT",
 };
 
 export function ScoringEventCallout({
@@ -23,18 +23,8 @@ export function ScoringEventCallout({
   return (
     <div className={`score-event ${className ?? ""}`.trim()}>
       {showAssetBadge && (
-        <span className="score-icon-wrapper">
-          <Image
-            src={`/${iconByPoints[event.points]}`}
-            alt="score type"
-            width={28}
-            height={28}
-            className="score-icon"
-            data-type={String(event.points)}
-            onError={(e) => {
-              console.error("Score icon failed to load", e);
-            }}
-          />
+        <span className="score-icon-wrapper" aria-hidden="true">
+          <ScoreTypeIcon type={scoreTypeByPoints[event.points]} size={28} />
         </span>
       )}
 

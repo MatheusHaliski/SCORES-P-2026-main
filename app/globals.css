@@ -388,6 +388,11 @@ body {
   display: inline-block;
 }
 
+.score-type-icon {
+  display: block;
+  background: transparent;
+}
+
 .score-text {
   display: flex;
   align-items: baseline;
@@ -410,18 +415,6 @@ body {
   font-size: 12px;
   opacity: 0.7;
   text-transform: capitalize;
-}
-
-.score-icon[data-type="3"] {
-  filter: drop-shadow(0 0 6px rgba(0, 150, 255, 0.7));
-}
-
-.score-icon[data-type="2"] {
-  filter: drop-shadow(0 0 6px rgba(255, 140, 0, 0.7));
-}
-
-.score-icon[data-type="1"] {
-  filter: drop-shadow(0 0 4px rgba(255, 255, 255, 0.6));
 }
 
 @media (max-width: 1100px) {
