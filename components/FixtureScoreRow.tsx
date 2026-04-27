@@ -6,6 +6,12 @@ const isImageLogo = (logo: string) => logo.startsWith("/") || logo.startsWith("h
 
 const SCORING_TYPES = new Set(["2PT_MADE", "3PT_MADE", "FREE_THROW_MADE"]);
 
+const badgeByEventType: Partial<Record<MatchEvent["type"], string>> = {
+  FREE_THROW_MADE: "/b1.png",
+  "2PT_MADE": "/b2.png",
+  "3PT_MADE": "/b3.png",
+};
+
 export function FixtureScoreRow({
   fixture,
   latestScoreEvent,
@@ -23,6 +29,7 @@ export function FixtureScoreRow({
 }) {
   const scoredByUserClub = latestScoreEvent?.teamId === userTeamId;
   const hasScoreInfo = !!latestScoreEvent && SCORING_TYPES.has(latestScoreEvent.type);
+  const scoringBadge = latestScoreEvent ? badgeByEventType[latestScoreEvent.type] : undefined;
   const homeColor = fixture.homeColor || "#fcd34d";
   const awayColor = fixture.awayColor || "#fcd34d";
 
@@ -74,8 +81,17 @@ export function FixtureScoreRow({
         </div>
       </div>
 
-      <div className={`mt-2 rounded-lg px-3 py-1.5 text-center text-xs font-semibold ${hasScoreInfo && scoredByUserClub ? "bg-yellow-300/20 text-yellow-100" : "bg-white/5 text-slate-200"}`}>
-        {hasScoreInfo ? `${latestScoreEvent?.playerName ?? "Jogador"} marcou agora` : "Rodada sincronizada ao vivo"}
+      <div className={`mt-2 rounded-lg px-3 py-1.5 text-xs font-semibold ${hasScoreInfo && scoredByUserClub ? "bg-yellow-300/20 text-yellow-100" : "bg-white/5 text-slate-200"}`}>
+        {hasScoreInfo ? (
+          <div className="flex items-center justify-center gap-2">
+            {scoringBadge ? (
+              <Image src={scoringBadge} alt="Tipo da cesta" width={22} height={22} className="rounded-md border border-white/20 bg-slate-900/60 object-cover" />
+            ) : null}
+            <span>{`${latestScoreEvent?.playerName ?? "Jogador"} marcou agora`}</span>
+          </div>
+        ) : (
+          <p className="text-center">Rodada sincronizada ao vivo</p>
+        )}
       </div>
     </button>
   );
